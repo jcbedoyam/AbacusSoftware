@@ -11,18 +11,18 @@ ser = serial.Serial(
 
 ser.isOpen()
 
+print "Waiting..."
+
 while 1:
     try:
-        out = ''
-        while ser.inWaiting() > 0:
-            out += ser.read(1)
+        out = ser.readline()
         if out != '':
             out = out[:-2]
             print ">> %s"%out
         if out[:3] == 'do:':
             command = out[4:]
             try:
-                eval(command)
+                exec(command)
             except:
                 print "Error: %s is not valid"%command
         time.sleep(0.1)
