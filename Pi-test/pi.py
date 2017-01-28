@@ -15,10 +15,10 @@ while 1:
     try:
         out = ''
         while ser.inWaiting() > 0:
-            out += ser.read(1)	
+            out += ser.read(1)
         if out != '':
             out = out[:-2]
-           	print ">> %s"%out
+            print ">> %s"%out
         if out[:3] == 'do:':
             command = out[4:]
             try:
