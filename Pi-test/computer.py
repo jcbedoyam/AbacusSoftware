@@ -16,7 +16,7 @@ while 1 :
     text = input(">> ")
     if text == 'exit':
         ser.close()
-        exit()
+        break
     else:
         text = text.encode()
         ser.write(text + b'\r\n')
