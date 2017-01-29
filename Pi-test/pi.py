@@ -21,13 +21,14 @@ while 1:
             print ">> %s"%out
         if out[:3] == 'do:':
             command = out[4:]
+            text = "Done\r\n"
             try:
-                ser.write("Done\r\n")
                 exec(command)
             except Exception as e:
                 out = e
                 print "Error: %s is not valid"%command
-                ser.write("Error: %s\r\n"%out)
+                text = "Error: %s\r\n"%out
+            ser.write(text)
         else:
             ser.write("Ok\r\n")
         time.sleep(0.01)
