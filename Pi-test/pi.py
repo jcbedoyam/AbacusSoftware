@@ -25,6 +25,7 @@ while 1:
                 exec(command)
             except:
                 print "Error: %s is not valid"%command
+        ser.write("Ok")
         time.sleep(0.1)
     except KeyboardInterrupt:
         ser.close()
