@@ -45,4 +45,4 @@ def createSerial(port, baudrate):
 def sendmessage(ser, text):
     text = text.encode()
     ser.write(text + b'\r\n')
-    return ser.readline().decode()
+    return ser.readline().decode()[:-2]
