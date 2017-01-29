@@ -22,11 +22,15 @@ while 1:
         if out[:3] == 'do:':
             command = out[4:]
             try:
+                ser.write("Done\r\n")
                 exec(command)
-            except:
+            except Exception as e:
+                out = e
                 print "Error: %s is not valid"%command
-        ser.write("Ok")
-        time.sleep(0.1)
+                ser.write("Error: %s\r\n"%out)
+        else:
+            ser.write("Ok\r\n")
+        time.sleep(0.01)
     except KeyboardInterrupt:
         ser.close()
         break
