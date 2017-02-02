@@ -51,7 +51,4 @@ def createSerial(port):
 def sendmessage(ser, text):
     text = text.encode()
     ser.write(text + b'\n')
-    return ser.readline().decode()
-
-def readmessage(ser):
-    return ser.readline()[2:]
+    return ser.readline().decode()[2:]
