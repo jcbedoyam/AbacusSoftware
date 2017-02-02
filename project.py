@@ -34,13 +34,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             
     def serial_refresh(self):
         self.port = findport()
-        self.baudrate = self.baudrate_line.text()
         self.port_line.setText(self.port)
-        self.serial = createSerial(self.port, self.baudrate)
+        self.serial = createSerial(self.port)
         if self.serial != None:
             self.terminal_line.setDisabled(False)
-        
-        
+                
     def table_change(self, row, column):
         self.data[row][column] = self.table.item(row, column).text()
         savetxt(self.output_name, self.data, delimiter=',')        

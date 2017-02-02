@@ -8,7 +8,13 @@ Created on Sun Jan 29 11:56:54 2017
 
 import os
 import serial
+import time
 
+"""
+constants
+"""
+BAUDRATE = 9600
+TIMEOUT = 0.2
 
 def matrix(y, x):
     mat = [['' for i in range(x)] for i in range(y)]
@@ -34,15 +40,15 @@ def findport():
     port = port.split(' ', 1)[0]
     return port
 
-def createSerial(port, baudrate):
+def createSerial(port):
     ser = None
     if port != '':
-        ser = serial.Serial(port=port, baudrate=baudrate,parity=serial.PARITY_ODD,
-            stopbits=serial.STOPBITS_TWO,
-            bytesize=serial.SEVENBITS, timeout=0.4)
+        ser = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_EVEN,
+            stopbits=serial.STOPBITS_ONE,
+            bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
     return ser
 
 def sendmessage(ser, text):
     text = text.encode()
-    ser.write(text + b'\r\n')
-    return ser.readline().decode()[:-2]
+    ser.write(text + b'\n')
+    return ser.readline().decode()
