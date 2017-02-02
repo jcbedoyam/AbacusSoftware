@@ -8,7 +8,7 @@ print "Waiting..."
 
 while 1:
     try:
-        out = ser.readline().decode()[:-2]
+        out = ser.readline().decode()[:-1]
         if out != '':
             print(">>> %s"%out)
             if out[:3] == 'do:':
