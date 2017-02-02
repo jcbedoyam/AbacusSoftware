@@ -10,19 +10,19 @@ while 1:
     try:
         out = ser.readline()
         if out != '':
-            print ">> %s"%out
+            print ">>> %s"%out
         if out[:3] == 'do:':
             command = out[4:]
-            text = "Done\n"
+            text = "Done"
             try:
                 exec(command)
             except Exception as e:
                 out = e
-                print "Error: %s is not valid\n"%command
-                text = "Error: %s\n"%out
-            ser.write(text)
+                print "Error: %s is not valid"%command
+                text = "Error: %s"%out
+            sendmessage(ser, text)
         else:
-            ser.write("Ok\n")
+            sendmessage(ser, "Ok")
         time.sleep(0.01)
     except KeyboardInterrupt:
         ser.close()
