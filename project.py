@@ -33,8 +33,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.terminal_text.ensureCursorVisible()
             
     def serial_refresh(self):
-        self.port = findport()
-        self.port_line.setText(self.port)
+        self.ports = findport()
+        for port in self.ports:
+            self.port_box.addItem(port)
+        self.port = self.port_box.currentText()
         self.serial = createSerial(self.port)
         if self.serial != None:
             self.terminal_line.setDisabled(False)

@@ -36,9 +36,12 @@ def loadtxt(file, delimiter = '\t'):
     return rows
 
 def findport():
-    port = os.popen('./device.sh | grep UART').read()
-    port = port.split(' ', 1)[0]
-    return port
+    multiple = os.popen('./device.sh | grep UART').read().split('\n')
+    ports = []
+    for port in multiple:
+        if port != '':
+            ports.append(port.split(' ', 1)[0])
+    return ports
 
 def createSerial(port):
     ser = None
