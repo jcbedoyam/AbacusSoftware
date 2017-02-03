@@ -1,6 +1,7 @@
 import sys
 from core import *
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 app = QtWidgets.QApplication(sys.argv)
 app.processEvents()
 
@@ -17,9 +18,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         signals and events
         """
         self.table.cellChanged.connect(self.table_change)
-        self.refresh_button.clicked.connect(self.serial_refresh)
         self.save_button.clicked.connect(self.choose_file)
         self.terminal_line.editingFinished.connect(self.terminal_handler)
+        self.port_box.installEventFilter(self)
         
         self.ylength = self.table.rowCount()
         self.xlength = self.table.columnCount()
@@ -31,8 +32,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.serial_refresh()
         self.terminal_text.ensureCursorVisible()
-            
+        
+        
+    def eventFilter(self, source, event):
+        if (event.type() == QtCore.QEvent.MouseButtonPress and source is self.port_box):
+            self.serial_refresh()            
+        return QtWidgets.QWidget.eventFilter(self, source, event)
+    
     def serial_refresh(self):
+        self.port_box.clear()
         self.ports = findport()
         for port in self.ports:
             self.port_box.addItem(port)
@@ -40,6 +48,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.serial = createSerial(self.port)
         if self.serial != None:
             self.terminal_line.setDisabled(False)
+        
                 
     def table_change(self, row, column):
         self.data[row][column] = self.table.item(row, column).text()
