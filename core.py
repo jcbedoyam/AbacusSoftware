@@ -14,7 +14,53 @@ import time
 constants
 """
 BAUDRATE = 9600
-TIMEOUT = 0.2
+TIMEOUT = 0.02
+BASE_DELAY = 1e-9
+BASE_SLEEP = 1e-9
+BASE_SAMPLING = 1e-3
+BASE_COINWIN = 1e-9
+DEFAULT_CHANNELS = 2
+MIN_DELAY = 0
+MAX_DELAY = 200
+STEP_DELAY = 5
+DEFAULT_DELAY = 0
+MIN_SLEEP = 0
+MAX_SLEEP = 200
+STEP_SLEEP = 5
+DEFAULT_SLEEP = 0
+
+ADDRESS = {'delayA_ns': 0,
+           'delayA_us': 1,
+           'delayA_ms': 2,
+           'delayA_s': 3,
+           'delayB_ns': 4,
+           'delayB_us': 5,
+           'delayB_ms': 6,
+           'delayB_s': 7,
+           'sleepTimeA_ns': 8,
+           'sleepTimeA_us': 9,
+           'sleepTimeA_ms': 10,
+           'sleepTimeA_s': 11,
+           'sleepTimeB_ns': 12,
+           'sleepTimeB_us': 13,
+           'sleepTimeB_ms': 14,
+           'sleepTimeB_s': 15,
+           'samplingTime_ns': 16,
+           'samplingTime_us': 17,
+           'samplingTime_ms': 18,
+           'samplingTime_s': 19,
+           'coincidenceWindow_ns': 20,
+           'coincidenceWindow_us': 21,
+           'coincidenceWindow_ms': 22,
+           'coincidenceWindow_s': 23,
+           'cuentasA_LSB': 24,
+           'cuentasA_MSB': 25,
+           'cuentasB_LSB': 26,
+           'cuentasB_MSB': 27,
+           'coincidencesAB_LSB': 28,
+           'coincidencesAB_MSB': 29}
+
+COEFFS = ['ns', 'us', 'ms', 's']
 
 def matrix(y, x):
     mat = [['' for i in range(x)] for i in range(y)]
@@ -43,15 +89,40 @@ def findport():
             ports.append(port.split(' ', 1)[0])
     return ports
 
-def createSerial(port):
-    ser = None
-    if port != '':
-        ser = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_EVEN,
-            stopbits=serial.STOPBITS_ONE,
-            bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
-    return ser
+class serialPort():
+    def __init__(self, port, parent=None):
+        self.parent = parent
+        self.port = port
+        self.serial = None
+        if self.port != '':
+            self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_EVEN,
+                stopbits=serial.STOPBITS_ONE,
+                bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
+            
+    def close(self):
+        self.serial.close()
+        
+    def message(self, address, value, read = False):
+        if value is int:
+            value = "%04X"%value
+            msb = int(value[:2], 16)
+            lsb = int(value[2:], 16)
+            encoded = [0x02, 0x00, address, msb, lsb, 0x04]
+            if read:
+                encoded[1] = 0x0E
+            else:
+                encoded[1] = 0x0F
+            encoded = serial.to_bytes(encoded)
+        else:
+            encoded = value.encode()
+        self.serial.write(encoded)
+        return self.serial.readline().decode()[:-1]   
 
-def sendmessage(ser, text):
-    text = text.encode()
-    ser.write(text + b'\n')
-    return ser.readline().decode()[:-1]
+def numparser(base, num):
+    first_order = int(base*num*1e9)
+    micro, nano = divmod(first_order, 1000)
+    unit, mili = divmod(int(micro/1000), 1000)
+    if micro >= 1000:
+        micro = 0
+        
+    return nano, micro, mili, unit
