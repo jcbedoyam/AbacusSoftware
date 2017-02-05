@@ -94,17 +94,8 @@ def loadtxt(file, delimiter = '\t'):
 
 def findport():
     ports_objects = list(find_ports.comports())
-    ports = []
-    if CURRENT_OS == "win32":
-        ports = [port.device for port in ports_objects]
-        return ports
-    else:
-        multiple = os.popen('./device.sh | grep UART').read().split('\n')
-        ports = []
-        for port in multiple:
-            if port != '':
-                ports.append(port.split(' ', 1)[0])
-        return ports
+    ports = [port.device for port in ports_objects]
+    return ports
 
 class serialPort():
     def __init__(self, port, parent=None):
