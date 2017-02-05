@@ -102,21 +102,28 @@ class serialPort():
     def close(self):
         self.serial.close()
         
-    def message(self, address, value, read = False):
-        if type(value) is int:
-            value = "%04X"%value
-            msb = int(value[:2], 16)
-            lsb = int(value[2:], 16)
-            encoded = [0x02, 0x00, address, msb, lsb, 0x04]
-            if read:
-                encoded[1] = 0x0E
+    def message(self, info, read = False):
+        if type(info) is list:
+            if not read:
+                value = "%04X"%info[1]
+                msb = int(value[:2], 16)
+                lsb = int(value[2:], 16)
+                encoded = [0x02, 0x0F, info[0], msb, lsb, 0x04]
             else:
-                encoded[1] = 0x0F
+                check = "%02X"%sum(info[1:])
+                encoded = [0x7E, info, int(check, 16)]
+                encoded = [val for sublist in encoded for val in sublist]
+
             encoded = serial.to_bytes(encoded)
         else:
-            encoded = value.encode()
+            encoded = info.encode()
+            
         self.serial.write(encoded)
-        return self.serial.readline().decode()[:-1]   
+        
+        if read:
+            return self.serial.readline().decode()[:-1]
+        else:
+            return None
 
 def numparser(base, num):
     first_order = int(base*num*1e9)

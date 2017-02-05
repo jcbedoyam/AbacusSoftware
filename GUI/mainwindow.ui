@@ -84,7 +84,7 @@
           <enum>QFrame::Raised</enum>
          </property>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="1" column="0">
+          <item row="2" column="0">
            <widget class="QPushButton" name="channels_button">
             <property name="enabled">
              <bool>false</bool>
@@ -192,6 +192,16 @@ Window (ns):</string>
               </widget>
              </item>
             </layout>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QPushButton" name="stream_button">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>Stream</string>
+            </property>
            </widget>
           </item>
          </layout>

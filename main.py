@@ -65,7 +65,7 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                     parsed = numparser(base, value)
                     for k in range(4):
                         address = ADDRESS[prefix+"%s_%s"%(chr(ord('A')+i-1), COEFFS[k])]
-                        self.parent.serial.message(address, parsed[k])
+                        self.parent.serial.message([address, parsed[k]])
         except Exception as e:
             self.parent.errorWindow(e)
                 
@@ -104,6 +104,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.port_box.installEventFilter(self)
         self.table.cellChanged.connect(self.table_change)
         self.save_button.clicked.connect(self.choose_file)
+        self.stream_button.clicked.connect(self.method_streamer)
         self.channels_button.clicked.connect(self.channelsCaller)
         self.samp_spinBox.valueChanged.connect(self.method_sampling)
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
@@ -149,6 +150,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.setDisabled(status)
         self.coin_spinBox.setDisabled(status)
         self.channels_button.setDisabled(status)
+        self.stream_button.setDisabled(status)
         
     def table_change(self, row, column):
         self.data[row][column] = self.table.item(row, column).text()
@@ -178,6 +180,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.window = propertiesWindow(self)
         self.window.show()
         
+    def method_streamer(self):
+        first =  "cuentasA_LSB"
+        address = ADDRESS[first]
+        self.serial.message([address, 0], read=False)
+        
     def method_sampling(self, value):
         try:
             parsed = numparser(BASE_SAMPLING, value)
@@ -192,7 +199,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             parsed = numparser(BASE_COINWIN, value)
             for i in range(4):
                 address = ADDRESS["coincidenceWindow_%s"%COEFFS[i]]
-                self.serial.message(address, parsed[i])
+                self.serial.message([address, parsed[i]])
         except Exception as e:
             self.errorWindow(e)
             
