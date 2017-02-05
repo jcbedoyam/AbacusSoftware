@@ -1,7 +1,7 @@
-Quantum : mainwindow.py channels.py main.py core.py
-	pyinstaller --onefile main.py
-	mv dist/main Quantum
-	rm -r dist build __pycache__ main.spec
+#Quantum : mainwindow.py channels.py main.py core.py
+#	pyinstaller --onefile main.py
+#	mv dist/main Quantum
+#	rm -r dist build __pycache__ main.spec
 
 all : mainwindow.py channels.py main.py core.py
 	python main.py && rm -r __pycache__

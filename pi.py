@@ -1,10 +1,10 @@
 from core import *
 
-ser = createSerial('/dev/ttyAMA0')
+ser = serialPort('/dev/ttyAMA0')
 
 ser.isOpen()
 
-print "Waiting..."
+print("Waiting...")
 
 while 1:
     try:
