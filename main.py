@@ -2,7 +2,13 @@ from core import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 app = QtWidgets.QApplication(sys.argv)
+splash_pix = QtGui.QPixmap(':/splash.png')
+splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+splash.show()
+sleep(2.5)
+
 app.processEvents()
+app.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
 from mainwindow import Ui_MainWindow
 from channels import Ui_Dialog
@@ -252,4 +258,5 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
 main = Main()
 main.show()
+splash.close()
 sys.exit(app.exec_())

@@ -10,9 +10,9 @@ import os
 import sys
 import serial
 import codecs
+import GUI_images
 from time import sleep, localtime, strftime
 import serial.tools.list_ports as find_ports
-
 
 """
 constants
@@ -67,6 +67,12 @@ ADDRESS = {'delayA_ns': 0,
 
 COEFFS = ['ns', 'us', 'ms', 's']
 
+CURRENT_OS = sys.platform
+if CURRENT_OS == 'win32':
+    import ctypes
+    myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
 def matrix(y, x):
     mat = [['' for i in range(x)] for i in range(y)]
     return mat
@@ -89,7 +95,7 @@ def loadtxt(file, delimiter = '\t'):
 def findport():
     ports_objects = list(find_ports.comports())
     ports = []
-    if sys.platform == "win32":
+    if CURRENT_OS == "win32":
         ports = [port.device for port in ports_objects]
         return ports
     else:
