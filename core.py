@@ -9,6 +9,7 @@ Created on Sun Jan 29 11:56:54 2017
 import os
 import serial
 import time
+import codecs
 
 """
 constants
@@ -121,9 +122,10 @@ class serialPort():
         self.serial.write(encoded)
         
         if receive:
-            ans = self.serial.read(50)
-            print(ans)
+            ans = self.serial.readline()
+            ans = codecs.encode(ans, "hex_codec")
             return ans
+            
         else:
             return None
 
