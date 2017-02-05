@@ -142,10 +142,11 @@ class serialPort():
                 if check == 0xff:
                     hexa = hexa[2:-1]
                     ans = []
-                    for i in range(int(len(hexa)/5)):
-                        channel = int(hexa[5*i], 16)
-                        value = int(hexa[5*i+1] + hexa[5*i+2] + hexa[5*i+3] + hexa[5*i+4], 16)
+                    for i in range(int(len(hexa)/3)):
+                        channel = int(hexa[3*i], 16)
+                        value = int(hexa[3*i+1] + hexa[3*i+2], 16)
                         ans.append([channel, value])
+                        print(channel)
                         
                 return ans
         else:

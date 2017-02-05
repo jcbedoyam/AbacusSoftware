@@ -168,8 +168,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def table_change(self, row, column):
         if self.ylength == row + 10:
             self.data += matrix(self.ylength, self.xlength)
-        self.data[row][column] = self.table.item(row, column).text()
-        savetxt(self.output_name, self.data, delimiter=',')        
+        if row >= 0 and column >= 0:
+            self.data[row][column] = self.table.item(row, column).text()
+            savetxt(self.output_name, self.data, delimiter=',')        
 
     def choose_file(self):
         name = QtWidgets.QFileDialog.getSaveFileName(self, "Save Data File", "", "CSV data files (*.csv)")[0]
@@ -226,6 +227,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.current_cell += 1
         except Exception as e:
             self.errorWindow(e)
+            
     def method_sampling(self, value):
         self.timer.setInterval(value)
         try:

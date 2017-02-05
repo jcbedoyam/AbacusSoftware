@@ -18,13 +18,17 @@ while 1:
                 lsb = int(out[4], 16)
                 if  msb + lsb == 0:
                     stop = max(ADDRESS.values())
-                    n_bytes = 5*(stop-address)
+                    n_bytes = 3*(stop-address)
                     send = [n_bytes]
-                    for i in range(address, stop+1):
-                        value = np.random.randint(200e6)
-                        print("%d %d"%(i, value))
+                    
+                    items = int((stop-address)/2)
+                    for i in range(items):
+                        value = 6*np.random.random()
+                        value = int(10**value)
+                        print("%d %d"%(2*i+address, value))
                         value = "%08X"%value
-                        send += [i] + [int(value[2*j:2*j+2], 16) for j in range(4)]
+                        send += [2*i + address] + [int(value[2*j:2*j+2], 16) for j in range(2)]
+                        send += [2*i+1 + address] + [int(value[2*j:2*j+2], 16) for j in range(2, 4)]
                     ser.message(send, read=True)
         time.sleep(0.01)
     except KeyboardInterrupt:

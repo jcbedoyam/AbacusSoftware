@@ -1,5 +1,5 @@
 all : mainwindow.py channels.py main.py core.py GUI_images.py
-	python main.py && rm -r __pycache__ && clear
+	python main.py && rm -r __pycache__ output.csv && clear
 
 Quantum : mainwindow.py channels.py main.py core.py GUI_images.py
 	pyinstaller --onefile --icon=GUI/icon.ico --windowed main.py
