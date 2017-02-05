@@ -148,6 +148,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.window.update()
             else:
                 self.widget_activate(True)
+                if self.serial != None:
+                    self.serial.close()
         except Exception as e:
             self.errorWindow(e)
         
@@ -200,16 +202,21 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         actual = self.table.rowCount() 
         if actual == self.current_cell + 10:
             self.table.setRowCount(self.ylength+actual) 
-        for i in range(len(values)):
-            if self.current_cell == 0:
-                for key, value in ADDRESS.items():
-                    if value == values[i]:
-                        break
-                self.table.setItem(0, i, QtWidgets.QTableWidgetItem(key))
-            cell = QtWidgets.QTableWidgetItem("%d"%values[i][1])
-            self.table.setItem(self.current_cell+1, i, cell)
-            cell.setFlags(QtCore.Qt.ItemIsEnabled)
-        self.current_cell += 1
+            
+        try:
+            for i in range(len(values)):
+                if self.current_cell == 0:
+                    for key, value in ADDRESS.items():
+                        if value == values[i][0]:
+                            break
+                    self.table.setItem(0, i, QtWidgets.QTableWidgetItem(key))
+                cell = QtWidgets.QTableWidgetItem("%d"%values[i][1])
+                self.table.setItem(self.current_cell+1, i, cell)
+                self.table.scrollToItem(cell)
+                cell.setFlags(QtCore.Qt.ItemIsEnabled)
+            self.current_cell += 1
+        except Exception as e:
+            self.errorWindow(e)
         
     def method_sampling(self, value):
         self.timer.setInterval(value)
