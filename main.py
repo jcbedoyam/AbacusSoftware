@@ -110,6 +110,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.terminal_line.editingFinished.connect(self.terminal_handler)
         
+        
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(1000)
+        self.timer.timeout.connect(self.method_streamer)
+        
         self.ylength = self.table.rowCount()
         self.xlength = self.table.columnCount()
 
@@ -181,6 +186,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.window.show()
         
     def method_streamer(self):
+        if self.timer.isActive() and self.sender() == self.stream_button:
+            self.timer.stop()
+        elif not self.timer.isActive():
+            self.timer.start()
+            
         first =  "cuentasA_LSB"
         address = ADDRESS[first]
         self.serial.message([0x0e, address, 0], receive = True)

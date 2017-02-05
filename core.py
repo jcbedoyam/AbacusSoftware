@@ -14,7 +14,7 @@ import codecs
 """
 constants
 """
-BAUDRATE = 9600
+BAUDRATE = 115200
 TIMEOUT = 0.2
 BASE_DELAY = 1e-9
 BASE_SLEEP = 1e-9
@@ -122,9 +122,15 @@ class serialPort():
         self.serial.write(encoded)
         
         if receive:
-            ans = self.serial.readline()
-            ans = codecs.encode(ans, "hex_codec")
-            return ans
+            ans = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
+            if ans[0] == '7e':
+                while True:
+                    byte = codecs.encode(self.serial.read(1), "hex_codec").decode()
+                    if byte == '7e' or byte == '':
+                        break
+                    ans.append(byte)
+                print(ans)
+                return ans
             
         else:
             return None
