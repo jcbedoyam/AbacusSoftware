@@ -7,9 +7,12 @@ Created on Sun Jan 29 11:56:54 2017
 """
 
 import os
+import sys
 import serial
-import time
 import codecs
+from time import sleep, localtime, strftime
+import serial.tools.list_ports as find_ports
+
 
 """
 constants
@@ -84,12 +87,18 @@ def loadtxt(file, delimiter = '\t'):
     return rows
 
 def findport():
-    multiple = os.popen('./device.sh | grep UART').read().split('\n')
+    ports_objects = list(find_ports.comports())
     ports = []
-    for port in multiple:
-        if port != '':
-            ports.append(port.split(' ', 1)[0])
-    return ports
+    if sys.platform == "win32":
+        ports = [port.device for port in ports_objects]
+        return ports
+    else:
+        multiple = os.popen('./device.sh | grep UART').read().split('\n')
+        ports = []
+        for port in multiple:
+            if port != '':
+                ports.append(port.split(' ', 1)[0])
+        return ports
 
 class serialPort():
     def __init__(self, port, parent=None):

@@ -1,4 +1,3 @@
-import sys
 from core import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -148,8 +147,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.window.update()
             else:
                 self.widget_activate(True)
-                if self.serial != None:
-                    self.serial.close()
+#                if self.serial != None:
+#                    self.serial.close()
         except Exception as e:
             self.errorWindow(e)
         
@@ -191,33 +190,36 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.window.show()
         
     def method_streamer(self):
-        if self.timer.isActive() and self.sender() == self.stream_button:
-            self.timer.stop()
-        elif not self.timer.isActive():
-            self.timer.start()
-        first =  "cuentasA_LSB"
-        address = ADDRESS[first]
-        values = self.serial.message([0x0e, address, 0], receive = True)
-        
-        actual = self.table.rowCount() 
-        if actual == self.current_cell + 10:
-            self.table.setRowCount(self.ylength+actual) 
-            
         try:
-            for i in range(len(values)):
-                if self.current_cell == 0:
-                    for key, value in ADDRESS.items():
-                        if value == values[i][0]:
-                            break
-                    self.table.setItem(0, i, QtWidgets.QTableWidgetItem(key))
-                cell = QtWidgets.QTableWidgetItem("%d"%values[i][1])
-                self.table.setItem(self.current_cell+1, i, cell)
+            if self.timer.isActive() and self.sender() == self.stream_button:
+                self.timer.stop()
+            elif not self.timer.isActive():
+                self.timer.start()
+                
+            first =  "cuentasA_LSB"
+            address = ADDRESS[first]
+            
+            values = self.serial.message([0x0e, address, 0], receive = True)        
+            actual = self.table.rowCount() 
+            if actual == self.current_cell + 10:
+                self.table.setRowCount(self.ylength+actual) 
+                
+            if type(values) is list:
+                for i in range(len(values)):
+                    if self.current_cell == 0:
+                        for key, value in ADDRESS.items():
+                            if value == values[i][0]:
+                                break
+                        self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key))                       
+                    cell = QtWidgets.QTableWidgetItem("%d"%values[i][1])
+                    self.table.setItem(self.current_cell+1, i+1, cell)
+                    cell.setFlags(QtCore.Qt.ItemIsEnabled)
+                cell = QtWidgets.QTableWidgetItem(strftime("%H:%M:%S", localtime()))
+                self.table.setItem(self.current_cell+1, 0, cell)
                 self.table.scrollToItem(cell)
-                cell.setFlags(QtCore.Qt.ItemIsEnabled)
-            self.current_cell += 1
+                self.current_cell += 1
         except Exception as e:
             self.errorWindow(e)
-        
     def method_sampling(self, value):
         self.timer.setInterval(value)
         try:
@@ -240,13 +242,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def errorWindow(self, error):
         msg = QtWidgets.QMessageBox()
         self.serial_refresh()
+        self.timer.stop()
         msg.setIcon(QtWidgets.QMessageBox.Critical)
-        
         msg.setText("An Error has ocurred.")
         msg.setInformativeText(str(error))
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-        msg.exec()
+        msg.exec_()
 
 main = Main()
 main.show()
