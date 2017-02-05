@@ -29,6 +29,7 @@ MIN_SLEEP = 0
 MAX_SLEEP = 200
 STEP_SLEEP = 5
 DEFAULT_SLEEP = 0
+DEFAULT_SAMP = 500
 
 ADDRESS = {'delayA_ns': 0,
            'delayA_us': 1,
@@ -122,16 +123,25 @@ class serialPort():
         self.serial.write(encoded)
         
         if receive:
-            ans = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
-            if ans[0] == '7e':
+            hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
+            ints = []
+            if hexa[0] == '7e':
                 while True:
                     byte = codecs.encode(self.serial.read(1), "hex_codec").decode()
-                    if byte == '7e' or byte == '':
+                    if byte == '':
                         break
-                    ans.append(byte)
-                print(ans)
+                    hexa.append(byte)
+                    ints.append(int(byte, 16))
+                check = int(("%02X"%sum(ints[1:-1]))[-2:], 16) + ints[-1]
+                if check == 0xff:
+                    hexa = hexa[2:-1]
+                    ans = []
+                    for i in range(int(len(hexa)/5)):
+                        channel = int(hexa[5*i], 16)
+                        value = int(hexa[5*i+1] + hexa[5*i+2] + hexa[5*i+3] + hexa[5*i+4], 16)
+                        ans.append([channel, value])
+                        
                 return ans
-            
         else:
             return None
 

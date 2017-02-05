@@ -97,23 +97,23 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         
         self.setupUi(self)
         self.output_name = self.save_line.text()
+        self.timer = QtCore.QTimer()
+        self.timer.setInterval(DEFAULT_SAMP)
+        self.samp_spinBox.setValue(DEFAULT_SAMP)
         
         """
         signals and events
         """
         self.port_box.installEventFilter(self)
+        self.timer.timeout.connect(self.method_streamer)
         self.table.cellChanged.connect(self.table_change)
         self.save_button.clicked.connect(self.choose_file)
         self.stream_button.clicked.connect(self.method_streamer)
         self.channels_button.clicked.connect(self.channelsCaller)
+#        self.samp_spinBox.valueChanged.connect(self.timer.setInterval)
         self.samp_spinBox.valueChanged.connect(self.method_sampling)
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.terminal_line.editingFinished.connect(self.terminal_handler)
-        
-        
-        self.timer = QtCore.QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.method_streamer)
         
         self.ylength = self.table.rowCount()
         self.xlength = self.table.columnCount()
@@ -125,6 +125,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.window = None
         self.serial = None
+        self.current_cell = 0
         self.serial_refresh()
         self.terminal_text.ensureCursorVisible()
                 
@@ -158,6 +159,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stream_button.setDisabled(status)
         
     def table_change(self, row, column):
+        if self.ylength == row + 10:
+            self.data += matrix(self.ylength, self.xlength)
         self.data[row][column] = self.table.item(row, column).text()
         savetxt(self.output_name, self.data, delimiter=',')        
 
@@ -190,17 +193,31 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.timer.stop()
         elif not self.timer.isActive():
             self.timer.start()
-            
         first =  "cuentasA_LSB"
         address = ADDRESS[first]
-        self.serial.message([0x0e, address, 0], receive = True)
+        values = self.serial.message([0x0e, address, 0], receive = True)
+        
+        actual = self.table.rowCount() 
+        if actual == self.current_cell + 10:
+            self.table.setRowCount(self.ylength+actual) 
+        for i in range(len(values)):
+            if self.current_cell == 0:
+                for key, value in ADDRESS.items():
+                    if value == values[i]:
+                        break
+                self.table.setItem(0, i, QtWidgets.QTableWidgetItem(key))
+            cell = QtWidgets.QTableWidgetItem("%d"%values[i][1])
+            self.table.setItem(self.current_cell+1, i, cell)
+            cell.setFlags(QtCore.Qt.ItemIsEnabled)
+        self.current_cell += 1
         
     def method_sampling(self, value):
+        self.timer.setInterval(value)
         try:
             parsed = numparser(BASE_SAMPLING, value)
             for i in range(4):
                 address = ADDRESS["samplingTime_%s"%COEFFS[i]]
-                self.serial.message(0x0f, address, parsed[i])
+                self.serial.message([0x0f, address, parsed[i]])
         except Exception as e:
             self.errorWindow(e)
         
@@ -223,7 +240,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msg.exec()
-#        msg.buttonClicked.connect(msgbtn)
 
 main = Main()
 main.show()

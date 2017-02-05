@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(600, 436)
+        MainWindow.resize(600, 450)
         self.centralWidget = QtWidgets.QWidget(MainWindow)
         self.centralWidget.setObjectName("centralWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralWidget)
@@ -115,7 +115,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_3.setSpacing(6)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.table = QtWidgets.QTableWidget(self.tab)
-        self.table.setEnabled(False)
+        self.table.setEnabled(True)
         self.table.setDragEnabled(True)
         self.table.setRowCount(50)
         self.table.setColumnCount(10)
