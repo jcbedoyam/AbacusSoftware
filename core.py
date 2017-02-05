@@ -105,10 +105,10 @@ class serialPort():
     def message(self, info, read = False):
         if type(info) is list:
             if not read:
-                value = "%04X"%info[1]
+                value = "%04X"%info[2]
                 msb = int(value[:2], 16)
                 lsb = int(value[2:], 16)
-                encoded = [0x02, 0x0F, info[0], msb, lsb, 0x04]
+                encoded = [0x02, info[0], info[1], msb, lsb, 0x04]
             else:
                 check = "%02X"%sum(info[1:])
                 encoded = [0x7E, info, int(check, 16)]

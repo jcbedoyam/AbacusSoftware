@@ -65,7 +65,7 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                     parsed = numparser(base, value)
                     for k in range(4):
                         address = ADDRESS[prefix+"%s_%s"%(chr(ord('A')+i-1), COEFFS[k])]
-                        self.parent.serial.message([address, parsed[k]])
+                        self.parent.serial.message([0x0f, address, parsed[k]])
         except Exception as e:
             self.parent.errorWindow(e)
                 
@@ -169,7 +169,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.terminal_line.setText('')
         if text != "" and self.serial != None:
             self.terminal_text.insertPlainText("[INPUT] %s\n"%text)
-            ans = self.serial.message(b'x24', text)
+            ans = self.serial.message([0x0f, b'x24', text])
             if ans != "":
                 self.terminal_text.insertPlainText("[OUT] %s\n"%ans)
             
@@ -183,14 +183,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def method_streamer(self):
         first =  "cuentasA_LSB"
         address = ADDRESS[first]
-        self.serial.message([address, 0], read=False)
+        self.serial.message([0x0e, address, 0])
         
     def method_sampling(self, value):
         try:
             parsed = numparser(BASE_SAMPLING, value)
             for i in range(4):
                 address = ADDRESS["samplingTime_%s"%COEFFS[i]]
-                self.serial.message(address, parsed[i])
+                self.serial.message(0x0f, address, parsed[i])
         except Exception as e:
             self.errorWindow(e)
         
@@ -199,7 +199,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             parsed = numparser(BASE_COINWIN, value)
             for i in range(4):
                 address = ADDRESS["coincidenceWindow_%s"%COEFFS[i]]
-                self.serial.message([address, parsed[i]])
+                self.serial.message([0x0f, address, parsed[i]])
         except Exception as e:
             self.errorWindow(e)
             
