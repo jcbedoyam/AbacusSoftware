@@ -13,8 +13,8 @@ import time
 """
 constants
 """
-BAUDRATE = 9600
-TIMEOUT = 0.02
+BAUDRATE = 115200
+TIMEOUT = 0.2
 BASE_DELAY = 1e-9
 BASE_SLEEP = 1e-9
 BASE_SAMPLING = 1e-3
@@ -103,7 +103,7 @@ class serialPort():
         self.serial.close()
         
     def message(self, address, value, read = False):
-        if value is int:
+        if type(value) is int:
             value = "%04X"%value
             msb = int(value[:2], 16)
             lsb = int(value[2:], 16)
