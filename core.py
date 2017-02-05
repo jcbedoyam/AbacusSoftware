@@ -110,7 +110,7 @@ class serialPort():
                 lsb = int(value[2:], 16)
                 encoded = [0x02, info[0], info[1], msb, lsb, 0x04]
             else:
-                check = hex(sum(info[1:]))[-s:]
+                check = hex(sum(info[1:]))[-2:]
                 check = 0xff - int(check, 16)
                 encoded = [0x7E] + info + [check]
 
