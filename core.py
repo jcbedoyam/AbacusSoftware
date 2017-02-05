@@ -111,8 +111,8 @@ class serialPort():
                 encoded = [0x02, info[0], info[1], msb, lsb, 0x04]
             else:
                 check = "%02X"%sum(info[1:])
-                encoded = [0x7E, info, int(check, 16)]
-                encoded = [val for sublist in encoded for val in sublist]
+                check = 0xff - int(check, 16)
+                encoded = [0x7E] + info + [int(check, 16)]
                 print(encoded)
 
             encoded = serial.to_bytes(encoded)
