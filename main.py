@@ -183,7 +183,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def method_streamer(self):
         first =  "cuentasA_LSB"
         address = ADDRESS[first]
-        self.serial.message([0x0e, address, 0])
+        self.serial.message([0x0e, address, 0], receive = True)
         
     def method_sampling(self, value):
         try:

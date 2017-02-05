@@ -13,7 +13,7 @@ import time
 """
 constants
 """
-BAUDRATE = 115200
+BAUDRATE = 9600
 TIMEOUT = 0.2
 BASE_DELAY = 1e-9
 BASE_SLEEP = 1e-9
@@ -102,7 +102,7 @@ class serialPort():
     def close(self):
         self.serial.close()
         
-    def message(self, info, read = False):
+    def message(self, info, read = False, receive = False):
         if type(info) is list:
             if not read:
                 value = "%04X"%info[2]
@@ -110,10 +110,9 @@ class serialPort():
                 lsb = int(value[2:], 16)
                 encoded = [0x02, info[0], info[1], msb, lsb, 0x04]
             else:
-                check = "%02X"%sum(info[1:])
+                check = hex(sum(info[1:]))[-s:]
                 check = 0xff - int(check, 16)
                 encoded = [0x7E] + info + [check]
-                print(encoded)
 
             encoded = serial.to_bytes(encoded)
         else:
@@ -121,8 +120,10 @@ class serialPort():
             
         self.serial.write(encoded)
         
-        if read:
-            return self.serial.readline().decode()[:-1]
+        if receive:
+            ans = self.serial.read(50)
+            print(ans)
+            return ans
         else:
             return None
 
