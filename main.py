@@ -152,7 +152,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             for port in self.ports:
                 self.port_box.addItem(port)
             new_port = self.port_box.currentText()
-            new_port = new_port[new_port.index("(") + 1:new_port.rindex(")")]
+            new_port = self.ports[new_port]
+            
             if new_port != '':
                 if new_port != self.port:
                     if self.serial != None:
@@ -164,6 +165,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.window.update()
             else:
                 self.widget_activate(True)
+                
         except Exception as e:
             self.errorWindow(e)
         
@@ -278,6 +280,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         reply = QtWidgets.QMessageBox.question(self, 'Message', 
                          quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
         if reply ==QtWidgets.QMessageBox.Yes:
+            savetxt(self.output_name, self.data, delimiter=',')
             event.accept()
         else:
             event.ignore()

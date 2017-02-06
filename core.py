@@ -94,8 +94,11 @@ def loadtxt(file, delimiter = '\t'):
 
 def findport():
     ports_objects = list(find_ports.comports())
-    description = [port.description for port in ports_objects]
-    return description
+    ports = {}
+    for i in range(len(ports_objects)):
+        port = ports_objects[i]
+        ports [port.description] = port.device 
+    return ports
 
 class serialPort():
     def __init__(self, port, parent=None):
