@@ -94,8 +94,8 @@ def loadtxt(file, delimiter = '\t'):
 
 def findport():
     ports_objects = list(find_ports.comports())
-    ports = [port.device for port in ports_objects]
-    return ports
+    description = [port.description for port in ports_objects]
+    return description
 
 class serialPort():
     def __init__(self, port, parent=None):
@@ -131,6 +131,8 @@ class serialPort():
         if receive:
             hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
             ints = []
+            if hexa[0] == '':
+                raise Exception('Timeout: device does not answer.')
             if hexa[0] == '7e':
                 while True:
                     byte = codecs.encode(self.serial.read(1), "hex_codec").decode()

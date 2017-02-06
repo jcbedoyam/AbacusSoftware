@@ -3,20 +3,18 @@ import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 app = QtWidgets.QApplication(sys.argv)
-splash_pix = QtGui.QPixmap(':/GUI/splash.png')
-app.setWindowIcon(QtGui.QIcon(':/GUI/icon.png'))
+splash_pix = QtGui.QPixmap(':/splash.png')
 splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
 splash.show()
 
-if CURRENT_OS == 'win':
-    sleep(2.5)
+if CURRENT_OS == 'win32':
+    sleep(2.5)    
     
 app.processEvents()
+app.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
 if CURRENT_OS == 'linux':
     sleep(2.5)
-    
-
 
 from mainwindow import Ui_MainWindow
 from channels import Ui_Dialog
@@ -31,7 +29,6 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         
         self.channel_spinBox.valueChanged.connect(self.creator)
         
-        self.setWindowIcon(QtGui.QIcon(':/GUI/icon.png'))
         self.parent = parent
         self.current_n = 0
         self.widgets = []
@@ -124,7 +121,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.save_button.clicked.connect(self.choose_file)
         self.stream_button.clicked.connect(self.method_streamer)
         self.channels_button.clicked.connect(self.channelsCaller)
-#        self.samp_spinBox.valueChanged.connect(self.timer.setInterval)
         self.samp_spinBox.valueChanged.connect(self.method_sampling)
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.terminal_line.editingFinished.connect(self.terminal_handler)
@@ -139,6 +135,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.window = None
         self.serial = None
+        self.port = None
         self.current_cell = 0
         self.serial_refresh()
         self.terminal_text.ensureCursorVisible()
@@ -154,16 +151,19 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ports = findport()
             for port in self.ports:
                 self.port_box.addItem(port)
-            self.port = self.port_box.currentText()
-            if self.port != '':
-                self.serial = serialPort(self.port, self)
-                self.widget_activate(False)
-                if self.window != None:
-                    self.window.update()
+            new_port = self.port_box.currentText()
+            new_port = new_port[new_port.index("(") + 1:new_port.rindex(")")]
+            if new_port != '':
+                if new_port != self.port:
+                    if self.serial != None:
+                        self.serial.close()
+                    self.port = new_port
+                    self.serial = serialPort(self.port, self)
+                    self.widget_activate(False)
+                    if self.window != None:
+                        self.window.update()
             else:
                 self.widget_activate(True)
-#                if self.serial != None:
-#                    self.serial.close()
         except Exception as e:
             self.errorWindow(e)
         
@@ -210,6 +210,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             if self.timer.isActive() and self.sender() == self.stream_button:
                 self.timer.stop()
+                savetxt(self.output_name, self.data, delimiter=',')
                 self.stream_button.setStyleSheet("background-color: none")
                 
             elif not self.timer.isActive():
@@ -218,8 +219,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 
             first =  "cuentasA_LSB"
             address = ADDRESS[first]
-            
-            values = self.serial.message([0x0e, address, 0], receive = True)        
+            values = self.serial.message([0x0e, address, 0], receive = True)
             actual = self.table.rowCount() 
             if (actual - self.current_cell) <= TABLE_YGROW:
                 self.table.setRowCount(TABLE_YGROW + actual) 
@@ -272,7 +272,16 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msg.exec_()
-
+        
+    def closeEvent(self, event):
+        quit_msg = "Are you sure you want to exit the program?"
+        reply = QtWidgets.QMessageBox.question(self, 'Message', 
+                         quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply ==QtWidgets.QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
+            
 main = Main()
 main.show()
 splash.close()
