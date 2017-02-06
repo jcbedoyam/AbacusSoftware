@@ -25,12 +25,13 @@ while 1:
                     for i in range(items):
                         value = 6*np.random.random()
                         value = int(10**value)
-                        print("%d %d"%(2*i+address, value))
+                        
                         value = "%08X"%value
                         send += [2*i + address] + [int(value[2*j:2*j+2], 16) for j in range(2)]
                         send += [2*i+1 + address] + [int(value[2*j:2*j+2], 16) for j in range(2, 4)]
+                    print(send)
                     ser.message(send, read=True)
-        time.sleep(0.01)
+        sleep(0.00001)
     except KeyboardInterrupt:
         ser.close()
         break

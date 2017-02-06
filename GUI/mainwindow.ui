@@ -184,7 +184,7 @@ Window (ns):</string>
                 <bool>false</bool>
                </property>
                <property name="minimum">
-                <number>1</number>
+                <number>10</number>
                </property>
                <property name="maximum">
                 <number>1000000</number>
@@ -232,7 +232,7 @@ Window (ns):</string>
               <bool>true</bool>
              </property>
              <property name="rowCount">
-              <number>50</number>
+              <number>100</number>
              </property>
              <property name="columnCount">
               <number>10</number>
@@ -249,6 +249,56 @@ Window (ns):</string>
              <attribute name="verticalHeaderShowSortIndicator" stdset="0">
               <bool>false</bool>
              </attribute>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
+             <row/>
              <row/>
              <row/>
              <row/>

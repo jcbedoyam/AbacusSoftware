@@ -1,13 +1,20 @@
 from core import *
+import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 app = QtWidgets.QApplication(sys.argv)
 splash_pix = QtGui.QPixmap(':/splash.png')
 splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
 splash.show()
-sleep(2.5)
 
+if CURRENT_OS == 'win':
+    sleep(2.5)
+    
 app.processEvents()
+
+if CURRENT_OS == 'linux':
+    sleep(2.5)
+    
 app.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
 from mainwindow import Ui_MainWindow
@@ -166,11 +173,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stream_button.setDisabled(status)
         
     def table_change(self, row, column):
-        if self.ylength == row + 10:
-            self.data += matrix(self.ylength, self.xlength)
+        if (self.ylength - row) <= TABLE_YGROW:
+            self.ylength += TABLE_YGROW
+            self.data += matrix(TABLE_YGROW, self.xlength)
+            savetxt(self.output_name, self.data, delimiter=',') 
         if row >= 0 and column >= 0:
             self.data[row][column] = self.table.item(row, column).text()
-            savetxt(self.output_name, self.data, delimiter=',')        
 
     def choose_file(self):
         name = QtWidgets.QFileDialog.getSaveFileName(self, "Save Data File", "", "CSV data files (*.csv)")[0]
@@ -185,7 +193,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.terminal_line.setText('')
         if text != "" and self.serial != None:
             self.terminal_text.insertPlainText("[INPUT] %s\n"%text)
-            ans = self.serial.message([0x0f, b'x24', text])
+            ans = self.serial.message(text)
             if ans != "":
                 self.terminal_text.insertPlainText("[OUT] %s\n"%ans)
             
@@ -200,7 +208,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             if self.timer.isActive() and self.sender() == self.stream_button:
                 self.timer.stop()
+                self.stream_button.setStyleSheet("background-color: none")
+                
             elif not self.timer.isActive():
+                self.stream_button.setStyleSheet("background-color: green")
                 self.timer.start()
                 
             first =  "cuentasA_LSB"
@@ -208,17 +219,18 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             
             values = self.serial.message([0x0e, address, 0], receive = True)        
             actual = self.table.rowCount() 
-            if actual == self.current_cell + 10:
-                self.table.setRowCount(self.ylength+actual) 
+            if (actual - self.current_cell) <= TABLE_YGROW:
+                self.table.setRowCount(TABLE_YGROW + actual) 
                 
             if type(values) is list:
-                for i in range(len(values)):
+                for i in range(int(len(values)/2)):
                     if self.current_cell == 0:
                         for key, value in ADDRESS.items():
-                            if value == values[i][0]:
+                            if value == values[i*2][0]:
                                 break
-                        self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key))                       
-                    cell = QtWidgets.QTableWidgetItem("%d"%values[i][1])
+                        self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key[:-4]))  
+                    value = "%d"%int(("%02X"%values[2*i][1]+"%02X"%values[2*i+1][1]), 16)
+                    cell = QtWidgets.QTableWidgetItem(value)
                     self.table.setItem(self.current_cell+1, i+1, cell)
                     cell.setFlags(QtCore.Qt.ItemIsEnabled)
                 cell = QtWidgets.QTableWidgetItem(strftime("%H:%M:%S", localtime()))
@@ -250,6 +262,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def errorWindow(self, error):
         msg = QtWidgets.QMessageBox()
         self.serial_refresh()
+        self.stream_button.setStyleSheet("background-color: none")
         self.timer.stop()
         msg.setIcon(QtWidgets.QMessageBox.Critical)
         msg.setText("An Error has ocurred.")

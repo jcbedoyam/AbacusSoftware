@@ -10,7 +10,6 @@ import os
 import sys
 import serial
 import codecs
-import GUI_images
 from time import sleep, localtime, strftime
 import serial.tools.list_ports as find_ports
 
@@ -18,7 +17,7 @@ import serial.tools.list_ports as find_ports
 constants
 """
 BAUDRATE = 115200
-TIMEOUT = 0.2
+TIMEOUT = 0.010
 BASE_DELAY = 1e-9
 BASE_SLEEP = 1e-9
 BASE_SAMPLING = 1e-3
@@ -33,6 +32,7 @@ MAX_SLEEP = 200
 STEP_SLEEP = 5
 DEFAULT_SLEEP = 0
 DEFAULT_SAMP = 500
+TABLE_YGROW = 100
 
 ADDRESS = {'delayA_ns': 0,
            'delayA_us': 1,
@@ -145,10 +145,8 @@ class serialPort():
                     for i in range(int(len(hexa)/3)):
                         channel = int(hexa[3*i], 16)
                         value = int(hexa[3*i+1] + hexa[3*i+2], 16)
-                        ans.append([channel, value])
-                        print(channel)
-                        
-                return ans
+                        ans.append([channel, value])                        
+                    return ans
         else:
             return None
 
