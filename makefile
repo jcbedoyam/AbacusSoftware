@@ -1,6 +1,9 @@
 all : mainwindow.py channels.py main.py core.py GUI_images.py
 	python main.py && rm -r __pycache__ output.csv && clear
 
+git : main.py
+	git add . && git commit -m "from make" && git push origin master
+
 Quantum : mainwindow.py channels.py main.py core.py GUI_images.py main.spec
 	pyinstaller --onefile --windowed --icon=GUI/icon.ico main.py
 	mv dist/main Quantum
