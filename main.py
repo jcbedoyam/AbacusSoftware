@@ -152,8 +152,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             for port in self.ports:
                 self.port_box.addItem(port)
             new_port = self.port_box.currentText()
-            new_port = self.ports[new_port]
-            
+            try:
+                new_port = self.ports[new_port]
+            except:
+                new_port = ''
             if new_port != '':
                 if new_port != self.port:
                     if self.serial != None:

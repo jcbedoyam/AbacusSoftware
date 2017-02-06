@@ -129,6 +129,7 @@ class serialPort():
         else:
             encoded = info.encode()
             
+        print(encoded)
         self.serial.write(encoded)
         
         if receive:
@@ -144,13 +145,14 @@ class serialPort():
                     hexa.append(byte)
                     ints.append(int(byte, 16))
                 check = int(("%02X"%sum(ints[1:-1]))[-2:], 16) + ints[-1]
+                print("".join(hexa))
                 if check == 0xff:
                     hexa = hexa[2:-1]
                     ans = []
                     for i in range(int(len(hexa)/3)):
                         channel = int(hexa[3*i], 16)
                         value = int(hexa[3*i+1] + hexa[3*i+2], 16)
-                        ans.append([channel, value])                        
+                        ans.append([channel, value])                   
                     return ans
         else:
             return None
