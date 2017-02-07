@@ -17,7 +17,7 @@ import serial.tools.list_ports as find_ports
 constants
 """
 BAUDRATE = 115200
-TIMEOUT = 0.010
+TIMEOUT = 0.020
 BASE_DELAY = 1e-9
 BASE_SLEEP = 1e-9
 BASE_SAMPLING = 1e-3
