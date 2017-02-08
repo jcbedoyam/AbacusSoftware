@@ -16,8 +16,8 @@ import serial.tools.list_ports as find_ports
 """
 constants
 """
-BAUDRATE = 115200
-TIMEOUT = 0.020
+BAUDRATE = 9600#115200
+TIMEOUT = 1#0.20
 BASE_DELAY = 1e-9
 BASE_SLEEP = 1e-9
 BASE_SAMPLING = 1e-3
@@ -108,7 +108,7 @@ class serialPort():
         if self.port != '':
             self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_NONE,
                 stopbits=serial.STOPBITS_ONE,
-                bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
+                bytesize=serial.SEVENBITS, timeout=TIMEOUT)
             
     def close(self):
         self.serial.close()

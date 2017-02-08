@@ -3,18 +3,18 @@ import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 app = QtWidgets.QApplication(sys.argv)
-splash_pix = QtGui.QPixmap(':/splash.png')
-splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
-splash.show()
+#splash_pix = QtGui.QPixmap(':/splash.png')
+#splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+#splash.show()
 
-if CURRENT_OS == 'win32':
-    sleep(2.5)    
+#if CURRENT_OS == 'win32':
+#    sleep(2.5)    
     
 app.processEvents()
 app.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
-if CURRENT_OS == 'linux':
-    sleep(2.5)
+#if CURRENT_OS == 'linux':
+#    sleep(2.5)
 
 from mainwindow import Ui_MainWindow
 from channels import Ui_Dialog
@@ -76,7 +76,7 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                     parsed = numparser(base, value)
                     for k in range(4):
                         address = ADDRESS[prefix+"%s_%s"%(chr(ord('A')+i-1), COEFFS[k])]
-                        self.parent.serial.message([0x0f, address, parsed[k]])
+                        self.parent.serial.message([0x0e, address, parsed[k]])
         except Exception as e:
             self.parent.errorWindow(e)
                 
@@ -252,7 +252,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             parsed = numparser(BASE_SAMPLING, value)
             for i in range(4):
                 address = ADDRESS["samplingTime_%s"%COEFFS[i]]
-                self.serial.message([0x0f, address, parsed[i]])
+                self.serial.message([0x0e, address, parsed[i]])
         except Exception as e:
             self.errorWindow(e)
         
@@ -289,5 +289,5 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             
 main = Main()
 main.show()
-splash.close()
+#splash.close()
 sys.exit(app.exec_())
