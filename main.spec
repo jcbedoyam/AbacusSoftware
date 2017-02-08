@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['/home/juan/Documents/reimagined-quantum'],
+             pathex=['C:\\Users\\RUTHERFORD\\Documents\\reimagined-quantum'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -25,4 +25,4 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          console=False , icon='GUI/icon.ico')
+          console=True , icon='GUI\\icon.ico')
