@@ -76,7 +76,7 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                     parsed = numparser(base, value)
                     for k in range(4):
                         address = ADDRESS[prefix+"%s_%s"%(chr(ord('A')+i-1), COEFFS[k])]
-                        self.parent.serial.message([0x0e, address, parsed[k]])
+                        self.parent.serial.message([0x0f, address, parsed[k]])
         except Exception as e:
             self.parent.errorWindow(e)
                 
@@ -252,7 +252,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             parsed = numparser(BASE_SAMPLING, value)
             for i in range(4):
                 address = ADDRESS["samplingTime_%s"%COEFFS[i]]
-                self.serial.message([0x0e, address, parsed[i]])
+                self.serial.message([0x0f, address, parsed[i]])
         except Exception as e:
             self.errorWindow(e)
         
