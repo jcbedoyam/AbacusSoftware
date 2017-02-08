@@ -106,7 +106,7 @@ class serialPort():
         self.port = port
         self.serial = None
         if self.port != '':
-            self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_EVEN,
+            self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_NONE,
                 stopbits=serial.STOPBITS_ONE,
                 bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
             

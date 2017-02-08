@@ -13,10 +13,6 @@
   <property name="windowTitle">
    <string>Quantum</string>
   </property>
-  <property name="windowIcon">
-   <iconset>
-    <normaloff>icon.png</normaloff>icon.png</iconset>
-  </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
