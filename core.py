@@ -133,7 +133,9 @@ class serialPort():
         self.serial.write(encoded)
         
         if receive:
-            hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
+#            hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
+            hexa = [codecs.encode(self.serial.read(25), "hex_codec").decode()]
+            print(hexa)
             ints = []
             if hexa[0] == '':
                 raise Exception('Timeout: device does not answer.')
