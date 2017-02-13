@@ -3,18 +3,18 @@ import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 app = QtWidgets.QApplication(sys.argv)
-#splash_pix = QtGui.QPixmap(':/splash.png')
-#splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
-#splash.show()
+splash_pix = QtGui.QPixmap(':/splash.png')
+splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+splash.show()
 
-#if CURRENT_OS == 'win32':
-#    sleep(2.5)    
+if CURRENT_OS == 'win32':
+    sleep(2.5)    
     
 app.processEvents()
 app.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
-#if CURRENT_OS == 'linux':
-#    sleep(2.5)
+if CURRENT_OS == 'linux':
+    sleep(2.5)
 
 from mainwindow import Ui_MainWindow
 from channels import Ui_Dialog
@@ -61,7 +61,7 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                 self.widgets[i].append(widget)
                 self.gridLayout_2.addWidget(widget, self.current_n+1, i)
             self.current_n += 1    
-        self.delete(n)
+        self.delete(n, N)
                         
     def update(self):
         try:
@@ -80,7 +80,7 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         except Exception as e:
             self.parent.errorWindow(e)
                 
-    def delete(self, n):
+    def delete(self, n, N):
         while self.current_n > n:
             for i in range(N):
                 widget = self.widgets[i][self.current_n-1]
@@ -129,6 +129,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.xlength = self.table.columnCount()
 
         self.data = matrix(self.ylength, self.xlength)
+        self.file_changed = False
         
         """
         set
@@ -139,6 +140,28 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.current_cell = 0
         self.serial_refresh()
         self.terminal_text.ensureCursorVisible()
+        
+        """
+        fig
+        """
+        
+        self.fig, (self.ax_counts, self.ax_coins) = plt.subplots(2, sharex=True, facecolor='None',edgecolor='None')
+        self.canvas = FigureCanvas(self.fig)
+        self.plot_layout.addWidget(self.canvas)
+        self.toolbar = NavigationToolbar(self.canvas, 
+                self.plot_widget, coordinates=True)
+        self.plot_layout.addWidget(self.toolbar)
+        
+        self.ax_counts.set_ylabel("Counts")
+        self.ax_coins.set_ylabel("Coincidences")
+        self.ax_coins.set_xlabel("Time")
+        self.fig.tight_layout()
+        
+        self.count_points = None
+        self.coin_points = None
+        self.count_index = []
+        self.coin_index = []
+        
                 
     def eventFilter(self, source, event):
         if (event.type() == QtCore.QEvent.MouseButtonPress and source is self.port_box):
@@ -157,14 +180,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             except:
                 new_port = ''
             if new_port != '':
-                if new_port != self.port:
-                    if self.serial != None:
-                        self.serial.close()
-                    self.port = new_port
-                    self.serial = serialPort(self.port, self)
-                    self.widget_activate(False)
-                    if self.window != None:
-                        self.window.update()
+                if self.serial != None:
+                    self.serial.close()
+                self.port = new_port
+                self.serial = serialPort(self.port, self)
+                self.widget_activate(False)
+                if self.window != None:
+                    self.window.update()
             else:
                 self.widget_activate(True)
                 
@@ -182,10 +204,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if (self.ylength - row) <= TABLE_YGROW:
             self.ylength += TABLE_YGROW
             self.data += matrix(TABLE_YGROW, self.xlength)
-            savetxt(self.output_name, self.data, delimiter=',') 
+            savetxt(self.output_name, self.data, delimiter='\t') 
         if row >= 0 and column >= 0:
+#            self.data[row, column] = self.table.item(row, column).text()
             self.data[row][column] = self.table.item(row, column).text()
-
+        self.file_changed = True
+            
     def choose_file(self):
         name = QtWidgets.QFileDialog.getSaveFileName(self, "Save Data File", "", "CSV data files (*.csv)")[0]
         if name != '':
@@ -195,15 +219,22 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.save_line.setText(self.output_name)
             
     def terminal_handler(self):
-        text = self.terminal_line.text()
-        self.terminal_line.setText('')
-        if text != "" and self.serial != None:
-            self.terminal_text.insertPlainText("[INPUT] %s\n"%text)
-            ans = self.serial.message(text)
-            if ans != "":
-                self.terminal_text.insertPlainText("[OUT] %s\n"%ans)
-            
-        self.terminal_text.moveCursor(QtGui.QTextCursor.End)
+        try:
+            text = self.terminal_line.text()
+            self.terminal_line.setText('')
+            if text != "" and self.serial != None:
+                self.terminal_text.insertPlainText("[INPUT] %s\n"%text)
+                receive = False
+                if text[:5] == "read ":
+                    receive = True
+                    text = text[5:]
+                ans = self.serial.message(text, receive=receive)
+                if ans != None:
+                    self.terminal_text.insertPlainText("[OUT] %s\n"%ans)
+                
+            self.terminal_text.moveCursor(QtGui.QTextCursor.End)
+        except Exception as e:
+            self.errorWindow(e)
         
     def channelsCaller(self):
         if self.window == None:
@@ -214,7 +245,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             if self.timer.isActive() and self.sender() == self.stream_button:
                 self.timer.stop()
-                savetxt(self.output_name, self.data, delimiter=',')
+                savetxt(self.output_name, self.data, delimiter='\t')
                 self.stream_button.setStyleSheet("background-color: none")
                 
             elif not self.timer.isActive():
@@ -223,7 +254,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 
             first =  "cuentasA_LSB"
             address = ADDRESS[first]
-            values = self.serial.message([0x0e, address, 0], receive = True)
+            values = self.serial.message([0x0e, address, 6], receive = True)
             actual = self.table.rowCount() 
             if (actual - self.current_cell) <= TABLE_YGROW:
                 self.table.setRowCount(TABLE_YGROW + actual) 
@@ -239,10 +270,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     cell = QtWidgets.QTableWidgetItem(value)
                     self.table.setItem(self.current_cell+1, i+1, cell)
                     cell.setFlags(QtCore.Qt.ItemIsEnabled)
-                cell = QtWidgets.QTableWidgetItem(strftime("%H:%M:%S", localtime()))
+                if self.current_cell == 0:
+                    self.init_time = time()
+                cell = QtWidgets.QTableWidgetItem("%.3f"%(time()-self.init_time))
                 self.table.setItem(self.current_cell+1, 0, cell)
                 self.table.scrollToItem(cell)
                 self.current_cell += 1
+                self.update_plot()
         except Exception as e:
             self.errorWindow(e)
             
@@ -265,6 +299,53 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception as e:
             self.errorWindow(e)
             
+    def update_plot(self):
+        if self.coin_points == None and self.count_points == None:
+            self.count_points = []
+            self.coin_points = []
+            for (i, column) in enumerate(self.data[0]):
+                if 'cuentas' in column:
+                    point = self.ax_counts.plot([],[], "-o", label = column)[0]
+                    self.count_points.append(point)
+                    self.count_index.append(i)
+                elif 'coin' in column:
+                    point = self.ax_coins.plot([],[], "-o", label = column)[0]
+                    self.coin_points.append(point)
+                    self.coin_index.append(i)
+            self.ax_counts.legend()
+            self.ax_coins.legend()
+        if self.current_cell > 2:
+            times = [float(self.data[j][0])  for j in range(1, self.current_cell)]
+            max_count = []
+            min_count = []
+            max_coin = []
+            min_coin = []
+            for (i, index) in enumerate(self.count_index):
+                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
+                max_count.append(max(data))
+                min_count.append(min(data))
+                self.count_points[i].set_data(times, data)
+            for (i, index) in enumerate(self.coin_index):
+                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
+                max_coin.append(max(data))
+                min_coin.append(min(data))
+                self.coin_points[i].set_data(times, data)
+            max_count = max(max_count)
+            min_count = min(min_count)
+            max_coin = max(max_coin)
+            min_coin = min(min_coin)
+            if max_count*1.25 > self.ax_counts.get_ylim()[1] or min_count*0.75 < self.ax_counts.get_ylim()[0]:
+                self.ax_counts.set_ylim(min_count, max_count*1.25)
+            self.ax_counts.set_ylim(min_count, max_count)
+            self.ax_coins.set_ylim(min_coin, max_coin)
+            if len(times) > 80:
+                self.ax_counts.set_xlim(times[-80], times[-1])
+                self.ax_coins.set_xlim(times[-80], times[-1])
+            else:
+                self.ax_counts.set_xlim(0, times[-1])
+                self.ax_coins.set_xlim(0, times[-1])
+            self.canvas.draw()
+        
     def errorWindow(self, error):
         msg = QtWidgets.QMessageBox()
         self.serial_refresh()
@@ -279,15 +360,16 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         
     def closeEvent(self, event):
         quit_msg = "Are you sure you want to exit the program?"
-        reply = QtWidgets.QMessageBox.question(self, 'Message', 
+        reply = QtWidgets.QMessageBox.question(self, 'Exit', 
                          quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
         if reply ==QtWidgets.QMessageBox.Yes:
-            savetxt(self.output_name, self.data, delimiter=',')
+            if self.file_changed:
+                savetxt(self.output_name, self.data, delimiter='\t')
             event.accept()
         else:
             event.ignore()
             
 main = Main()
 main.show()
-#splash.close()
+splash.close()
 sys.exit(app.exec_())

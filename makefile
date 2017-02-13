@@ -5,7 +5,7 @@ git : main.py
 	git add . && git commit -m "from make" && git push origin master
 
 Quantum : mainwindow.py channels.py main.py core.py GUI_images.py main.spec
-	pyinstaller --onefile --windowed --icon=GUI/icon.ico main.py
+	pyinstaller --onefile --windowed --icon=GUI/icon.ico --hidden-import=PySide main.py
 	mv dist/main Quantum
 	rm -r dist build __pycache__
 

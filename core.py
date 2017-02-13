@@ -10,14 +10,19 @@ import os
 import sys
 import serial
 import codecs
-from time import sleep, localtime, strftime
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_qt5agg import (
+                            FigureCanvasQTAgg as FigureCanvas,
+                            NavigationToolbar2QT as NavigationToolbar)
+from time import sleep, localtime, strftime, time
 import serial.tools.list_ports as find_ports
 
 """
 constants
 """
 BAUDRATE = 115200
-TIMEOUT = 1#0.20
+TIMEOUT = 0.02
+BOUNCE_TIMEOUT = 20
 BASE_DELAY = 1e-9
 BASE_SLEEP = 1e-9
 BASE_SAMPLING = 1e-3
@@ -66,6 +71,7 @@ ADDRESS = {'delayA_ns': 0,
            'coincidencesAB_MSB': 29}
 
 COEFFS = ['ns', 'us', 'ms', 's']
+plt.rcParams.update({'font.size': 8})
 
 CURRENT_OS = sys.platform
 if CURRENT_OS == 'win32':
@@ -74,6 +80,7 @@ if CURRENT_OS == 'win32':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 def matrix(y, x):
+#    mat = np.zeros((y,x))
     mat = [['' for i in range(x)] for i in range(y)]
     return mat
 
@@ -114,28 +121,24 @@ class serialPort():
         self.serial.close()
         
     def message(self, info, read = False, receive = False):
-        if type(info) is list:
-            if not read:
-                value = "%04X"%info[2]
-                msb = int(value[:2], 16)
-                lsb = int(value[2:], 16)
-                encoded = [0x02, info[0], info[1], msb, lsb, 0x04]
+        def sender():            
+            if type(info) is list:
+                if not read:
+                    value = "%04X"%info[2]
+                    msb = int(value[:2], 16)
+                    lsb = int(value[2:], 16)
+                    encoded = [0x02, info[0], info[1], msb, lsb, 0x04]
+                else:
+                    check = hex(sum(info[1:]))[-2:]
+                    check = 0xff - int(check, 16)
+                    encoded = [0x7E] + info + [check]
+    
+                encoded = serial.to_bytes(encoded)
             else:
-                check = hex(sum(info[1:]))[-2:]
-                check = 0xff - int(check, 16)
-                encoded = [0x7E] + info + [check]
-
-            encoded = serial.to_bytes(encoded)
-        else:
-            encoded = info.encode()
-            
-        print(encoded)
-        self.serial.write(encoded)
-        
-        if receive:
-#            hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
-            hexa = [codecs.encode(self.serial.read(25), "hex_codec").decode()]
-            print(hexa)
+                encoded = info.encode()
+            self.serial.write(encoded)            
+        def receiver():
+            hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
             ints = []
             if hexa[0] == '':
                 raise Exception('Timeout: device does not answer.')
@@ -147,7 +150,7 @@ class serialPort():
                     hexa.append(byte)
                     ints.append(int(byte, 16))
                 check = int(("%02X"%sum(ints[1:-1]))[-2:], 16) + ints[-1]
-                print("".join(hexa))
+#                print("".join(hexa))
                 if check == 0xff:
                     hexa = hexa[2:-1]
                     ans = []
@@ -156,8 +159,22 @@ class serialPort():
                         value = int(hexa[3*i+1] + hexa[3*i+2], 16)
                         ans.append([channel, value])                   
                     return ans
+                
+        sender()          
+        if receive:
+            n = 0
+            while n < BOUNCE_TIMEOUT:
+                try:
+                    return receiver()
+                except Exception as e:
+                    n += 1
+                    sender()
+                    if n < BOUNCE_TIMEOUT:
+                        continue
+                    raise Exception(e)                    
         else:
             return None
+        
 
 def numparser(base, num):
     first_order = int(base*num*1e9)
