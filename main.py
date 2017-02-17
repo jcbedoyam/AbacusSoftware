@@ -1,23 +1,36 @@
-from core import *
+import sys
 import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 app = QtWidgets.QApplication(sys.argv)
 splash_pix = QtGui.QPixmap(':/splash.png')
 splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+progressBar = QtWidgets.QProgressBar(splash)
+progressBar.setGeometry(250, 320, 100, 20)
+#progressBar.setStyleSheet(DEFAULT_STYLE)
 splash.show()
-
-if CURRENT_OS == 'win32':
-    sleep(2.5)    
-    
 app.processEvents()
 app.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
-if CURRENT_OS == 'linux':
-    sleep(2.5)
-
+from core import *
+progressBar.setValue(15)
 from mainwindow import Ui_MainWindow
+progressBar.setValue(30)
 from channels import Ui_Dialog
+progressBar.setValue(50)
+
+thread = threading.Thread(target=matplotlib_import)
+thread.setDaemon(True)
+thread.start()
+i = 50
+while thread.is_alive():
+    if i < 95:
+        i += 1
+        progressBar.setValue(i)
+    sleep(0.2)
+from core import *
+    
+plt.rcParams.update({'font.size': 8})
 
 class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
     """
@@ -305,15 +318,17 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.coin_points = []
             for (i, column) in enumerate(self.data[0]):
                 if 'cuentas' in column:
-                    point = self.ax_counts.plot([],[], "-o", label = column)[0]
+                    point = self.ax_counts.plot([],[], "-o", ms=3, label = column)[0]
                     self.count_points.append(point)
                     self.count_index.append(i)
                 elif 'coin' in column:
-                    point = self.ax_coins.plot([],[], "-o", label = column)[0]
+                    point = self.ax_coins.plot([],[], "-o", ms=3, label = column)[0]
                     self.coin_points.append(point)
                     self.coin_index.append(i)
-            self.ax_counts.legend()
-            self.ax_coins.legend()
+            self.ax_counts.legend(loc = 2)
+            self.ax_coins.legend(loc = 2)
+            
+            
         if self.current_cell > 2:
             times = [float(self.data[j][0])  for j in range(1, self.current_cell)]
             max_count = []
@@ -370,6 +385,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             event.ignore()
             
 main = Main()
+progressBar.setValue(100)
 main.show()
 splash.close()
 sys.exit(app.exec_())

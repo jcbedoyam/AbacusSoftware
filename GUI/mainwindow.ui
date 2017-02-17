@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
+    <width>650</width>
     <height>600</height>
    </rect>
   </property>
@@ -366,6 +366,20 @@ Window (ns):</string>
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="tab_3">
+          <attribute name="title">
+           <string>Current</string>
+          </attribute>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QLabel" name="current_label">
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
          <widget class="QWidget" name="tab_2">
           <attribute name="title">
            <string>Terminal</string>
@@ -465,7 +479,7 @@ Window (ns):</string>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>600</width>
+     <width>650</width>
      <height>17</height>
     </rect>
    </property>

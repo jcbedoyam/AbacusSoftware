@@ -10,10 +10,7 @@ import os
 import sys
 import serial
 import codecs
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import (
-                            FigureCanvasQTAgg as FigureCanvas,
-                            NavigationToolbar2QT as NavigationToolbar)
+import threading
 from time import sleep, localtime, strftime, time
 import serial.tools.list_ports as find_ports
 
@@ -70,14 +67,33 @@ ADDRESS = {'delayA_ns': 0,
            'coincidencesAB_LSB': 28,
            'coincidencesAB_MSB': 29}
 
+DEFAULT_STYLE = """
+QProgressBar{
+    border: 2px solid grey;
+    border-radius: 5px;
+    text-align: center
+}
+
+QProgressBar::chunk {
+    width: 100px;
+}
+"""
+
 COEFFS = ['ns', 'us', 'ms', 's']
-plt.rcParams.update({'font.size': 8})
 
 CURRENT_OS = sys.platform
 if CURRENT_OS == 'win32':
     import ctypes
     myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    
+    
+def matplotlib_import():
+    global plt, FigureCanvas, NavigationToolbar
+    import matplotlib.pyplot as plt
+    from matplotlib.backends.backend_qt5agg import (
+                            FigureCanvasQTAgg as FigureCanvas,
+                            NavigationToolbar2QT as NavigationToolbar)
 
 def matrix(y, x):
 #    mat = np.zeros((y,x))
