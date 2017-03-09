@@ -96,12 +96,11 @@ def matplotlib_import():
                             NavigationToolbar2QT as NavigationToolbar)
 
 def matrix(y, x):
-#    mat = np.zeros((y,x))
     mat = [['' for i in range(x)] for i in range(y)]
     return mat
 
 def savetxt(file, matrix, delimiter = '\t'):
-    with open(file, 'w') as file:
+    with open(file, 'a') as file:
         for row in matrix:
             text = delimiter.join(row)
             file.write(text+'\n')
@@ -120,7 +119,7 @@ def findport():
     ports = {}
     for i in range(len(ports_objects)):
         port = ports_objects[i]
-        ports [port.description] = port.device 
+        ports[port.description] = port.device 
     return ports
 
 class serialPort():
@@ -152,7 +151,7 @@ class serialPort():
                 encoded = serial.to_bytes(encoded)
             else:
                 encoded = info.encode()
-            self.serial.write(encoded)            
+            self.serial.write(encoded)      
         def receiver():
             hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
             ints = []
@@ -166,13 +165,12 @@ class serialPort():
                     hexa.append(byte)
                     ints.append(int(byte, 16))
                 check = int(("%02X"%sum(ints[1:-1]))[-2:], 16) + ints[-1]
-#                print("".join(hexa))
                 if check == 0xff:
                     hexa = hexa[2:-1]
                     ans = []
                     for i in range(int(len(hexa)/3)):
                         channel = int(hexa[3*i], 16)
-                        value = int(hexa[3*i+1] + hexa[3*i+2], 16)
+                        value = int(hexa[3*i+2] + hexa[3*i+1], 16) #ERROR SHOULD BE HERE
                         ans.append([channel, value])                   
                     return ans
                 

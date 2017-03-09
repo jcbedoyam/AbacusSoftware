@@ -75,7 +75,12 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                 self.gridLayout_2.addWidget(widget, self.current_n+1, i)
             self.current_n += 1    
         self.delete(n, N)
-                        
+        
+    def saveParams(self):
+        with open(self.parent.params_file, 'a') as f:
+            for widget in self.widgets:
+                print(widget)
+                
     def update(self):
         try:
             for i in range(1, 3):
@@ -121,6 +126,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         
         self.setupUi(self)
         self.output_name = self.save_line.text()
+        self.params_file = self.output_name[:-4]
         self.timer = QtCore.QTimer()
         self.timer.setInterval(DEFAULT_SAMP)
         self.samp_spinBox.setValue(DEFAULT_SAMP)
@@ -150,6 +156,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.window = None
         self.serial = None
         self.port = None
+        self.ports = {}
         self.current_cell = 0
         self.serial_refresh()
         self.terminal_text.ensureCursorVisible()
@@ -183,10 +190,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     
     def serial_refresh(self):
         try:
-            self.port_box.clear()
-            self.ports = findport()
-            for port in self.ports:
-                self.port_box.addItem(port)
+            current_ports = findport()
+            n = sum(set(self.ports.items()) & set(current_ports.items()))
+            if n != len(current_ports):
+                for port in self.ports:
+                    self.port_box.addItem(port)
+                    
             new_port = self.port_box.currentText()
             try:
                 new_port = self.ports[new_port]
