@@ -34,6 +34,7 @@ MAX_SLEEP = 200
 STEP_SLEEP = 5
 DEFAULT_SLEEP = 0
 DEFAULT_SAMP = 500
+DEFAULT_TPLOT = 100
 TABLE_YGROW = 100
 
 ADDRESS = {'delayA_ns': 0,
@@ -128,9 +129,12 @@ class serialPort():
         self.port = port
         self.serial = None
         if self.port != '':
-            self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_NONE,
-                stopbits=serial.STOPBITS_ONE,
-                bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
+            try:
+                self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_NONE,
+                                            stopbits=serial.STOPBITS_ONE,
+                                            bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
+            except Exception as E:
+                print(E)
             
     def close(self):
         self.serial.close()

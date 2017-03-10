@@ -48,16 +48,19 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.update)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reset)
         self.creator(self.channel_spinBox.value())
-        
+        self.last_time = ""
     def creator(self, n):
+        """
+            creates the spinboxes and labels required by the user
+        """
         funcs = [QtWidgets.QLabel, QtWidgets.QSpinBox, QtWidgets.QSpinBox]
         
-        N = len(funcs)
+        self.N = len(funcs)
         if len(self.widgets) == 0:
-            self.widgets = [[] for i in range(N)]
+            self.widgets = [[] for i in range(self.N)]
         
         while self.current_n < n:
-            for i in range(N):
+            for i in range(self.N):
                 if i == 0:
                     widget = funcs[i]("Channel %s: "%chr(self.current_n + ord("A")))
                 else:
@@ -74,31 +77,55 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                 self.widgets[i].append(widget)
                 self.gridLayout_2.addWidget(widget, self.current_n+1, i)
             self.current_n += 1    
-        self.delete(n, N)
+        self.delete(n, self.N)
         
-    def saveParams(self):
-        with open(self.parent.params_file, 'a') as f:
-            for widget in self.widgets:
-                print(widget)
+    def saveParams(self, delimiter = ","):
+        current_time = strftime("%H:%M:%S", localtime())
+        if self.last_time != current_time:
+            self.last_time = current_time
+            with open(self.parent.params_file, 'a') as f:
+                f.write("%s\n"%self.last_time)
+                for j in range(self.channel_spinBox.value()):
+                    text = ""
+                    for i in range(self.N):
+                        widget = self.widgets[i][j]
+                        if i == 0:
+                            text += widget.text()
+                        else:
+                            if i == 1:
+                                text += " %d ns"%widget.value()
+                            else:
+                                text += "%s %d ns"%(delimiter, widget.value())
+                    f.write("%s\n"%text)
                 
     def update(self):
-        try:
-            for i in range(1, 3):
-                base = BASE_DELAY
-                prefix = "delay" 
-                if i == 2:
-                    base = BASE_SLEEP
-                    prefix = "sleepTime"
-                for j in range(self.current_n):
-                    value = self.widgets[i][j].value()
-                    parsed = numparser(base, value)
-                    for k in range(4):
-                        address = ADDRESS[prefix+"%s_%s"%(chr(ord('A')+i-1), COEFFS[k])]
+        """
+            sends message with the updated information
+        """
+        
+        for i in range(1, 3):
+            base = BASE_DELAY
+            prefix = "delay" 
+            if i == 2:
+                base = BASE_SLEEP
+                prefix = "sleepTime"
+            for j in range(self.current_n):
+                value = self.widgets[i][j].value()
+                parsed = numparser(base, value)
+                for k in range(4):
+                    address = ADDRESS[prefix+"%s_%s"%(chr(ord('A')+i-1), COEFFS[k])]
+                    try:
                         self.parent.serial.message([0x0f, address, parsed[k]])
-        except Exception as e:
-            self.parent.errorWindow(e)
+                    except Exception as e:
+                        self.parent.errorWindow(e)
+        if self.parent.file_changed:
+            self.saveParams()
+        
                 
     def delete(self, n, N):
+        """
+            delets unneccesary rows of labels and spinboxes 
+        """
         while self.current_n > n:
             for i in range(N):
                 widget = self.widgets[i][self.current_n-1]
@@ -108,8 +135,11 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             self.current_n -= 1
                 
     def reset(self):
+        """
+            sets everything to default
+        """
         self.channel_spinBox.setValue(DEFAULT_CHANNELS)
-        self.delete(DEFAULT_CHANNELS)
+        self.delete(DEFAULT_CHANNELS, self.N)
         for i in range(1, 3):
             value = DEFAULT_DELAY
             if i == 2:
@@ -126,9 +156,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         
         self.setupUi(self)
         self.output_name = self.save_line.text()
-        self.params_file = self.output_name[:-4]
+        self.params_file = "%s.params"%self.output_name[:-4]
         self.timer = QtCore.QTimer()
         self.timer.setInterval(DEFAULT_SAMP)
+        self.plot_timer = QtCore.QTimer()
+        self.plot_timer.setInterval(DEFAULT_TPLOT)
         self.samp_spinBox.setValue(DEFAULT_SAMP)
         
         """
@@ -136,6 +168,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.port_box.installEventFilter(self)
         self.timer.timeout.connect(self.method_streamer)
+        self.plot_timer.timeout.connect(self.update_plot)
         self.table.cellChanged.connect(self.table_change)
         self.save_button.clicked.connect(self.choose_file)
         self.stream_button.clicked.connect(self.method_streamer)
@@ -184,15 +217,25 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         
                 
     def eventFilter(self, source, event):
+        """
+        creates event to handle serial combobox opening
+        """
         if (event.type() == QtCore.QEvent.MouseButtonPress and source is self.port_box):
             self.serial_refresh()            
         return QtWidgets.QWidget.eventFilter(self, source, event)
     
     def serial_refresh(self):
+        """
+        loads serial port described at user combobox
+        """
         try:
             current_ports = findport()
-            n = sum(set(self.ports.items()) & set(current_ports.items()))
+            n = 0
+            for x in current_ports.items():
+                if x in self.ports.items():
+                    n += 1
             if n != len(current_ports):
+                self.ports = current_ports
                 for port in self.ports:
                     self.port_box.addItem(port)
                     
@@ -210,12 +253,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 if self.window != None:
                     self.window.update()
             else:
-                self.widget_activate(True)
-                
+                self.widget_activate(True)                
         except Exception as e:
             self.errorWindow(e)
         
     def widget_activate(self, status):
+        """
+        most of the tools will be disabled if there is no UART detected
+        """
         self.terminal_line.setDisabled(status)
         self.samp_spinBox.setDisabled(status)
         self.coin_spinBox.setDisabled(status)
@@ -223,6 +268,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stream_button.setDisabled(status)
         
     def table_change(self, row, column):
+        """
+            saves 
+        """
         if (self.ylength - row) <= TABLE_YGROW:
             self.ylength += TABLE_YGROW
             self.data += matrix(TABLE_YGROW, self.xlength)
@@ -233,14 +281,22 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.file_changed = True
             
     def choose_file(self):
+        """
+        user interaction with saving file
+        """
         name = QtWidgets.QFileDialog.getSaveFileName(self, "Save Data File", "", "CSV data files (*.csv)")[0]
         if name != '':
             self.output_name = name
             if self.output_name[-4:] != '.csv':
                 self.output_name += '.csv'
             self.save_line.setText(self.output_name)
+            self.params_file = "%s.params"%self.output_name[:-4]
             
     def terminal_handler(self):
+        """
+        terminal interactions
+        ### DEPRECATED
+        """
         try:
             text = self.terminal_line.text()
             self.terminal_line.setText('')
@@ -259,6 +315,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.errorWindow(e)
         
     def channelsCaller(self):
+        """
+        creates a property window to define number of channels
+        """
         if self.window == None:
             self.window = propertiesWindow(self)
         self.window.show()
@@ -267,12 +326,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             if self.timer.isActive() and self.sender() == self.stream_button:
                 self.timer.stop()
+                self.plot_timer.stop()
                 savetxt(self.output_name, self.data, delimiter='\t')
                 self.stream_button.setStyleSheet("background-color: none")
                 
             elif not self.timer.isActive():
                 self.stream_button.setStyleSheet("background-color: green")
                 self.timer.start()
+                self.plot_timer.start()
                 
             first =  "cuentasA_LSB"
             address = ADDRESS[first]
@@ -298,12 +359,17 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.table.setItem(self.current_cell+1, 0, cell)
                 self.table.scrollToItem(cell)
                 self.current_cell += 1
-                self.update_plot()
+                self.current_label.setText("value")
+#                self.update_plot()
         except Exception as e:
             self.errorWindow(e)
             
     def method_sampling(self, value):
         self.timer.setInterval(value)
+        if value > DEFAULT_TPLOT:
+            self.plot_timer.setInterval(value)
+        else:
+            self.plot_timer.setInterval(DEFAULT_TPLOT)
         try:
             parsed = numparser(BASE_SAMPLING, value)
             for i in range(4):
@@ -389,6 +455,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if reply ==QtWidgets.QMessageBox.Yes:
             if self.file_changed:
                 savetxt(self.output_name, self.data, delimiter='\t')
+                with open(self.output_name, "a") as file:
+                    file.write("===PARAMETERS USED===")
+                    with open(self.params_file, "r") as params:
+                        for line in params:
+                            file.write(line)
+                try:
+                    os.remove(self.params_file)
+                except:
+                    pass
             event.accept()
         else:
             event.ignore()
