@@ -49,6 +49,7 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reset)
         self.creator(self.channel_spinBox.value())
         self.last_time = ""
+        
     def creator(self, n):
         """
             creates the spinboxes and labels required by the user
@@ -79,25 +80,6 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             self.current_n += 1    
         self.delete(n, self.N)
         
-    def saveParams(self, delimiter = ","):
-        current_time = strftime("%H:%M:%S", localtime())
-        if self.last_time != current_time:
-            self.last_time = current_time
-            with open(self.parent.params_file, 'a') as f:
-                f.write("%s\n"%self.last_time)
-                for j in range(self.channel_spinBox.value()):
-                    text = ""
-                    for i in range(self.N):
-                        widget = self.widgets[i][j]
-                        if i == 0:
-                            text += widget.text()
-                        else:
-                            if i == 1:
-                                text += " %d ns"%widget.value()
-                            else:
-                                text += "%s %d ns"%(delimiter, widget.value())
-                    f.write("%s\n"%text)
-                
     def update(self):
         """
             sends message with the updated information
@@ -118,9 +100,26 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                         self.parent.serial.message([0x0f, address, parsed[k]])
                     except Exception as e:
                         self.parent.errorWindow(e)
-        if self.parent.file_changed:
-            self.saveParams()
+        self.saveParams()
         
+    def saveParams(self, delimiter = ","):
+        current_time = strftime("%H:%M:%S", localtime())
+        if self.last_time != current_time:
+            self.last_time = current_time
+            with open(self.parent.params_file, 'a') as f:
+                f.write("%s\n"%self.last_time)
+                for j in range(self.channel_spinBox.value()):
+                    text = ""
+                    for i in range(self.N):
+                        widget = self.widgets[i][j]
+                        if i == 0:
+                            text += widget.text()
+                        else:
+                            if i == 1:
+                                text += " %d ns"%widget.value()
+                            else:
+                                text += "%s %d ns"%(delimiter, widget.value())
+                    f.write("%s\n"%text)        
                 
     def delete(self, n, N):
         """
@@ -180,8 +179,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ylength = self.table.rowCount()
         self.xlength = self.table.columnCount()
 
-        self.data = matrix(self.ylength, self.xlength)
+        self.data = None#matrix(self.ylength, self.xlength)
+        self.data_empty = True  # DEPRECATED
         self.file_changed = False
+        self.header = None
         
         """
         set
@@ -191,6 +192,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.port = None
         self.ports = {}
         self.current_cell = 0
+        self.last_row_saved = 0
         self.serial_refresh()
         self.terminal_text.ensureCursorVisible()
         
@@ -229,16 +231,19 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         loads serial port described at user combobox
         """
         try:
+            if self.serial == None:
+                self.port_box.clear()
             current_ports = findport()
             n = 0
             for x in current_ports.items():
                 if x in self.ports.items():
                     n += 1
             if n != len(current_ports):
+                self.port_box.clear()
                 self.ports = current_ports
                 for port in self.ports:
                     self.port_box.addItem(port)
-                    
+                
             new_port = self.port_box.currentText()
             try:
                 new_port = self.ports[new_port]
@@ -255,6 +260,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 self.widget_activate(True)                
         except Exception as e:
+            e = type(e)("Serial refresh: "+str(e))
             self.errorWindow(e)
         
     def widget_activate(self, status):
@@ -265,20 +271,37 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.setDisabled(status)
         self.coin_spinBox.setDisabled(status)
         self.channels_button.setDisabled(status)
+        if status:
+            self.stream_activate(status)
+
+    def stream_activate(self, status):
         self.stream_button.setDisabled(status)
         
     def table_change(self, row, column):
         """
             saves 
         """
-        if (self.ylength - row) <= TABLE_YGROW:
-            self.ylength += TABLE_YGROW
-            self.data += matrix(TABLE_YGROW, self.xlength)
-            savetxt(self.output_name, self.data, delimiter='\t') 
-        if row >= 0 and column >= 0:
+        if row == 0:
+            self.header[column] = self.table.item(row, column).text()
+        else:
+            m_row = row - 1
+            if m_row >= TABLE_YGROW :
+                m_row = -1
+                if column == 0:
+                    self.data = np.roll(self.data, -1, axis = 0)
+            self.data[m_row, column] = float(self.table.item(row, column).text())
+        if self.current_cell == 1 and column == 0:
+            savetxt(self.output_name, self.header, typ = str)
+#        if (self.ylength - row) <= TABLE_YGROW:
+#            self.ylength += TABLE_YGROW
+#            self.data += matrix(TABLE_YGROW, self.xlength)
+#            if not self.data_empty:
+#                savetxt(self.output_name, self.data, delimiter='\t') 
+#        if row >= 0 and column >= 0:
 #            self.data[row, column] = self.table.item(row, column).text()
-            self.data[row][column] = self.table.item(row, column).text()
+#            self.data[row][column] = self.table.item(row, column).text()
         self.file_changed = True
+        self.data_empty = False
             
     def choose_file(self):
         """
@@ -321,13 +344,22 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.window == None:
             self.window = propertiesWindow(self)
         self.window.show()
+        self.stream_activate(False)
+        N = self.window.current_n
+        self.data = np.zeros((TABLE_YGROW, N + 2))
+        self.header = np.zeros(N+2, dtype= object)
         
     def method_streamer(self):
         try:
+            last_row = self.current_cell%TABLE_YGROW
             if self.timer.isActive() and self.sender() == self.stream_button:
                 self.timer.stop()
                 self.plot_timer.stop()
-                savetxt(self.output_name, self.data, delimiter='\t')
+                if self.current_cell > TABLE_YGROW:
+                    savetxt(self.output_name, self.data[self.last_row_saved:])
+                else:
+                    savetxt(self.output_name, self.data[self.last_row_saved:last_row])
+                self.last_row_saved = last_row
                 self.stream_button.setStyleSheet("background-color: none")
                 
             elif not self.timer.isActive():
@@ -340,24 +372,28 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             values = self.serial.message([0x0e, address, 6], receive = True)
             actual = self.table.rowCount() 
             if (actual - self.current_cell) <= TABLE_YGROW:
-                self.table.setRowCount(TABLE_YGROW + actual) 
+                self.table.setRowCount(TABLE_YGROW + actual)
+            if last_row == 0 and not self.data_empty:
+                    savetxt(self.output_name, self.data[self.last_row_saved:])
+                    self.last_row_saved = last_row
                 
             if type(values) is list:
-                for i in range(int(len(values)/2)):
-                    if self.current_cell == 0:
-                        for key, value in ADDRESS.items():
-                            if value == values[i*2][0]:
-                                break
-                        self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key[:-4]))  
-                    value = "%d"%int(("%02X"%values[2*i][1]+"%02X"%values[2*i+1][1]), 16)
-                    cell = QtWidgets.QTableWidgetItem(value)
-                    self.table.setItem(self.current_cell+1, i+1, cell)
-                    cell.setFlags(QtCore.Qt.ItemIsEnabled)
                 if self.current_cell == 0:
                     self.init_time = time()
                 cell = QtWidgets.QTableWidgetItem("%.3f"%(time()-self.init_time))
                 self.table.setItem(self.current_cell+1, 0, cell)
                 self.table.scrollToItem(cell)
+                for i in range(int(len(values)/2)):
+                    if self.current_cell == 0:
+                        for key, value in ADDRESS.items():
+                            if value == values[i*2][0]:
+                                break
+                        self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key[:-4]))
+                        self.table.setItem(0, 0, QtWidgets.QTableWidgetItem("Time (s)"))
+                    value = "%d"%int(("%02X"%values[2*i][1]+"%02X"%values[2*i+1][1]), 16)
+                    cell = QtWidgets.QTableWidgetItem(value)
+                    self.table.setItem(self.current_cell+1, i+1, cell)
+                    cell.setFlags(QtCore.Qt.ItemIsEnabled)
                 self.current_cell += 1
                 self.current_label.setText("value")
 #                self.update_plot()
@@ -377,6 +413,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.serial.message([0x0f, address, parsed[i]])
         except Exception as e:
             self.errorWindow(e)
+            
+        savetxt(self.params_file, ["Sampling Time: %d ms"%value], typ = str)
         
     def method_coinWin(self, value):
         try:
@@ -386,12 +424,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.serial.message([0x0f, address, parsed[i]])
         except Exception as e:
             self.errorWindow(e)
+        savetxt(self.params_file, ["Coincidence window: %d ns"%value], typ = str)
             
     def update_plot(self):
         if self.coin_points == None and self.count_points == None:
             self.count_points = []
             self.coin_points = []
-            for (i, column) in enumerate(self.data[0]):
+            for (i, column) in enumerate(self.header):
                 if 'cuentas' in column:
                     point = self.ax_counts.plot([],[], "-o", ms=3, label = column)[0]
                     self.count_points.append(point)
@@ -405,18 +444,25 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             
             
         if self.current_cell > 2:
-            times = [float(self.data[j][0])  for j in range(1, self.current_cell)]
             max_count = []
             min_count = []
             max_coin = []
             min_coin = []
+            if self.current_cell < TABLE_YGROW:
+                until = self.current_cell
+            else:
+                until = TABLE_YGROW
+#            times = [float(self.data[j][0])  for j in range(1, self.current_cell)]
+            times = self.data[:until, 0]
             for (i, index) in enumerate(self.count_index):
-                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
+#                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
+                data = self.data[:until, index]
                 max_count.append(max(data))
                 min_count.append(min(data))
                 self.count_points[i].set_data(times, data)
             for (i, index) in enumerate(self.coin_index):
-                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
+#                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
+                data = self.data[:until, index]
                 max_coin.append(max(data))
                 min_coin.append(min(data))
                 self.coin_points[i].set_data(times, data)
@@ -428,7 +474,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.ax_counts.set_ylim(min_count, max_count*1.25)
             self.ax_counts.set_ylim(min_count, max_count)
             self.ax_coins.set_ylim(min_coin, max_coin)
-            if len(times) > 80:
+            if self.current_cell > 80:
                 self.ax_counts.set_xlim(times[-80], times[-1])
                 self.ax_coins.set_xlim(times[-80], times[-1])
             else:
@@ -438,9 +484,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         
     def errorWindow(self, error):
         msg = QtWidgets.QMessageBox()
+        error = str(error)
+        if "write" in error or "Serial" in error:
+            self.serial = None
+            self.ports = {}
+        self.timer.stop()
         self.serial_refresh()
         self.stream_button.setStyleSheet("background-color: none")
-        self.timer.stop()
+        
         msg.setIcon(QtWidgets.QMessageBox.Critical)
         msg.setText("An Error has ocurred.")
         msg.setInformativeText(str(error))
@@ -454,9 +505,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                          quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
         if reply ==QtWidgets.QMessageBox.Yes:
             if self.file_changed:
-                savetxt(self.output_name, self.data, delimiter='\t')
+                savetxt(self.output_name, self.data[self.current_cell%TABLE_YGROW:], delimiter='\t')
                 with open(self.output_name, "a") as file:
-                    file.write("===PARAMETERS USED===")
+                    file.write("##### PARAMETERS USED #####\n")
                     with open(self.params_file, "r") as params:
                         for line in params:
                             file.write(line)

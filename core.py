@@ -90,7 +90,8 @@ if CURRENT_OS == 'win32':
     
     
 def matplotlib_import():
-    global plt, FigureCanvas, NavigationToolbar
+    global plt, FigureCanvas, NavigationToolbar, np
+    import numpy as np
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_qt5agg import (
                             FigureCanvasQTAgg as FigureCanvas,
@@ -100,11 +101,17 @@ def matrix(y, x):
     mat = [['' for i in range(x)] for i in range(y)]
     return mat
 
-def savetxt(file, matrix, delimiter = '\t'):
-    with open(file, 'a') as file:
-        for row in matrix:
-            text = delimiter.join(row)
-            file.write(text+'\n')
+def savetxt(file, matrix, delimiter = '\t', typ = float):
+    if typ is str:
+        with open(file, 'a') as _file:
+            text = delimiter.join(matrix)
+            _file.write("%s\n"%text)
+    else:
+        with open(file, 'ab') as _file:
+            np.savetxt(_file, matrix, fmt = '%.3f', delimiter = delimiter)
+#        for row in matrix:
+#            text = delimiter.join(row)
+#            file.write(text+'\n')
 
 def loadtxt(file, delimiter = '\t'):
     rows = []
@@ -129,12 +136,9 @@ class serialPort():
         self.port = port
         self.serial = None
         if self.port != '':
-            try:
-                self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_NONE,
-                                            stopbits=serial.STOPBITS_ONE,
-                                            bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
-            except Exception as E:
-                print(E)
+            self.serial = serial.Serial(port=port, baudrate=BAUDRATE, parity=serial.PARITY_NONE,
+                                        stopbits=serial.STOPBITS_ONE,
+                                        bytesize=serial.EIGHTBITS, timeout=TIMEOUT)
             
     def close(self):
         self.serial.close()

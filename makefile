@@ -1,5 +1,5 @@
 all : mainwindow.py channels.py main.py core.py GUI_images.py
-	python main.py && rm -r __pycache__ output.csv && clear
+	python main.py && rm -r __pycache__ && clear
 
 git : main.py
 	git add . && git commit -m "from make" && git push origin master
