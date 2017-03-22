@@ -178,7 +178,9 @@ class serialPort():
                     ans = []
                     for i in range(int(len(hexa)/3)):
                         channel = int(hexa[3*i], 16)
-                        value = int(hexa[3*i+2] + hexa[3*i+1], 16) #ERROR SHOULD BE HERE
+#                        if i == 0:
+#                            print(hexa[3*i + 1], hexa[3*i + 2], hexa[3*i + 1] + hexa[3*i + 2], int(hexa[3*i + 1] + hexa[3*i + 2], 16))
+                        value = int(hexa[3*i+1] + hexa[3*i+2], 16) #ERROR SHOULD BE HERE
                         ans.append([channel, value])                   
                     return ans
                 

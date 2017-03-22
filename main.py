@@ -390,7 +390,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                                 break
                         self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key[:-4]))
                         self.table.setItem(0, 0, QtWidgets.QTableWidgetItem("Time (s)"))
-                    value = "%d"%int(("%02X"%values[2*i][1]+"%02X"%values[2*i+1][1]), 16)
+                    value = "%d"%int("%02X"%values[2*i][1], 16)#+"%02X"%values[2*i+1][1]), 16)
                     cell = QtWidgets.QTableWidgetItem(value)
                     self.table.setItem(self.current_cell+1, i+1, cell)
                     cell.setFlags(QtCore.Qt.ItemIsEnabled)
