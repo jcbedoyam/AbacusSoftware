@@ -113,9 +113,6 @@ def savetxt(file, matrix, delimiter = '\t', typ = float):
     else:
         with open(file, 'ab') as _file:
             np.savetxt(_file, matrix, fmt = '%.3f', delimiter = delimiter)
-#        for row in matrix:
-#            text = delimiter.join(row)
-#            file.write(text+'\n')
 
 def loadtxt(file, delimiter = '\t'):
     rows = []
@@ -131,7 +128,7 @@ def findport():
     ports = {}
     for i in range(len(ports_objects)):
         port = ports_objects[i]
-        ports[port.description] = port.device 
+        ports["%s (%s)"%(port.description, port.device)] = port.device 
     return ports
 
 class serialPort():
@@ -182,7 +179,7 @@ class serialPort():
                     ans = []
                     for i in range(int(len(hexa)/3)):
                         channel = int(hexa[3*i], 16)
-                        value = int(hexa[3*i+1] + hexa[3*i+2], 16)
+                        value = hexa[3*i+1] + hexa[3*i+2]
                         ans.append([channel, value])
                     return ans                
         sender()          

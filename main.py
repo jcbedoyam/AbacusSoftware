@@ -45,6 +45,11 @@ class StretchedLabel(QtWidgets.QLabel):
         self.initial = True
         self.setFont(QtGui.QFont("Monospace"))
         self.initial = False
+        self.initial_font_size = 10
+        self.font_size = 10
+        self.MAX_TRY = 10
+        self.height = self.contentsRect().height()
+        self.width = self.contentsRect().width()
         
     def eventFilter(self, object, evt):
         if not self.initial:
@@ -55,21 +60,28 @@ class StretchedLabel(QtWidgets.QLabel):
             elif ty == 12:
                 self.resizeEvent(evt)
                 return False
-        return True       
+        return True
             
     def resizeEvent(self, evt):                 
         f = self.font()
         cr = self.contentsRect()
-        fs = 1                    
-        while True:
-            f.setPixelSize(fs)
+        height = cr.height()
+        width = cr.width()
+        if height*width < self.height*self.width:
+            self.font_size = self.initial_font_size
+        else:
+            self.font_size += -5
+        for i in range(self.MAX_TRY):
+            f.setPixelSize(self.font_size)
             br =  QtGui.QFontMetrics(f).boundingRect(self.text())
             if br.height() <= cr.height() and br.width() <= cr.width():
-                fs += 1
+                self.font_size += 1
             else:
-                f.setPixelSize(max(fs - 1, 1))
-                break  
+                f.setPixelSize(max(self.font_size - 1, 1))
+                break
         self.setFont(f)
+        self.height = height
+        self.width = width
 
 class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
     """
@@ -214,6 +226,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.valueChanged.connect(self.method_sampling)
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.terminal_line.editingFinished.connect(self.terminal_handler)
+        self.port_box.highlighted.connect(self.select_serial)
         
         self.ylength = self.table.rowCount()
         self.xlength = self.table.columnCount()
@@ -238,6 +251,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.current_cell = 0
         self.last_row_saved = 0
         self.serial_refresh()
+        self.select_serial(0)
         self.terminal_text.ensureCursorVisible()
         
         """
@@ -260,11 +274,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         
         self.count_points = None
         self.coin_points = None
+        self.data_empty = True
         self.count_index = []
         self.coin_index = []
         
-        self.ax_counts_axes = self.ax_counts.get_ylim()
-        self.ax_coins_axes = self.ax_coins.get_ylim()
+        self.ax_counts_axes = None
+        self.ax_coins_axes = None
                 
     def eventFilter(self, source, event):
         """
@@ -278,38 +293,39 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         loads serial port described at user combobox
         """
+        current_ports = findport()
+        n = 0
+        for x in current_ports.items():
+            if x in self.ports.items():
+                n += 1
+        if n != len(current_ports):
+            self.port_box.clear()
+            self.ports = current_ports
+            for port in self.ports:
+                self.port_box.addItem(port)
+        
+    def select_serial(self, index):
+        new_port = self.port_box.itemText(index)
         try:
-            if self.serial == None:
-                self.port_box.clear()
-            current_ports = findport()
-            n = 0
-            for x in current_ports.items():
-                if x in self.ports.items():
-                    n += 1
-            if n != len(current_ports):
-                self.port_box.clear()
-                self.ports = current_ports
-                for port in self.ports:
-                    self.port_box.addItem(port)
-                
-            new_port = self.port_box.currentText()
+            new_port = self.ports[new_port]
+        except:
+            new_port = ''
+        if new_port != '':
+            if self.serial != None:
+                self.serial.close()
+                self.serial = None
+            self.port = new_port
             try:
-                new_port = self.ports[new_port]
-            except:
-                new_port = ''
-            if new_port != '':
-                if self.serial != None:
-                    self.serial.close()
-                self.port = new_port
                 self.serial = serialPort(self.port, self)
                 self.widget_activate(False)
                 if self.window != None:
                     self.window.update()
-            else:
-                self.widget_activate(True)                
-        except Exception as e:
-            e = type(e)("Serial refresh: "+str(e))
-            self.errorWindow(e)
+            except Exception as e:
+                e = type(e)("Serial selection: "+str(e))
+                self.errorWindow(e)
+        else:
+            self.widget_activate(True)
+            
         
     def widget_activate(self, status):
         """
@@ -416,7 +432,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             first =  "cuentasA_LSB"
             address = ADDRESS[first]
             values = self.serial.message([0x0e, address, 6], receive = True)
-            print(values)
             actual = self.table.rowCount() 
             if (actual - self.current_cell) <= TABLE_YGROW:
                 self.table.setRowCount(TABLE_YGROW + actual)
@@ -438,11 +453,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                         self.header_list.append(key[:-4])
                         self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key[:-4]))
                         self.table.setItem(0, 0, QtWidgets.QTableWidgetItem("Time (s)"))
-                    value = "%d"%values[2*i][1]
+                    value = "%d"%int(values[2*i+1][1] + values[2*i][1], 16)
                     if i == 0:
                         label_txt = "%s: %s"%(self.header_list[i], value)
                     else:
-                        label_txt = ", %s: %s"%(self.header_list[i], value)
+                        label_txt += ", %s: %s"%(self.header_list[i], value)
                     cell = QtWidgets.QTableWidgetItem(value)
                     self.table.setItem(self.current_cell+1, i+1, cell)
                     cell.setFlags(QtCore.Qt.ItemIsEnabled)
@@ -492,8 +507,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                         point = self.ax_coins.plot([],[], "-o", ms=3, label = column)[0]
                         self.coin_points.append(point)
                         self.coin_index.append(i)
-                self.ax_counts.legend(loc = 2)
-                self.ax_coins.legend(loc = 2)
+            self.ax_counts.legend(loc = 2)
+            self.ax_coins.legend(loc = 2)
+            self.ax_counts_axes = self.ax_counts.get_ylim()
+            self.ax_coins_axes = self.ax_coins.get_ylim()
             """
             should solve the axes thing
             """
@@ -533,9 +550,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 zip(self.ax_counts_axes, self.ax_counts.get_ylim())]):
                 max_count = max(max_count)
                 min_count = min(min_count)
-                
                 if (max_count*1.25 > self.ax_counts.get_ylim()[1] \
-                    or min_count*0.75 < self.ax_counts.get_ylim()[0]):
+                    or min_count < self.ax_counts.get_ylim()[0]):
                     self.ax_counts.set_ylim(min_count, max_count*1.25)
                     self.ax_counts_axes = self.ax_counts.get_ylim()
                     
@@ -544,7 +560,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 max_coin = max(max_coin)
                 min_coin = min(min_coin)
                 if (max_coin*1.25 > self.ax_coins.get_ylim()[1] \
-                    or min_coin*0.75 < self.ax_coins.get_ylim()[0]):
+                    or min_coin< self.ax_coins.get_ylim()[0]):
                     self.ax_coins.set_ylim(min_coin, max_coin*1.25)
                     self.ax_coins_axes = self.ax_coins.get_ylim()
                     
