@@ -29,8 +29,47 @@ while thread.is_alive():
         progressBar.setValue(i)
     sleep(0.2)
 from core import *
+from matplotlib.ticker import EngFormatter
     
 plt.rcParams.update({'font.size': 8})
+
+class StretchedLabel(QtWidgets.QLabel):
+    """
+    from reclosedev at http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour
+    and Jean-Sébastien http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt
+    """
+    def __init__(self, *args, **kwargs):
+        QtWidgets.QLabel.__init__(self, *args, **kwargs)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+        self.installEventFilter(self)
+        self.initial = True
+        self.setFont(QtGui.QFont("Monospace"))
+        self.initial = False
+        
+    def eventFilter(self, object, evt):
+        if not self.initial:
+            ty = evt.type()
+            if ty == 97: # DONT KNOW WHY
+                self.resizeEvent(evt)
+                return False
+            elif ty == 12:
+                self.resizeEvent(evt)
+                return False
+        return True       
+            
+    def resizeEvent(self, evt):                 
+        f = self.font()
+        cr = self.contentsRect()
+        fs = 1                    
+        while True:
+            f.setPixelSize(fs)
+            br =  QtGui.QFontMetrics(f).boundingRect(self.text())
+            if br.height() <= cr.height() and br.width() <= cr.width():
+                fs += 1
+            else:
+                f.setPixelSize(max(fs - 1, 1))
+                break  
+        self.setFont(f)
 
 class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
     """
@@ -179,11 +218,16 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ylength = self.table.rowCount()
         self.xlength = self.table.columnCount()
 
-        self.data = None#matrix(self.ylength, self.xlength)
-        self.data_empty = True  # DEPRECATED
+        self.data = None
+#        self.data_empty = True  # DEPRECATED
         self.file_changed = False
         self.header = None
+        self.header_list = []
         
+        self.current_label = StretchedLabel(self.tab_3)
+        self.current_label.setText("Hello world")
+        self.current_label.setObjectName("current_label")
+        self.verticalLayout_2.addWidget(self.current_label)
         """
         set
         """
@@ -205,6 +249,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.plot_layout.addWidget(self.canvas)
         self.toolbar = NavigationToolbar(self.canvas, 
                 self.plot_widget, coordinates=True)
+        
+#        self.toolbar.setVisible(False)
         self.plot_layout.addWidget(self.toolbar)
         
         self.ax_counts.set_ylabel("Counts")
@@ -217,6 +263,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.count_index = []
         self.coin_index = []
         
+        self.ax_counts_axes = self.ax_counts.get_ylim()
+        self.ax_coins_axes = self.ax_coins.get_ylim()
                 
     def eventFilter(self, source, event):
         """
@@ -292,14 +340,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.data[m_row, column] = float(self.table.item(row, column).text())
         if self.current_cell == 1 and column == 0:
             savetxt(self.output_name, self.header, typ = str)
-#        if (self.ylength - row) <= TABLE_YGROW:
-#            self.ylength += TABLE_YGROW
-#            self.data += matrix(TABLE_YGROW, self.xlength)
-#            if not self.data_empty:
-#                savetxt(self.output_name, self.data, delimiter='\t') 
-#        if row >= 0 and column >= 0:
-#            self.data[row, column] = self.table.item(row, column).text()
-#            self.data[row][column] = self.table.item(row, column).text()
         self.file_changed = True
         self.data_empty = False
             
@@ -307,8 +347,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         user interaction with saving file
         """
-        name = QtWidgets.QFileDialog.getSaveFileName(self, "Save Data File", "", "CSV data files (*.csv)")[0]
-        if name != '':
+        self.current_label.setText("A")
+        dlg = QtWidgets.QFileDialog()
+        dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        dlg.setNameFilters(["CSV data files (*.csv)"])
+        dlg.selectNameFilter("CSV data files (*.csv)")
+        if dlg.exec_():
+            name = dlg.selectedFiles()[0]
             self.output_name = name
             if self.output_name[-4:] != '.csv':
                 self.output_name += '.csv'
@@ -370,6 +416,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             first =  "cuentasA_LSB"
             address = ADDRESS[first]
             values = self.serial.message([0x0e, address, 6], receive = True)
+            print(values)
             actual = self.table.rowCount() 
             if (actual - self.current_cell) <= TABLE_YGROW:
                 self.table.setRowCount(TABLE_YGROW + actual)
@@ -377,7 +424,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     savetxt(self.output_name, self.data[self.last_row_saved:])
                     self.last_row_saved = last_row
                 
-            if type(values) is list:
+            if type(values) is list:        
                 if self.current_cell == 0:
                     self.init_time = time()
                 cell = QtWidgets.QTableWidgetItem("%.3f"%(time()-self.init_time))
@@ -388,15 +435,20 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                         for key, value in ADDRESS.items():
                             if value == values[i*2][0]:
                                 break
+                        self.header_list.append(key[:-4])
                         self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(key[:-4]))
                         self.table.setItem(0, 0, QtWidgets.QTableWidgetItem("Time (s)"))
-                    value = "%d"%int("%02X"%values[2*i][1], 16)#+"%02X"%values[2*i+1][1]), 16)
+                    value = "%d"%values[2*i][1]
+                    if i == 0:
+                        label_txt = "%s: %s"%(self.header_list[i], value)
+                    else:
+                        label_txt = ", %s: %s"%(self.header_list[i], value)
                     cell = QtWidgets.QTableWidgetItem(value)
                     self.table.setItem(self.current_cell+1, i+1, cell)
                     cell.setFlags(QtCore.Qt.ItemIsEnabled)
                 self.current_cell += 1
-                self.current_label.setText("value")
-#                self.update_plot()
+                self.current_label.setText(label_txt)
+                
         except Exception as e:
             self.errorWindow(e)
             
@@ -430,17 +482,24 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.coin_points == None and self.count_points == None:
             self.count_points = []
             self.coin_points = []
-            for (i, column) in enumerate(self.header):
-                if 'cuentas' in column:
-                    point = self.ax_counts.plot([],[], "-o", ms=3, label = column)[0]
-                    self.count_points.append(point)
-                    self.count_index.append(i)
-                elif 'coin' in column:
-                    point = self.ax_coins.plot([],[], "-o", ms=3, label = column)[0]
-                    self.coin_points.append(point)
-                    self.coin_index.append(i)
-            self.ax_counts.legend(loc = 2)
-            self.ax_coins.legend(loc = 2)
+            if type(self.header[0]) != int:
+                for (i, column) in enumerate(self.header):
+                    if 'cuentas' in column:
+                        point = self.ax_counts.plot([],[], "-o", ms=3, label = column)[0]
+                        self.count_points.append(point)
+                        self.count_index.append(i)
+                    elif 'coin' in column:
+                        point = self.ax_coins.plot([],[], "-o", ms=3, label = column)[0]
+                        self.coin_points.append(point)
+                        self.coin_index.append(i)
+                self.ax_counts.legend(loc = 2)
+                self.ax_coins.legend(loc = 2)
+            """
+            should solve the axes thing
+            """
+            formatter = EngFormatter()
+            self.ax_counts.yaxis.set_major_formatter(formatter)
+            self.ax_coins.yaxis.set_major_formatter(formatter)
             
             
         if self.current_cell > 2:
@@ -449,37 +508,49 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             max_coin = []
             min_coin = []
             if self.current_cell < TABLE_YGROW:
+                frm = 0
+                xlimit = 0
                 until = self.current_cell
+                times = self.data[:until, 0]
             else:
                 until = TABLE_YGROW
-#            times = [float(self.data[j][0])  for j in range(1, self.current_cell)]
-            times = self.data[:until, 0]
+                frm = until - VALUES_TO_SHOW
+                times = self.data[frm:until, 0]
+                xlimit = times[-VALUES_TO_SHOW]
+            
             for (i, index) in enumerate(self.count_index):
-#                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
-                data = self.data[:until, index]
+                data = self.data[frm:until, index]
                 max_count.append(max(data))
                 min_count.append(min(data))
                 self.count_points[i].set_data(times, data)
             for (i, index) in enumerate(self.coin_index):
-#                data = [int(self.data[j][index]) for j in range(1, self.current_cell)]
-                data = self.data[:until, index]
+                data = self.data[frm:until, index]
                 max_coin.append(max(data))
                 min_coin.append(min(data))
                 self.coin_points[i].set_data(times, data)
-            max_count = max(max_count)
-            min_count = min(min_count)
-            max_coin = max(max_coin)
-            min_coin = min(min_coin)
-            if max_count*1.25 > self.ax_counts.get_ylim()[1] or min_count*0.75 < self.ax_counts.get_ylim()[0]:
-                self.ax_counts.set_ylim(min_count, max_count*1.25)
-            self.ax_counts.set_ylim(min_count, max_count)
-            self.ax_coins.set_ylim(min_coin, max_coin)
-            if self.current_cell > 80:
-                self.ax_counts.set_xlim(times[-80], times[-1])
-                self.ax_coins.set_xlim(times[-80], times[-1])
-            else:
-                self.ax_counts.set_xlim(0, times[-1])
-                self.ax_coins.set_xlim(0, times[-1])
+                
+            if all([last == now for (last, now) in \
+                zip(self.ax_counts_axes, self.ax_counts.get_ylim())]):
+                max_count = max(max_count)
+                min_count = min(min_count)
+                
+                if (max_count*1.25 > self.ax_counts.get_ylim()[1] \
+                    or min_count*0.75 < self.ax_counts.get_ylim()[0]):
+                    self.ax_counts.set_ylim(min_count, max_count*1.25)
+                    self.ax_counts_axes = self.ax_counts.get_ylim()
+                    
+            if all([last == now for (last, now) in \
+                zip(self.ax_coins_axes, self.ax_coins.get_ylim())]):
+                max_coin = max(max_coin)
+                min_coin = min(min_coin)
+                if (max_coin*1.25 > self.ax_coins.get_ylim()[1] \
+                    or min_coin*0.75 < self.ax_coins.get_ylim()[0]):
+                    self.ax_coins.set_ylim(min_coin, max_coin*1.25)
+                    self.ax_coins_axes = self.ax_coins.get_ylim()
+                    
+            self.ax_counts.set_xlim(xlimit, times[-1])
+            self.ax_coins.set_xlim(xlimit, times[-1])
+
             self.canvas.draw()
         
     def errorWindow(self, error):

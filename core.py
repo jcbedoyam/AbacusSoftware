@@ -36,6 +36,10 @@ DEFAULT_SLEEP = 0
 DEFAULT_SAMP = 500
 DEFAULT_TPLOT = 100
 TABLE_YGROW = 100
+VALUES_TO_SHOW = 80
+
+if VALUES_TO_SHOW > TABLE_YGROW:
+    VALUES_TO_SHOW = TABLE_YGROW
 
 ADDRESS = {'delayA_ns': 0,
            'delayA_us': 1,
@@ -178,12 +182,9 @@ class serialPort():
                     ans = []
                     for i in range(int(len(hexa)/3)):
                         channel = int(hexa[3*i], 16)
-#                        if i == 0:
-#                            print(hexa[3*i + 1], hexa[3*i + 2], hexa[3*i + 1] + hexa[3*i + 2], int(hexa[3*i + 1] + hexa[3*i + 2], 16))
-                        value = int(hexa[3*i+1] + hexa[3*i+2], 16) #ERROR SHOULD BE HERE
-                        ans.append([channel, value])                   
-                    return ans
-                
+                        value = int(hexa[3*i+1] + hexa[3*i+2], 16)
+                        ans.append([channel, value])
+                    return ans                
         sender()          
         if receive:
             n = 0

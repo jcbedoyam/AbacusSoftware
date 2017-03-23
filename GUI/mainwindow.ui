@@ -370,15 +370,7 @@ Window (ns):</string>
           <attribute name="title">
            <string>Current</string>
           </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <item>
-            <widget class="QLabel" name="current_label">
-             <property name="text">
-              <string/>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <layout class="QVBoxLayout" name="verticalLayout_2"/>
          </widget>
          <widget class="QWidget" name="tab_2">
           <attribute name="title">
