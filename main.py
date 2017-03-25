@@ -43,7 +43,10 @@ class StretchedLabel(QtWidgets.QLabel):
         self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.installEventFilter(self)
         self.initial = True
-        self.setFont(QtGui.QFont("Monospace"))
+        self.font_name = "Monospace"
+        if CURRENT_OS == "win32":
+            self.font_name = "Lucida"
+        self.setFont(QtGui.QFont(self.font_name))
         self.initial = False
         self.initial_font_size = 10
         self.font_size = 10
@@ -534,20 +537,28 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 frm = until - VALUES_TO_SHOW
                 times = self.data[frm:until, 0]
                 xlimit = times[-VALUES_TO_SHOW]
+                
+            count_status = all([last == now for (last, now) in \
+                zip(self.ax_counts_axes, self.ax_counts.get_ylim())])
+    
+            coin_status = all([last == now for (last, now) in \
+                zip(self.ax_coins_axes, self.ax_coins.get_ylim())])
             
             for (i, index) in enumerate(self.count_index):
                 data = self.data[frm:until, index]
-                max_count.append(max(data))
-                min_count.append(min(data))
                 self.count_points[i].set_data(times, data)
+                if count_status:
+                    max_count.append(max(data))
+                    min_count.append(min(data))
+                
             for (i, index) in enumerate(self.coin_index):
                 data = self.data[frm:until, index]
-                max_coin.append(max(data))
-                min_coin.append(min(data))
                 self.coin_points[i].set_data(times, data)
+                if coin_status:
+                    max_coin.append(max(data))
+                    min_coin.append(min(data))  
                 
-            if all([last == now for (last, now) in \
-                zip(self.ax_counts_axes, self.ax_counts.get_ylim())]):
+            if count_status:
                 max_count = max(max_count)
                 min_count = min(min_count)
                 if (max_count*1.25 > self.ax_counts.get_ylim()[1] \
@@ -555,8 +566,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.ax_counts.set_ylim(min_count, max_count*1.25)
                     self.ax_counts_axes = self.ax_counts.get_ylim()
                     
-            if all([last == now for (last, now) in \
-                zip(self.ax_coins_axes, self.ax_coins.get_ylim())]):
+            if coin_status:
                 max_coin = max(max_coin)
                 min_coin = min(min_coin)
                 if (max_coin*1.25 > self.ax_coins.get_ylim()[1] \
