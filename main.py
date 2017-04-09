@@ -45,7 +45,7 @@ class StretchedLabel(QtWidgets.QLabel):
         self.initial = True
         self.font_name = "Monospace"
         if CURRENT_OS == "win32":
-            self.font_name = "Lucida"
+            self.font_name = "Courier New"
         self.setFont(QtGui.QFont(self.font_name))
         self.initial = False
         self.initial_font_size = 10

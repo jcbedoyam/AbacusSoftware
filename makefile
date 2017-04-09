@@ -1,4 +1,4 @@
-all : mainwindow.py channels.py main.py core.py GUI_images.py
+run : mainwindow.py channels.py main.py core.py GUI_images.py
 	python main.py && rm -r __pycache__ && clear
 
 git : main.py
