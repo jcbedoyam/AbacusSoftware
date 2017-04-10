@@ -14,17 +14,14 @@ import threading
 from time import sleep, localtime, strftime, time
 import serial.tools.list_ports as find_ports
 
-"""
-constants
-"""
-BAUDRATE = 115200
-TIMEOUT = 0.02
-BOUNCE_TIMEOUT = 20
-BASE_DELAY = 1e-9
-BASE_SLEEP = 1e-9
-BASE_SAMPLING = 1e-3
-BASE_COINWIN = 1e-9
-DEFAULT_CHANNELS = 2
+BAUDRATE = 115200 #: Default baudrate for the serial port communication
+TIMEOUT = 0.02 #: Maximum time without answer from the serial port
+BOUNCE_TIMEOUT = 20 #: Number of times a specific transmition is tried
+BASE_DELAY = 1e-9 #: Default channnel delay time (seconds)
+BASE_SLEEP = 1e-9 #: Default channel sleep time (seconds)
+BASE_SAMPLING = 1e-3 #: Default sampling time (seconds)
+BASE_COINWIN = 1e-9 #: Default coincidence window (seconds)
+DEFAULT_CHANNELS = 2 #: Default number of channels
 MIN_DELAY = 0
 MAX_DELAY = 200
 STEP_DELAY = 5
@@ -94,6 +91,10 @@ if CURRENT_OS == 'win32':
     
     
 def matplotlib_import():
+    """ Imports matplotlib and NumPy.
+    
+    Useful to be combined with threading processes.
+    """
     global plt, FigureCanvas, NavigationToolbar, np
     import numpy as np
     import matplotlib.pyplot as plt
@@ -102,10 +103,21 @@ def matplotlib_import():
                             NavigationToolbar2QT as NavigationToolbar)
 
 def matrix(y, x):
+    """ Creates a python list with (x)x(y) dimentions.
+    
+    DEPRECATED.
+    NumPy matrices are used insted.
+    """
     mat = [['' for i in range(x)] for i in range(y)]
     return mat
 
 def savetxt(file, matrix, delimiter = '\t', typ = float):
+    """ Saves data to a text file.
+    
+    Used to save matrix contents to plain text files. 
+    Depening whether or not matrix contains strings or floats
+    uses np.savetxt function.
+    """
     if typ is str:
         with open(file, 'a') as _file:
             text = delimiter.join(matrix)
