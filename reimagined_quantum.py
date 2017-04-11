@@ -351,13 +351,12 @@ class DataChannel(object):
         self.value = int(self.hex_value, 16)
         self.values = [int(self.hex_value[:4], 16), int(self.hex_value[4:], 16)]
         
-    def exchange_values(self, read = True):
-        return [channel.exchange_values(read) for channel in self.channels]
+    def exchange_values(self):
+        return [channel.exchange_values(True) for channel in self.channels]
     
-    def update_values(self, read = True):
-        answer = [channel.update_values(read) for channel in self.channels]
-        if read:
-            self.read_values(answer)
+    def update_values(self):
+        answer = [channel.update_values(True) for channel in self.channels]
+        self.read_values(answer)
         return self.value
 
 class FunctionTimer(object):
@@ -420,9 +419,10 @@ class Detector(object):
         return check
         
     def check_times(self):
-        self.check_values(self.delay_channel)
-        self.check_values(self.sleep_channel)
-    
+        check_delay = self.check_values(self.delay_channel)
+        check_sleep = self.check_values(self.sleep_channel)
+        return check_delay, check_sleep
+        
     def start_timers(self, interval):
         pass
     
@@ -446,24 +446,92 @@ class Experiment(object):
         self.port = port
         self.number_detectors = number_detectors
         self.detector_identifiers = [chr(i + ord('A')) for i in range(self.number_detectors)]
-        self.coins_identifiers = self.get_number_of_combinations()
+        self.coins_identifiers = self.get_combinations()
         self.number_coins = len(self.coins_identifiers)
-        
+        self.detector_dict = {self.detector_identifiers[i]: i for i in range(self.number_detectors)}
+        self.coins_dict = {self.coins_identifiers[i]: i for i in range(self.number_coins)}
         self.detectors = [Detector(identifier, self.port) for identifier in self.detector_identifiers]
         self.coin_channels = [DataChannel("coincidences%s"%identifier, self.port) for identifier in self.coins_identifiers]
         
+        self.sampling_channel = TimerChannel("samplingTime", port, self.BASE_SAMPLING)
+        self.coinwindow_channel = TimerChannel("coincidenceWindow", port, self.BASE_COINWIN)
+        
+    def measure_N_points(self, detector_identifiers, interval, N_points, print_ = True):
+        if detector_identifiers != []:
+            coins_identifiers = {}
+            if len(detector_identifiers) > 1:
+                for detector in detector_identifiers:
+                    if detector in self.detector_dict:
+                        for key in self.coins_dict:
+                            if (detector in key) and (not key in coins_identifiers):
+                               coins_identifiers[key] = self.coins_dict[key]
+                    else:
+                        raise Exception("The following detector is not withing our experiment: %s."%detector)
+                        
+            detectors = [self.detectors[self.detector_dict[identifier]] for identifier in detector_identifiers]
+            coins = [self.coin_channels[coins_identifiers[key]] for key in coins_identifiers]
+            
+        else:
+            detectors = self.detectors
+            coins = self.coin_channels
+        
+        n_detectors = len(detectors)
+        n_coins = len(coins)
+        
+        data_detectors = np.zeros((N_points, n_detectors))
+        data_coins = np.zeros((N_points, n_coins))
+        times = np.zeros(N_points)
+        for i in range(N_points):
+            for j in range(n_detectors):
+                data_detectors[i, j] = detectors[j].update_data()
+            for k in range(n_coins):
+                data_coins[i, k] = coins[k].update_values()
+            if i == 0:
+                initial_time = time()
+                times[i] = 0
+            else:
+                times[i] = time() - initial_time
+            if print_:
+                print(times[i], data_detectors[i], data_coins[i])
+            sleep(interval)
+            
+        return times, data_detectors, data_coins
 
-    def get_number_of_combinations(self):
+    def get_combinations(self):
         letters = "".join(self.detector_identifiers)
         coins = []
         for i in range(1, self.number_detectors):
             coins += list(combinations(letters, i+1))
+            
         return ["".join(values) for values in coins]
     
+if __name__ == "__main__":
+    import numpy as np
+    import matplotlib.pyplot as plt
     
-port = CommunicationPort("/dev/ttyUSB0")
-Experiment(port)
-#detectorA = Detector("A", port)
-#detectorA.set_delay(15)
-#detectorA.time_timer.start()
-#detectorA.data_timer.start()
+    port = CommunicationPort("/dev/ttyUSB0")
+    exp = Experiment(port, 2)
+    time, detectors, coins = exp.measure_N_points(["A", "B"], 0.0, 50, print_ = False)
+    
+    fig, axes = plt.subplots(2, sharex = True)
+    
+    # DETECTORS
+    n = detectors.shape[1]
+    if n == 1:
+        axes[0].plot(time, detectors, "-o", label = "%s"%exp.detectors[0].name)
+    else:
+        for i in range(n):
+            axes[0].plot(time, detectors[:, i], "-o", label = "%s"%exp.detectors[i].name)
+            
+    # COINCIDENCES
+    n = coins.shape[1]
+    if n == 1:
+        axes[1].plot(time, coins, "-o", label = "%s"%exp.coin_channels[0].prefix)
+    else:
+        for i in range(n):
+            axes[1].plot(time, detectors[:, i], "-o", label = "%s"%exp.coin_channels[i].prefix)
+    for ax in axes:
+        ax.legend()
+        ax.set_ylabel("Counts")
+    
+    plt.show()
