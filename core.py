@@ -10,7 +10,7 @@ import os
 import sys
 import serial
 import codecs
-import threading
+from threading import Thread
 from time import sleep, localtime, strftime, time
 import serial.tools.list_ports as find_ports
 

@@ -19,7 +19,7 @@ progressBar.setValue(30)
 from channels import Ui_Dialog
 progressBar.setValue(50)
 
-thread = threading.Thread(target=matplotlib_import)
+thread = Thread(target=matplotlib_import)
 thread.setDaemon(True)
 thread.start()
 i = 50
