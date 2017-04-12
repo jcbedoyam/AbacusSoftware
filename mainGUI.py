@@ -10,27 +10,7 @@ import sys
 import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-app = QtWidgets.QApplication(sys.argv)
-splash_pix = QtGui.QPixmap(':/splash.png')
-splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
-progressBar = QtWidgets.QProgressBar(splash)
-progressBar.setGeometry(250, 320, 100, 20)
-#progressBar.setStyleSheet(DEFAULT_STYLE)
-splash.show()
-app.processEvents()
-app.setWindowIcon(QtGui.QIcon(':/icon.png'))
-
 from reimaginedQuantum import *
-if CURRENT_OS == 'win32':
-    import ctypes
-    myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-
-progressBar.setValue(15)
-from mainwindow import Ui_MainWindow
-progressBar.setValue(30)
-from channels import Ui_Dialog
-progressBar.setValue(50)
 
 def savetxt(file, matrix, delimiter = ',', fmt = "%.3f", typ = float):
     """ Saves data to a text file.
@@ -60,17 +40,11 @@ def heavy_import():
                             NavigationToolbar2QT as NavigationToolbar)
     from matplotlib.ticker import EngFormatter
 
-thread = Thread(target=heavy_import)
-thread.setDaemon(True)
-thread.start()
-i = 50
-while thread.is_alive():
-    if i < 95:
-        i += 1
-        progressBar.setValue(i)
-    sleep(0.2)
-
-plt.rcParams.update({'font.size': 8})
+#########################
+from mainwindow import Ui_MainWindow
+from channels import Ui_Dialog
+heavy_import()
+#########################
 
 class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
     """
@@ -413,10 +387,9 @@ class Axes(object):
         self.legend()
     
     def restore(self):
-#        self.fig.canvas.restore_region(self.background)
         [self.axes.draw_artist(line) for line in self.points]
         self.fig.canvas.blit(self.axes.bbox)
-#        self.fig.canvas.flush_events()
+        self.fig.canvas.flush_events()
     
 class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     """
@@ -782,9 +755,43 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             event.accept()
         else:
             event.ignore()
-        
-main = Main()
-progressBar.setValue(100)
-main.show()
-splash.close()
-sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    app = QtWidgets.QApplication(sys.argv)
+    splash_pix = QtGui.QPixmap(':/splash.png')
+    splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+    progressBar = QtWidgets.QProgressBar(splash)
+    progressBar.setGeometry(250, 320, 100, 20)
+    #progressBar.setStyleSheet(DEFAULT_STYLE)
+    splash.show()
+    app.processEvents()
+    app.setWindowIcon(QtGui.QIcon(':/icon.png'))
+
+    if CURRENT_OS == 'win32':
+        import ctypes
+        myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+    progressBar.setValue(15)
+    from mainwindow import Ui_MainWindow
+    progressBar.setValue(30)
+    from channels import Ui_Dialog
+    progressBar.setValue(50)
+
+    thread = Thread(target=heavy_import)
+    thread.setDaemon(True)
+    thread.start()
+    i = 50
+    while thread.is_alive():
+        if i < 95:
+            i += 1
+            progressBar.setValue(i)
+        sleep(0.2)
+
+    plt.rcParams.update({'font.size': 8})
+
+    main = Main()
+    progressBar.setValue(100)
+    main.show()
+    splash.close()
+    sys.exit(app.exec_())
