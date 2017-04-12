@@ -19,23 +19,6 @@ from time import sleep, localtime, strftime, time
 import serial.tools.list_ports as find_ports
 
 
-"""
-*Global constants*
-"""
-
-MIN_DELAY = 0
-MAX_DELAY = 200
-STEP_DELAY = 5
-DEFAULT_DELAY = 0
-MIN_SLEEP = 0
-MAX_SLEEP = 200
-STEP_SLEEP = 5
-DEFAULT_SLEEP = 0
-DEFAULT_SAMP = 500
-DEFAULT_TPLOT = 100
-TABLE_YGROW = 100
-VALUES_TO_SHOW = 80
-
 ADDRESS = {'delayA_ns': 0,
            'delayA_us': 1,
            'delayA_ms': 2,
@@ -184,15 +167,18 @@ class CommunicationPort(object):
             for i in range(self.bounce_timeout):
                 try:
                     return self.receive()
-                except Exception as ex:
+                except Exception as ex1:
                     try:
                         self.send(content)
-                    except Exception as ex:
+                    except Exception as ex2:
                         pass
                     if i == self.bounce_timeout - 1:
-                        raise ex
+                        raise ex1
         else:
             return None
+        
+    def close(self):
+        self.serial.close()
                 
 class Channel(object):
     """
@@ -329,6 +315,10 @@ class DataChannel(object):
     NUMBER_OF_CHANNELS = len(SIGNIFICANT_BYTES)
     global ADDRESS
     def __init__(self, prefix, port):
+        letters = prefix.strip()
+        letters = [letter for letter in letters if letter.isupper()]
+        pos = len(prefix.split(letters[0])[0])
+        self.name = "%s %s"%(prefix[:pos].title(), prefix[pos:])
         self.prefix = prefix
         self.port = port
         self.channels_names = ["%s_%s"%(prefix, sig) for sig in self.SIGNIFICANT_BYTES]
@@ -433,6 +423,10 @@ class Detector(object):
     def set_sleep(self, value):
         self.sleep_channel.set_value(value)
         self.sleep_channel.update_values(read = False)
+        
+    def set_times(self, delay, sleep):
+        self.set_delay(delay)
+        self.set_sleep(sleep)
 
 class Experiment(object):
     """
@@ -440,7 +434,6 @@ class Experiment(object):
     """
     BASE_SAMPLING = 1e-3 #: Default sampling time (seconds)
     BASE_COINWIN = 1e-9 #: Default coincidence window (seconds)
-    DEFAULT_CHANNELS = 2 #: Default number of channels
     
     def __init__(self, port, number_detectors = 2):
         self.port = port
@@ -454,7 +447,21 @@ class Experiment(object):
         self.coin_channels = [DataChannel("coincidences%s"%identifier, self.port) for identifier in self.coins_identifiers]
         
         self.sampling_channel = TimerChannel("samplingTime", port, self.BASE_SAMPLING)
-        self.coinwindow_channel = TimerChannel("coincidenceWindow", port, self.BASE_COINWIN)
+        self.coinWindow_channel = TimerChannel("coincidenceWindow", port, self.BASE_COINWIN)
+        
+    
+    def current_values(self):
+        detector_values = [detector.update_data() for detector in self.detectors]
+        coin_values = [coin.update_values() for coin in self.coin_channels]
+        return time(), detector_values, coin_values
+    
+    def set_sampling(self, value):
+        self.sampling_channel.set_value(value)
+        self.sampling_channel.update_values(False)
+        
+    def set_coinWindow(self, value):
+        self.coinWindow_channel.set_value(value)
+        self.coinWindow_channel.update_values(False)
         
     def measure_N_points(self, detector_identifiers, interval, N_points, print_ = True):
         if detector_identifiers != []:
@@ -504,6 +511,21 @@ class Experiment(object):
             coins += list(combinations(letters, i+1))
             
         return ["".join(values) for values in coins]
+
+CURRENT_OS = sys.platform
+    
+
+def findPort():
+    global CURRENT_OS
+    ports_objects = list(find_ports.comports())
+    ports = {}
+    for i in range(len(ports_objects)):
+        port = ports_objects[i]
+        if CURRENT_OS == "win32":
+            ports["%s"%port.description] = port.device 
+        else:
+            ports["%s (%s)"%(port.description, port.device)] = port.device
+    return ports
     
 if __name__ == "__main__":
     import numpy as np
