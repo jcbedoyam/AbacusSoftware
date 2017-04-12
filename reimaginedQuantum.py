@@ -278,7 +278,7 @@ class TimerChannel(object):
         
     def read_values(self, values):
         self.values = self.unnested_values(values)
-        self.value = self.base*sum([self.values[i]*10**(3*i) for i in range(self.NUMBER_OF_CHANNELS)])
+        self.value = int(self.base*sum([self.values[i]*10**(3*i) for i in range(self.NUMBER_OF_CHANNELS)]))
         
     def unnested_values(self, values):
         return [int(value[0][1],16) for value in values]
@@ -306,7 +306,17 @@ class TimerChannel(object):
         if read:
             self.read_values(answer)
         return self.value
-            
+    
+    def check_values(self):
+        values = self.exchange_values()
+        values_unnested = self.unnested_values(values)
+        answer = self.verify_values(values_unnested)
+        if not answer:
+            self.read_values(values)
+            return self.prefix, int(self.value/self.base)
+        else:
+            return None
+        
 class DataChannel(object):
     """
     Constants
@@ -403,15 +413,21 @@ class Detector(object):
         return self.current_data
     
     def check_values(self, channel):
-        values = channel.exchange_values()
-        values = channel.unnested_values(values)
-        check = channel.verify_values(values)
-        return check
+        return channel.check_values()
+#        values = channel.exchange_values()
+#        values = channel.unnested_values(values)
+#        check = channel.verify_values(values)
+#        return check
         
     def check_times(self):
         check_delay = self.check_values(self.delay_channel)
         check_sleep = self.check_values(self.sleep_channel)
-        return check_delay, check_sleep
+        ans = []
+        if check_delay != None:
+            ans += [check_delay]
+        if check_sleep != None:
+            ans += [check_sleep]
+        return ans
         
     def start_timers(self, interval):
         pass
@@ -511,6 +527,18 @@ class Experiment(object):
             coins += list(combinations(letters, i+1))
             
         return ["".join(values) for values in coins]
+    
+    def check_values(self):
+        values1 = self.sampling_channel.check_values()
+        values2 = self.coinWindow_channel.check_values()
+        values = []
+        for detector in self.detectors:
+            values += detector.check_times()
+        if values1 != None:
+            values += [values1]
+        if values2 != None:
+            values += [values2]
+        return values
 
 CURRENT_OS = sys.platform
     

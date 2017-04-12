@@ -10,6 +10,7 @@ import sys
 import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+import re
 from reimaginedQuantum import *
 
 def savetxt(file, matrix, delimiter = ',', fmt = "%.3f", typ = float):
@@ -73,6 +74,17 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reset)
         self.creator(self.channel_spinBox.value())
         self.last_time = ""
+        
+    def set_value(self, name, value):
+        prefix = re.sub('[^A-Z]', '', name)
+        if "sleepTime" in name:
+            prefix = prefix[1:]
+            
+        pos = ord(prefix) - ord('A')
+        if "delay" in name:
+            self.widgets[1][pos].setValue(value)
+        elif "sleepTime" in name:
+            self.widgets[2][pos].setValue(value)
         
     def creator(self, n):
         """
@@ -399,6 +411,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     """
     DEFAULT_SAMP = 500
     DEFAULT_TPLOT = 100
+    DEFAULT_TCHECK = 1000
     TABLE_YGROW = 100
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
@@ -414,6 +427,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             timer = self.DEFAULT_TPLOT
         self.plot_timer.setInterval(timer)
+        
+        self.check_timer = QtCore.QTimer()
+        self.check_timer.setInterval(self.DEFAULT_TCHECK)
         self.samp_spinBox.setValue(self.DEFAULT_SAMP)
         
         """
@@ -422,6 +438,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.port_box.installEventFilter(self)
         self.timer.timeout.connect(self.method_streamer)
         self.plot_timer.timeout.connect(self.update_plot)
+        self.check_timer.timeout.connect(self.check_clocks)
         self.save_button.clicked.connect(self.choose_file)
         self.stream_button.clicked.connect(self.method_streamer)
         self.channels_button.clicked.connect(self.channelsCaller)
@@ -606,12 +623,25 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.window = propertiesWindow(self)
         self.window.show()
         
+    def check_clocks(self):
+        pass
+#        ans = self.experiment.check_values()
+#        for channel in ans:
+#            name, value = channel
+#            if name == "samplingTime":
+#                self.samp_spinBox.setValue(value)
+#            elif name == "coincidenceWindow":
+#                self.coin_spinBox.setValue(value)
+#            else:
+#                self.window.set_value(name, value)
+        
     def method_streamer(self):
         try:
             time_, detectors, coins = self.experiment.current_values()
             if self.timer.isActive() and self.sender() == self.stream_button:
                 self.timer.stop()
                 self.plot_timer.stop()
+                self.check_timer.stop()
                 self.data.save()
                 self.stream_button.setStyleSheet("background-color: none")
                 
@@ -619,6 +649,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.stream_button.setStyleSheet("background-color: green")
                 self.timer.start()
                 self.plot_timer.start()
+                self.check_timer.start()
                 
             
             actual = self.table.rowCount() 
