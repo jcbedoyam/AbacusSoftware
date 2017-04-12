@@ -17,8 +17,9 @@ from itertools import combinations
 from threading import Thread, Timer
 from time import sleep, localtime, strftime, time
 import serial.tools.list_ports as find_ports
-
-
+#################
+import numpy as np
+#################
 ADDRESS = {'delayA_ns': 0,
            'delayA_us': 1,
            'delayA_ms': 2,
