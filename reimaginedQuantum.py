@@ -15,7 +15,7 @@ import serial
 import codecs
 from itertools import combinations
 from threading import Thread, Timer
-from time import sleep, localtime, strftime, time
+from time import sleep, localtime, strftime, time, asctime
 import serial.tools.list_ports as find_ports
 #################
 import numpy as np
@@ -51,6 +51,11 @@ ADDRESS = {'delayA_ns': 0,
            'coincidencesAB_LSB': 28,
            'coincidencesAB_MSB': 29}
 
+READ_VALUE = 0x0e #: Reading operation signal
+WRITE_VALUE = 0x0f #: Writing operation signal
+START_COMMUNICATION = 0x02 #: Begin message signal
+END_COMMUNICATION = 0x04 #: End of message
+MAXIMUM_WRITTING_TRIES = 20 #: Number of tries done to write a value
 class CommunicationPort(object):
     """
     Constants
@@ -185,12 +190,7 @@ class Channel(object):
     """
     Constants
     """
-    READ_VALUE = 0x0e #: Reading operation signal
-    WRITE_VALUE = 0x0f #: Writing operation signal
-    START_COMMUNICATION = 0x02 #: Begin message signal
-    END_COMMUNICATION = 0x04 #: End of message
-    
-    global ADDRESS
+    global ADDRESS, READ_VALUE, WRITE_VALUE, START_COMMUNICATION, END_COMMUNICATION
     def __init__(self, name, port):
         self.name = name
         self.port = port
@@ -224,11 +224,11 @@ class Channel(object):
             list: list of bytes containing channel info.
         """
         if read:
-            message = [self.START_COMMUNICATION, self.READ_VALUE, self.address,
-                       0x00, 0x00, self.END_COMMUNICATION]
+            message = [START_COMMUNICATION, READ_VALUE, self.address,
+                       0x00, 0x00, END_COMMUNICATION]
         else:
-            message = [self.START_COMMUNICATION, self.WRITE_VALUE, self.address,
-                       self.msb_value, self.lsb_value, self.END_COMMUNICATION]
+            message = [START_COMMUNICATION, WRITE_VALUE, self.address,
+                       self.msb_value, self.lsb_value, END_COMMUNICATION]
         return serial.to_bytes(message)
     
     def verify_values(self, hex_list):
@@ -262,13 +262,15 @@ class TimerChannel(object):
     """
     UNITS = ['ns', 'us', 'ms', 's']
     NUMBER_OF_CHANNELS = len(UNITS)
-    global ADDRESS
+    global ADDRESS, READ_VALUE, WRITE_VALUE, START_COMMUNICATION, END_COMMUNICATION, MAXIMUM_WRITTING_TRIES
     def __init__(self, prefix, port, base):
         self.prefix = prefix
         self.port = port
         self.base = base
         self.channels_names = ["%s_%s"%(prefix, unit) for unit in self.UNITS]
         self.channels = [Channel(name, port) for name in self.channels_names]
+        self.first_address = self.channels[0].address 
+        self.last_address = self.channels[3].address
         self.value = 0 # in base
         self.values = [0, 0, 0, 0]
         
@@ -279,10 +281,10 @@ class TimerChannel(object):
         
     def read_values(self, values):
         self.values = self.unnested_values(values)
-        self.value = int(self.base*sum([self.values[i]*10**(3*i) for i in range(self.NUMBER_OF_CHANNELS)]))
+        self.value = int((1e-9/self.base)*sum([self.values[i]*10**(3*i) for i in range(self.NUMBER_OF_CHANNELS)]))
         
     def unnested_values(self, values):
-        return [int(value[0][1],16) for value in values]
+        return [int(value[1], 16) for value in values]
         
     def parse_to_units(self):
         first_order = int(self.base*self.value*1e9)
@@ -308,15 +310,24 @@ class TimerChannel(object):
             self.read_values(answer)
         return self.value
     
+    def construct_message(self):
+        return [START_COMMUNICATION, READ_VALUE, 
+                self.first_address, 0x00, 0x03, END_COMMUNICATION]
+        
     def check_values(self):
-        values = self.exchange_values()
-        values_unnested = self.unnested_values(values)
-        answer = self.verify_values(values_unnested)
-        if not answer:
-            self.read_values(values)
-            return self.prefix, int(self.value/self.base)
-        else:
-            return None
+        values = self.port.message(self.construct_message(), wait_for_answer = True)
+        values = self.unnested_values(values)
+        check = self.verify_values(values)
+        return check
+        
+    def set_write_value(self, value):
+        for i in range(MAXIMUM_WRITTING_TRIES):    
+            self.set_value(value)
+            self.update_values(False)
+            if self.check_values():
+                break
+        if i == MAXIMUM_WRITTING_TRIES -1:
+            raise Exception("Maximum writting tries.")
         
 class DataChannel(object):
     """
@@ -337,28 +348,23 @@ class DataChannel(object):
         self.hex_value = "0x00"
         self.value = 0
         self.values = [0, 0]
-        
-    def set_value(self, value):
-        self.value = value
-        self.split_value()
-        [channel.set_value(value) for (channel, value) in zip(self.channels, self.values)]
+ 
+    def get_value(self):
+        return self.value
     
-    def split_value(self):
-        self.hex_value = "%08X"%self.value
-        self.values = [int(self.hex_value[:4], 16), int(self.hex_value[4:], 16)]
-        
     def read_values(self, values):
-        self.hex_value = "".join([value[0][1] for value in values])
+        self.hex_value = "".join([values[1][1], values[0][1]])
         self.value = int(self.hex_value, 16)
         self.values = [int(self.hex_value[:4], 16), int(self.hex_value[4:], 16)]
         
-    def exchange_values(self):
-        return [channel.exchange_values(True) for channel in self.channels]
-    
     def update_values(self):
-        answer = [channel.update_values(True) for channel in self.channels]
+        answer = self.port.message(self.construct_message(), wait_for_answer = True)
         self.read_values(answer)
         return self.value
+    
+    def construct_message(self):
+        return [START_COMMUNICATION, READ_VALUE, 
+                self.channels[1].address, 0x00, 0x01, END_COMMUNICATION]
 
 class FunctionTimer(object):
     def __init__(self, interval, function, *args):
@@ -398,48 +404,38 @@ class Detector(object):
         self.identifier = identifier
         self.name = "Detector %s"%self.identifier
         self.port = port
-        self.data_interval = data_interval/1000 # in miliseconds
-        self.timer_check_interval = timer_check_interval/1000
         self.data_channel = DataChannel("counts%s"%self.identifier, self.port)
         self.delay_channel = TimerChannel("delay%s"%self.identifier, self.port, self.BASE_DELAY)
         self.sleep_channel = TimerChannel("sleepTime%s"%self.identifier, self.port, self.BASE_SLEEP)
-        
-        self.time_timer = FunctionTimer(self.timer_check_interval, self.check_times)
-        self.data_timer = FunctionTimer(self.data_interval, self.update_data)
-        
+        self.first_data_address = self.data_channel.channels[1].address
+        self.first_timer_address = self.delay_channel.first_address
         self.current_data = 0
+        
+    def read_values(self, values):
+        self.data_channel.read_values(values)
+        
+    def set_values(self, values):
+        self.data_channel.set_values(values)
+        
+    def get_timer_values(self):
+        return self.delay_channel.value, self.sleep_channel.value
+        
+    def get_value(self):
+        self.current_data = self.data_channel.get_value()
+        return self.current_data
         
     def update_data(self):
         self.current_data = self.data_channel.update_values()
-        return self.current_data
-    
-    def check_values(self, channel):
-        return channel.check_values()
-#        values = channel.exchange_values()
-#        values = channel.unnested_values(values)
-#        check = channel.verify_values(values)
-#        return check
         
-    def check_times(self):
-        check_delay = self.check_values(self.delay_channel)
-        check_sleep = self.check_values(self.sleep_channel)
-        ans = []
-        if check_delay != None:
-            ans += [check_delay]
-        if check_sleep != None:
-            ans += [check_sleep]
-        return ans
-        
-    def start_timers(self, interval):
-        pass
+    def set_timers_values(self, values):
+        self.delay_channel.read_values(values[:4])
+        self.sleep_channel.read_values(values[4:])
     
     def set_delay(self, value):
-        self.delay_channel.set_value(value)
-        self.delay_channel.update_values(read = False)
+        self.delay_channel.set_write_value(value)
         
     def set_sleep(self, value):
-        self.sleep_channel.set_value(value)
-        self.sleep_channel.update_values(read = False)
+        self.sleep_channel.set_write_value(value)
         
     def set_times(self, delay, sleep):
         self.set_delay(delay)
@@ -451,7 +447,7 @@ class Experiment(object):
     """
     BASE_SAMPLING = 1e-3 #: Default sampling time (seconds)
     BASE_COINWIN = 1e-9 #: Default coincidence window (seconds)
-    
+    global READ_VALUE, WRITE_VALUE, START_COMMUNICATION, END_COMMUNICATION
     def __init__(self, port, number_detectors = 2):
         self.port = port
         self.number_detectors = number_detectors
@@ -466,19 +462,61 @@ class Experiment(object):
         self.sampling_channel = TimerChannel("samplingTime", port, self.BASE_SAMPLING)
         self.coinWindow_channel = TimerChannel("coincidenceWindow", port, self.BASE_COINWIN)
         
-    
+    def construct_message(self, data = True):
+        if data:
+            number = "%08X"%(2*(self.number_detectors + self.number_coins) - 1)
+            first = self.detectors[0].first_data_address
+        else:
+            number = "%08X"%(self.coinWindow_channel.last_address - self.detectors[0].first_timer_address)
+            first = self.detectors[0].first_timer_address
+        
+        msb = int(number[:4], 16)
+        lsb = int(number[4:], 16)
+        return [START_COMMUNICATION, READ_VALUE, first, 
+                msb, lsb, END_COMMUNICATION]
+        
     def current_values(self):
-        detector_values = [detector.update_data() for detector in self.detectors]
-        coin_values = [coin.update_values() for coin in self.coin_channels]
+        ans = self.port.message(self.construct_message(), wait_for_answer = True)
+        detector_values = []
+        coin_values = []
+        for i in range(self.number_detectors):
+            self.detectors[i].read_values(ans[2*i:2*i+2])
+            detector_values.append(self.detectors[i].get_value())
+        for j in range(self.number_coins):
+            self.coin_channels[j].read_values(ans[2*(i+j+1):2*(i+j+1)+2])
+            coin_values.append(self.coin_channels[j].get_value())
         return time(), detector_values, coin_values
     
     def set_sampling(self, value):
-        self.sampling_channel.set_value(value)
-        self.sampling_channel.update_values(False)
+        self.sampling_channel.set_write_value(value)
         
     def set_coinWindow(self, value):
-        self.coinWindow_channel.set_value(value)
-        self.coinWindow_channel.update_values(False)
+        self.coinWindow_channel.set_write_value(value)
+        
+    def get_sampling_value(self):
+        return self.sampling_channel.value
+        
+    def get_coinwin_value(self):
+        return self.coinWindow_channel.value
+    
+    def get_detectors_timers_values(self):
+        return [detector.get_timer_values() for detector in self.detectors]
+
+    def get_combinations(self):
+        letters = "".join(self.detector_identifiers)
+        coins = []
+        for i in range(1, self.number_detectors):
+            coins += list(combinations(letters, i+1))
+            
+        return ["".join(values) for values in coins]
+    
+    def periodic_check(self):
+        values = self.port.message(self.construct_message(data = False), wait_for_answer = True)
+        for i in range(self.number_detectors):
+            last = 8*(i+1)
+            self.detectors[i].set_timers_values(values[8*i:last])
+        self.sampling_channel.read_values(values[last:4+last])
+        self.coinWindow_channel.read_values(values[last+4:])
         
     def measure_N_points(self, detector_identifiers, interval, N_points, print_ = True):
         if detector_identifiers != []:
@@ -520,27 +558,8 @@ class Experiment(object):
             sleep(interval)
             
         return times, data_detectors, data_coins
-
-    def get_combinations(self):
-        letters = "".join(self.detector_identifiers)
-        coins = []
-        for i in range(1, self.number_detectors):
-            coins += list(combinations(letters, i+1))
-            
-        return ["".join(values) for values in coins]
     
-    def check_values(self):
-        values1 = self.sampling_channel.check_values()
-        values2 = self.coinWindow_channel.check_values()
-        values = []
-        for detector in self.detectors:
-            values += detector.check_times()
-        if values1 != None:
-            values += [values1]
-        if values2 != None:
-            values += [values2]
-        return values
-
+    
 CURRENT_OS = sys.platform
     
 
@@ -556,33 +575,33 @@ def findPort():
             ports["%s (%s)"%(port.description, port.device)] = port.device
     return ports
     
-if __name__ == "__main__":
-    import numpy as np
-    import matplotlib.pyplot as plt
-    
-    port = CommunicationPort("/dev/ttyUSB0")
-    exp = Experiment(port, 2)
-    time, detectors, coins = exp.measure_N_points(["A", "B"], 0.0, 50, print_ = False)
-    
-    fig, axes = plt.subplots(2, sharex = True)
-    
-    # DETECTORS
-    n = detectors.shape[1]
-    if n == 1:
-        axes[0].plot(time, detectors, "-o", label = "%s"%exp.detectors[0].name)
-    else:
-        for i in range(n):
-            axes[0].plot(time, detectors[:, i], "-o", label = "%s"%exp.detectors[i].name)
-            
-    # COINCIDENCES
-    n = coins.shape[1]
-    if n == 1:
-        axes[1].plot(time, coins, "-o", label = "%s"%exp.coin_channels[0].prefix)
-    else:
-        for i in range(n):
-            axes[1].plot(time, detectors[:, i], "-o", label = "%s"%exp.coin_channels[i].prefix)
-    for ax in axes:
-        ax.legend()
-        ax.set_ylabel("Counts")
-    
-    plt.show()
+#if __name__ == "__main__":
+#    import numpy as np
+#    import matplotlib.pyplot as plt
+#    
+#    port = CommunicationPort("/dev/ttyUSB0")
+#    exp = Experiment(port, 2)
+#    time, detectors, coins = exp.measure_N_points(["A", "B"], 0.0, 50, print_ = False)
+#    
+#    fig, axes = plt.subplots(2, sharex = True)
+#    
+#    # DETECTORS
+#    n = detectors.shape[1]
+#    if n == 1:
+#        axes[0].plot(time, detectors, "-o", label = "%s"%exp.detectors[0].name)
+#    else:
+#        for i in range(n):
+#            axes[0].plot(time, detectors[:, i], "-o", label = "%s"%exp.detectors[i].name)
+#            
+#    # COINCIDENCES
+#    n = coins.shape[1]
+#    if n == 1:
+#        axes[1].plot(time, coins, "-o", label = "%s"%exp.coin_channels[0].prefix)
+#    else:
+#        for i in range(n):
+#            axes[1].plot(time, detectors[:, i], "-o", label = "%s"%exp.coin_channels[i].prefix)
+#    for ax in axes:
+#        ax.legend()
+#        ax.set_ylabel("Counts")
+#    
+#    plt.show()
