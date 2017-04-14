@@ -257,8 +257,8 @@ class AutoSizeLabel(QtWidgets.QLabel):
     from reclosedev at http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour
     and Jean-Sébastien http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt
     """
-    MAX_CHARS = 20
-    MAX_DIGITS = 6
+    MAX_CHARS = 25
+    MAX_DIGITS = 7
     global CURRENT_OS
     def __init__(self, text, value):
         QtWidgets.QLabel.__init__(self)
@@ -272,12 +272,12 @@ class AutoSizeLabel(QtWidgets.QLabel):
         self.initial = False
         self.initial_font_size = 10
         self.font_size = 10
-        self.MAX_TRY = 10
+        self.MAX_TRY = 40
         self.height = self.contentsRect().height()
         self.width = self.contentsRect().width()
         self.name = text
         self.setText(self.stylish_text(text, value))
-        self.set_font_size(20)
+        self.set_font_size(self.font_size)
         
     def set_font_size(self, size):
         f = self.font()
@@ -315,21 +315,20 @@ class AutoSizeLabel(QtWidgets.QLabel):
         cr = self.contentsRect()
         height = cr.height()
         width = cr.width()
-        if height*width < self.height*self.width:
+        difference = height*width - self.height*self.width
+        if abs(difference) > 1:
             self.font_size = self.initial_font_size
-        else:
-            self.font_size += -5
-        for i in range(self.MAX_TRY):
-            f.setPixelSize(self.font_size)
-            br =  QtGui.QFontMetrics(f).boundingRect(self.text())
-            if br.height() <= cr.height() and br.width() <= cr.width():
-                self.font_size += 1
-            else:
-                f.setPixelSize(max(self.font_size - 1, 1))
-                break
-        self.setFont(f)
-        self.height = height
-        self.width = width
+            for i in range(self.MAX_TRY):
+                f.setPixelSize(self.font_size)
+                br =  QtGui.QFontMetrics(f).boundingRect(self.text())
+                if br.height() <= cr.height() and br.width() <= cr.width():
+                    self.font_size += 1
+                else:
+                    f.setPixelSize(max(self.font_size - 1, 1))
+                    break
+            self.setFont(f)
+            self.height = height
+            self.width = width
     
 class Canvas(FigureCanvas):
     def __init__(self, figure):
