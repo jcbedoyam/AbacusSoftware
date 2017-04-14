@@ -315,8 +315,7 @@ class AutoSizeLabel(QtWidgets.QLabel):
         cr = self.contentsRect()
         height = cr.height()
         width = cr.width()
-        difference = height*width - self.height*self.width
-        if abs(difference) > 1:
+        if abs(height*width - self.height*self.width) > 1:
             self.font_size = self.initial_font_size
             for i in range(self.MAX_TRY):
                 f.setPixelSize(self.font_size)

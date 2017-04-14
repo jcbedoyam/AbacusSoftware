@@ -96,7 +96,7 @@ class Ui_MainWindow(object):
         self.samp_spinBox.setMaximumSize(QtCore.QSize(100, 16777215))
         self.samp_spinBox.setCorrectionMode(QtWidgets.QAbstractSpinBox.CorrectToNearestValue)
         self.samp_spinBox.setKeyboardTracking(False)
-        self.samp_spinBox.setMinimum(50)
+        self.samp_spinBox.setMinimum(30)
         self.samp_spinBox.setMaximum(1000000)
         self.samp_spinBox.setProperty("value", 500)
         self.samp_spinBox.setObjectName("samp_spinBox")

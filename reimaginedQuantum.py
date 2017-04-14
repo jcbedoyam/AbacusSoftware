@@ -129,6 +129,7 @@ class CommunicationPort(object):
             answer = "Timeout: noisy answer '%s'"%hexa[0]
             if hexa[0] == "":
                 answer = 'Timeout: device does not answer.'
+            self.serial.flush()
             raise Exception(answer)
         while True:
             byte = codecs.encode(self.serial.read(1), "hex_codec").decode()
