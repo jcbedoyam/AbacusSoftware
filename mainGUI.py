@@ -472,7 +472,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.port_box.installEventFilter(self)
         self.timer.timeout.connect(self.method_streamer)
         self.plot_timer.timeout.connect(self.update_plot)
-        self.check_timer.timeout.connect(self.check_clocks)
+        self.check_timer.timeout.connect(self.handle_check)
         self.save_button.clicked.connect(self.choose_file)
         self.stream_button.clicked.connect(self.method_streamer)
         self.channels_button.clicked.connect(self.channelsCaller)
@@ -486,6 +486,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.data = None
         self.params_header = None
+        self.do_check = False
         """
         set
         """
@@ -712,8 +713,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.window = propertiesWindow(self)
         self.window.show()
         
-    def check_clocks(self):
-        self.experiment.periodic_check()
+    def handle_check(self):
+        self.do_check = True
+        
+    def periodic_check(self):
+        try:
+            self.experiment.periodic_check()
+        except Exception as e:
+            self.errorWindow(e)
         samp = self.experiment.get_sampling_value()
         coin = self.experiment.get_coinwin_value()
         if self.samp_spinBox.value() != samp:    
@@ -736,7 +743,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
        
     def method_streamer(self):
         try:
-            time_, detectors, coins = self.experiment.current_values()
             if self.timer.isActive() and self.sender() == self.stream_button:
                 self.stop_clocks()
                 self.data.save()
@@ -748,6 +754,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.method_sampling(self.samp_spinBox.value())
                 self.method_coinWin(self.coin_spinBox.value())
                 self.start_clocks()    
+            
+            time_, detectors, coins = self.experiment.current_values()
+            if self.do_check:
+                self.periodic_check()
+                self.do_check = False
             
             actual = self.table.rowCount() 
             if (actual - self.current_cell) <= self.TABLE_YGROW:

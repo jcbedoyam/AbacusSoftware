@@ -49,16 +49,19 @@ ADDRESS = {'delayA_ns': 0,
            'countsB_LSB': 26,
            'countsB_MSB': 27,
            'coincidencesAB_LSB': 28,
-           'coincidencesAB_MSB': 29}
+           'coincidencesAB_MSB': 29} #: Memory addresses 
 
 READ_VALUE = 0x0e #: Reading operation signal
 WRITE_VALUE = 0x0f #: Writing operation signal
 START_COMMUNICATION = 0x02 #: Begin message signal
 END_COMMUNICATION = 0x04 #: End of message
-MAXIMUM_WRITTING_TRIES = 20 #: Number of tries done to write a value
+MAXIMUM_WRITING_TRIES = 20 #: Number of tries done to write a value
 class CommunicationPort(object):
-    """
-    Constants
+    """ Builds a serial port from pyserial. 
+    
+    Implements multiple functions that will be used by different instances of the experiment.
+    
+    **Constants**
     """
     BAUDRATE = 115200 #: Default baudrate for the serial port communication
     TIMEOUT = 0.02 #: Maximum time without answer from the serial port
@@ -184,11 +187,13 @@ class CommunicationPort(object):
             return None
         
     def close(self):
+        """ Closes the serial port."""
         self.serial.close()
                 
 class Channel(object):
-    """
-    Constants
+    """ Implements a channel, an object representation of a memory address.
+    
+    **Constants**
     """
     global ADDRESS, READ_VALUE, WRITE_VALUE, START_COMMUNICATION, END_COMMUNICATION
     def __init__(self, name, port):
@@ -201,7 +206,7 @@ class Channel(object):
         self.lsb_value = 0
         
     def set_value(self, value):
-        """ Writes and incoming int value to class attributes."""
+        """ Writes and incoming int value to class attributes. """
         self.int_value = value
         self.hex_value = "%04X"%value
         self.split_value()
@@ -251,18 +256,26 @@ class Channel(object):
         return self.port.message(message, wait_for_answer = read)
             
     def update_values(self, read = True):
+        """ Updates values read from device.
+        
+        Returns:
+            list of string hexadecimal values
+        """
         answer = self.exchange_values(read)
         if read:
             self.read_value(answer)
         return answer
             
 class TimerChannel(object):
+    """ Implements a timer channel, an object representation of multiple memory addresses.
+    
+    Timer channels are a construction of four simple channels, each for every time unit.
+    
+    **Constants**
     """
-    Constants
-    """
-    UNITS = ['ns', 'us', 'ms', 's']
-    NUMBER_OF_CHANNELS = len(UNITS)
-    global ADDRESS, READ_VALUE, WRITE_VALUE, START_COMMUNICATION, END_COMMUNICATION, MAXIMUM_WRITTING_TRIES
+    UNITS = ['ns', 'us', 'ms', 's'] #: Units contained in each channel.
+    NUMBER_OF_CHANNELS = len(UNITS) #: Number of channels in a timer channel.
+    global ADDRESS, READ_VALUE, WRITE_VALUE, START_COMMUNICATION, END_COMMUNICATION, MAXIMUM_WRITING_TRIES
     def __init__(self, prefix, port, base):
         self.prefix = prefix
         self.port = port
@@ -275,18 +288,29 @@ class TimerChannel(object):
         self.values = [0, 0, 0, 0]
         
     def set_value(self, value):
+        """ Writes an incoming integer value to memory, and parses it into time units.
+        Information is passed down the tree.
+        """
         self.value = value
         self.parse_to_units()
         [channel.set_value(value) for (channel, value) in zip(self.channels, self.values)]
         
     def read_values(self, values):
+        """ Writes an incoming tuple of hexadecimal values to memory and constructs 
+        simple representation. """
         self.values = self.unnested_values(values)
         self.value = int((1e-9/self.base)*sum([self.values[i]*10**(3*i) for i in range(self.NUMBER_OF_CHANNELS)]))
         
     def unnested_values(self, values):
+        """ Removes addresses from incoming hexadecimal values. 
+        
+        Returns:
+            list: each position contains an integer representation of a hexadecimal value.
+        """
         return [int(value[1], 16) for value in values]
         
     def parse_to_units(self):
+        """ Breaks a simple value representation to time units. """
         first_order = int(self.base*self.value*1e9)
         micro, nano = divmod(first_order, 1000)
         unit, mili = divmod(int(micro/1000), 1000)
@@ -295,6 +319,11 @@ class TimerChannel(object):
         self.values = [nano, micro, mili, unit]
         
     def verify_values(self, values_to_verify):
+        """ Verifies if incoming values are equal to the stored ones.
+        
+        Return:
+            bool: True if they are the same, False otherwise.
+        """
         n = sum([self.values[i] == values_to_verify[i] for i in range(self.NUMBER_OF_CHANNELS)])
         if n == self.NUMBER_OF_CHANNELS:
             return True
@@ -302,39 +331,71 @@ class TimerChannel(object):
             return False
         
     def exchange_values(self, read = True):
+        """ Exchanges information with device.
+        
+        If `read = True` means it will only send a message to device in order to get its answer.
+        Otherwise the communication will try to write at the device.
+        """
         return [channel.exchange_values(read) for channel in self.channels]
     
     def update_values(self, read = True):
+        """ Updates current values with the device ones.
+        
+        Returns:
+            int: current value estored at the timer channel.
+        """
         answer = [channel.update_values(read) for channel in self.channels]
         if read:
             self.read_values(answer)
         return self.value
     
     def construct_message(self):
+        """ Constructs the message to be send to the device to 
+        gather the values written in memory for all four channels.
+        
+        Returns:
+            list: containing integer representations of hexadecimal values.    
+        """
         return [START_COMMUNICATION, READ_VALUE, 
                 self.first_address, 0x00, 0x03, END_COMMUNICATION]
         
     def check_values(self):
+        """ Sends message and waits for answer, in which current device values are stored.
+        Checks if those values are the same with the channel ones.
+        
+        Returns:
+            bool: True if values are the same, False otherwise.
+        """
         values = self.port.message(self.construct_message(), wait_for_answer = True)
         values = self.unnested_values(values)
         check = self.verify_values(values)
         return check
         
     def set_write_value(self, value):
-        for i in range(MAXIMUM_WRITTING_TRIES):    
+        """ Sets the incoming value to the class attribute, writtes them to device.
+        The process is done as many times are in `MAXIMUM_WRITING_TRIES`, 
+        if values are different raises and Exception.
+        
+        Raises:
+            Exception: Maximum writting tries.
+        """
+        for i in range(MAXIMUM_WRITING_TRIES):    
             self.set_value(value)
             self.update_values(False)
             if self.check_values():
                 break
-        if i == MAXIMUM_WRITTING_TRIES -1:
+        if i == MAXIMUM_WRITING_TRIES -1:
             raise Exception("Maximum writting tries.")
         
 class DataChannel(object):
+    """ Implements a data channel, an object representation of multiple memory addresses.
+    Timer channels are a construction of two simple channels, one for the Most Significant Bytes (MSB)
+    and another for the Least Significant Bytes (LSB).
+    
+    **Constants**
     """
-    Constants
-    """
-    SIGNIFICANT_BYTES = ["MSB", "LSB"]
-    NUMBER_OF_CHANNELS = len(SIGNIFICANT_BYTES)
+    SIGNIFICANT_BYTES = ["MSB", "LSB"] #: Significant bytes.
+    NUMBER_OF_CHANNELS = len(SIGNIFICANT_BYTES) #: Number of channels in data channel.
     global ADDRESS
     def __init__(self, prefix, port):
         letters = prefix.strip()
@@ -350,53 +411,45 @@ class DataChannel(object):
         self.values = [0, 0]
  
     def get_value(self):
+        """ Returns the current value.
+        
+        Returns:
+            int: current value.
+        """
         return self.value
     
     def read_values(self, values):
+        """ Saves an incoming set of tuples containg the values of each channel.
+        """
         self.hex_value = "".join([values[1][1], values[0][1]])
         self.value = int(self.hex_value, 16)
         self.values = [int(self.hex_value[:4], 16), int(self.hex_value[4:], 16)]
         
     def update_values(self):
+        """ Sends a message to the device, the answer contains current device values.
+        It then stores them with the help of `read_values(values)`.
+        
+        Returns:
+            int: current value.
+        """
         answer = self.port.message(self.construct_message(), wait_for_answer = True)
         self.read_values(answer)
         return self.value
     
     def construct_message(self):
+        """ Constructs the message to be send to the device in order to get its current values.
+        
+        Returns:
+            list: containing integer representations of hexadecimal values.
+        """
         return [START_COMMUNICATION, READ_VALUE, 
                 self.channels[1].address, 0x00, 0x01, END_COMMUNICATION]
-
-class FunctionTimer(object):
-    def __init__(self, interval, function, *args):
-        self._timer = None
-        self.interval = interval
-        self.function = function
-        self.is_running = False
-        self.args = args
-
-    def _run(self):
-        self.is_running = False
-        self.start()
-        try:
-            self.function(*self.args)
-        except Exception as e:
-            if not "noisy answer" in str(e):
-                self.stop()
-                raise e
-
-    def start(self):
-        if not self.is_running:
-            self._timer = Timer(self.interval, self._run)
-            self._timer.start()
-            self.is_running = True
-
-    def stop(self):
-        self._timer.cancel()
-        self.is_running = False
         
 class Detector(object):
-    """
-    Constants
+    """ Implements a detector, an object representation of multiple memory addresses.
+    A detector is made of one data channel and two timer channels.
+    
+    **Constants**
     """
     BASE_DELAY = 1e-9 #: Default channnel delay time (seconds)
     BASE_SLEEP = 1e-9 #: Default channel sleep time (seconds)
@@ -412,26 +465,41 @@ class Detector(object):
         self.current_data = 0
         
     def read_values(self, values):
+        """ Reads incoming values at the data channel."""
         self.data_channel.read_values(values)
         
-    def set_values(self, values):
-        self.data_channel.set_values(values)
+#    def set_values(self, values):
+#        """ Dont know"""
+#        self.data_channel.set_values(values)
         
     def get_timer_values(self):
+        """ Gets the values at each timer channel.
+        
+        Returns:
+            tuple: each value in a position of the tuple..
+        """
         return self.delay_channel.value, self.sleep_channel.value
         
     def get_value(self):
+        """ Stores and returns the current value of the data channel.
+        
+        Returns:
+            int: current value at the data channel.
+        """
         self.current_data = self.data_channel.get_value()
         return self.current_data
         
     def update_data(self):
+        """ Stores a fresh value of the data channel."""
         self.current_data = self.data_channel.update_values()
         
     def set_timers_values(self, values):
+        """ Sets the incoming values in each timer channel."""
         self.delay_channel.read_values(values[:4])
         self.sleep_channel.read_values(values[4:])
     
     def set_delay(self, value):
+        """ Saves the incoming value, writes it to device and verifies writing. """
         self.delay_channel.set_write_value(value)
         
     def set_sleep(self, value):

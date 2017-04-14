@@ -74,7 +74,8 @@ Step 6 - reboot the pi
 
 sudo reboot
 ```
-
+### Drivers
+[1] http://www.ftdichip.com/Drivers/VCP.htm
 ### GUI
 ### Binaries
 MS Visual C++ dll
