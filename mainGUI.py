@@ -11,6 +11,7 @@ import GUI_images
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import re
+
 from reimaginedQuantum import *
 
 DELIMITER = "\t"
@@ -35,8 +36,7 @@ def heavy_import():
     
     Useful to be combined with threading processes.
     """
-    global plt, FigureCanvas, NavigationToolbar, np, EngFormatter
-    import numpy as np
+    global plt, FigureCanvas, NavigationToolbar, EngFormatter
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_qt5agg import (
                             FigureCanvasQTAgg as FigureCanvas,
@@ -470,7 +470,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.port_box.installEventFilter(self)
         self.timer.timeout.connect(self.method_streamer)
         self.plot_timer.timeout.connect(self.update_plot)
-        self.check_timer.timeout.connect(self.handle_check)
+        self.check_timer.timeout.connect(self.periodic_check)
         self.save_button.clicked.connect(self.choose_file)
         self.stream_button.clicked.connect(self.method_streamer)
         self.channels_button.clicked.connect(self.channelsCaller)
@@ -484,7 +484,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.data = None
         self.params_header = None
-        self.do_check = False
         """
         set
         """
@@ -710,10 +709,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     "The selected file already exists.\nData will be appended.")
             self.window = propertiesWindow(self)
         self.window.show()
-        
-    def handle_check(self):
-        self.do_check = True
-        
+
     def periodic_check(self):
         try:
             self.experiment.periodic_check()
@@ -754,9 +750,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.start_clocks()    
             
             time_, detectors, coins = self.experiment.current_values()
-            if self.do_check:
-                self.periodic_check()
-                self.do_check = False
             
             actual = self.table.rowCount() 
             if (actual - self.current_cell) <= self.TABLE_YGROW:

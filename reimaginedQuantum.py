@@ -13,6 +13,7 @@ import os
 import sys
 import serial
 import codecs
+from queue import Queue
 from itertools import combinations
 from threading import Thread, Timer
 from time import sleep, localtime, strftime, time, asctime
@@ -69,13 +70,20 @@ class CommunicationPort(object):
     PARITY = serial.PARITY_NONE #: Message will not have any parity
     STOP_BITS = serial.STOPBITS_ONE #: Message contains only one stop bit
     BYTE_SIZE = serial.EIGHTBITS #: One byte = 8 bits
-    
+    MESSAGE_TRIGGER = 1e-3 #: If queue is empty    
     def __init__(self, device, baudrate = BAUDRATE, timeout = TIMEOUT, bounce_timeout = BOUNCE_TIMEOUT):
         self.device = device
         self.baudrate = baudrate
         self.timeout = timeout
         self.bounce_timeout = bounce_timeout
         self.serial = self.begin_serial()
+        
+        # Implements a Queue to send messages
+        self.queue = Queue()
+        self.stop = False
+        self.answer = []
+        self.thread = Thread(target=self.handle_queue)
+        self.thread.start()
         
     def begin_serial(self):
         """ Initializes pyserial instance.
@@ -137,6 +145,14 @@ class CommunicationPort(object):
                 break
             hexa.append(byte)
         return hexa
+    
+    def handle_queue(self):
+        while not self.stop:
+            while not self.queue.empty():
+                conf, content, wait_for_answer = self.queue.get()
+                answer = self.message_internal(content, wait_for_answer) # call function
+                self.answer.append((conf, content, answer))
+            sleep(self.MESSAGE_TRIGGER)
         
     def receive(self):
         """ Organices information according to project requirements.
@@ -161,8 +177,19 @@ class CommunicationPort(object):
             return ans
         else:
             raise Exception("Message corrupted. Incorrect checksum.")
-
+            
     def message(self, content, wait_for_answer = False):
+        conf = np.random.random()
+        self.queue.put((conf, content, wait_for_answer))
+        while not self.stop:
+            for (i, item) in enumerate(self.answer):
+                if conf == item[0] and content == item[1]:
+                    value = item[1]
+                    del self.answer[i]
+                    return value
+        raise Exception("Port is closed.")
+
+    def message_internal(self, content, wait_for_answer = False):
         """ Sends a message, and waits for answer.
         
         Returns:
@@ -190,6 +217,7 @@ class CommunicationPort(object):
     def close(self):
         """ Closes the serial port."""
         self.serial.close()
+        self.stop = True
                 
 class Channel(object):
     """ Implements a channel, an object representation of a memory address.
