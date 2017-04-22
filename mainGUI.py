@@ -425,6 +425,7 @@ class Axes(object):
         self.axes.set_ylim(self.ylimits)
         self.axes.set_xlim(0, self.xmajor)
         self.axes.set_ylabel(self.ylabel)
+        self.axes.yaxis.set_major_formatter(EngFormatter())
         self.legend()
     
     def draw_artist(self):

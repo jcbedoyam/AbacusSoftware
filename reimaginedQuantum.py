@@ -136,6 +136,7 @@ class CommunicationPort(object):
             if byte == '':
                 break
             hexa.append(byte)
+        print(hexa)
         return hexa
         
     def receive(self):
@@ -358,7 +359,7 @@ class TimerChannel(object):
             list: containing integer representations of hexadecimal values.    
         """
         return [START_COMMUNICATION, READ_VALUE, 
-                self.first_address, 0x00, 0x03, END_COMMUNICATION]
+                self.first_address, 0x00, 0x04, END_COMMUNICATION]
         
     def check_values(self):
         """ Sends message and waits for answer, in which current device values are stored.
@@ -533,10 +534,10 @@ class Experiment(object):
         
     def construct_message(self, data = True):
         if data:
-            number = "%08X"%(2*(self.number_detectors + self.number_coins) - 1)
+            number = "%08X"%(2*(self.number_detectors + self.number_coins))
             first = self.detectors[0].first_data_address
         else:
-            number = "%08X"%(self.coinWindow_channel.last_address - self.detectors[0].first_timer_address)
+            number = "%08X"%(self.coinWindow_channel.last_address - self.detectors[0].first_timer_address +1)
             first = self.detectors[0].first_timer_address
         
         msb = int(number[:4], 16)
