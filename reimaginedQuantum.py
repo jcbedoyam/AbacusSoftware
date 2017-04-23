@@ -144,7 +144,6 @@ class CommunicationPort(object):
             if byte == '':
                 break
             hexa.append(byte)
-        print(hexa)
         return hexa
 
     def handle_queue(self):
@@ -180,7 +179,7 @@ class CommunicationPort(object):
             raise Exception("Message corrupted. Incorrect checksum.")
 
     def message(self, content, wait_for_answer = False):
-        self.message_internal(content, wait_for_answer)
+        return self.message_internal(content, wait_for_answer)
         # conf = np.random.random()
         # self.queue.put((conf, content, wait_for_answer))
         # while not self.stop:
@@ -410,13 +409,16 @@ class TimerChannel(object):
         Raises:
             Exception: Maximum writting tries.
         """
-        for i in range(MAXIMUM_WRITING_TRIES):
-            self.set_value(value)
-            self.update_values(False)
-            if self.check_values():
-                break
-        if i == MAXIMUM_WRITING_TRIES -1:
-            raise Exception("Maximum writting tries.")
+        try:
+            for i in range(MAXIMUM_WRITING_TRIES):
+                self.set_value(value)
+                self.update_values(False)
+                if self.check_values():
+                    break
+            if i == MAXIMUM_WRITING_TRIES -1:
+                raise Exception("Maximum writting tries.")
+        except Exception as e:
+            raise e
 
 class DataChannel(object):
     """ Implements a data channel, an object representation of multiple memory addresses.
@@ -499,10 +501,6 @@ class Detector(object):
         """ Reads incoming values at the data channel."""
         self.data_channel.read_values(values)
 
-#    def set_values(self, values):
-#        """ Dont know"""
-#        self.data_channel.set_values(values)
-
     def get_timer_values(self):
         """ Gets the values at each timer channel.
 
@@ -578,12 +576,15 @@ class Experiment(object):
         ans = self.port.message(self.construct_message(), wait_for_answer = True)
         detector_values = []
         coin_values = []
-        for i in range(self.number_detectors):
-            self.detectors[i].read_values(ans[2*i:2*i+2])
-            detector_values.append(self.detectors[i].get_value())
-        for j in range(self.number_coins):
-            self.coin_channels[j].read_values(ans[2*(i+j+1):2*(i+j+1)+2])
-            coin_values.append(self.coin_channels[j].get_value())
+        try:
+            for i in range(self.number_detectors):
+                self.detectors[i].read_values(ans[2*i:2*i+2])
+                detector_values.append(self.detectors[i].get_value())
+            for j in range(self.number_coins):
+                self.coin_channels[j].read_values(ans[2*(i+j+1):2*(i+j+1)+2])
+                coin_values.append(self.coin_channels[j].get_value())
+        except Exception as e:
+            raise e
         return time(), detector_values, coin_values
 
     def set_sampling(self, value):
@@ -610,12 +611,15 @@ class Experiment(object):
         return ["".join(values) for values in coins]
 
     def periodic_check(self):
-        values = self.port.message(self.construct_message(data = False), wait_for_answer = True)
-        for i in range(self.number_detectors):
-            last = 8*(i+1)
-            self.detectors[i].set_timers_values(values[8*i:last])
-        self.sampling_channel.read_values(values[last:4+last])
-        self.coinWindow_channel.read_values(values[last+4:])
+        try:
+            values = self.port.message(self.construct_message(data = False), wait_for_answer = True)
+            for i in range(self.number_detectors):
+                last = 8*(i+1)
+                self.detectors[i].set_timers_values(values[8*i:last])
+            self.sampling_channel.read_values(values[last:4+last])
+            self.coinWindow_channel.read_values(values[last+4:])
+        except Exception as e:
+            raise e
 
     def measure_N_points(self, detector_identifiers, interval, N_points, print_ = True):
         if detector_identifiers != []:
