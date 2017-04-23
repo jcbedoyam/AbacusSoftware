@@ -95,8 +95,8 @@ while 1:
                 address = int(out[2], 16)
                 if int(out[1], 16) == 0x0E:
                     additional_channels = int("%s%s"%(out[3], out[4]), 16)
-                    number_of_channels = additional_channels + 1
-                    if additional_channels == 1:
+                    number_of_channels = additional_channels
+                    if additional_channels == 0:
                         number_of_channels = 1
                     
                     n_bytes = 3*number_of_channels
