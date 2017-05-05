@@ -26,5 +26,7 @@ Software/mainwindow.py : Software/GUI/mainwindow.ui
 
 html :
 	$(SPHINXBUILD) -b html $(SOURCEDIR) $(BUILDDIR)/html
+	rm -r docs/* && mv build/html/* docs/ && rm -r build
+
 pdf :
 	$(SPHINXBUILD) -b latexpdf $(SOURCEDIR) $(BUILDDIR)/latex
