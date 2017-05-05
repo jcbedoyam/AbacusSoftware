@@ -5,27 +5,26 @@ SPHINXPROJ    = ReimaginedQuantum
 SOURCEDIR     = source
 BUILDDIR      = build
 
-run : mainwindow.py channels.py mainGUI.py reimaginedQuantum.py GUI_images.py
-	python mainGUI.py && rm -r __pycache__ && clear
+run : install run_software
 
-git : mainGUI.py
-	git add . && git commit -m "from make" && git push origin master
 
-Quantum : mainwindow.py channels.py main.py core.py GUI_images.py main.spec
-	pyinstaller --windowed --icon=GUI/icon.ico --hidden-import=PySide main.py
-#	mv dist/main Quantum
-#	rm -r dist build __pycache__
+#	cd Software & make & ../
+install :
+	cd Python && python setup.py install
 
-GUI_images.py : GUI/icon.png GUI/splash.png GUI/GUI_images.qrc
-	pyrcc5 GUI/GUI_images.qrc > GUI_images.py
+run_software : Software/mainwindow.py Software/channels.py Software/mainGUI.py Software/GUI_images.py
+	cd Software && python mainGUI.py && rm -r __pycache__ && clear
 
-channels.py : GUI/channels.ui
-	pyuic5 GUI/channels.ui > channels.py
+Software/GUI_images.py : Software/GUI/icon.png Software/GUI/splash.png Software/GUI/GUI_images.qrc
+	pyrcc5 Software/GUI/GUI_images.qrc > Software/GUI_images.py
 
-mainwindow.py : GUI/mainwindow.ui
-	pyuic5 GUI/mainwindow.ui > mainwindow.py
+Software/channels.py : Software/GUI/channels.ui
+	pyuic5 Software/GUI/channels.ui > Software/channels.py
 
-html : 
+Software/mainwindow.py : Software/GUI/mainwindow.ui
+	pyuic5 Software/GUI/mainwindow.ui > Software/mainwindow.py
+
+html :
 	$(SPHINXBUILD) -b html $(SOURCEDIR) $(BUILDDIR)/html
 pdf :
 	$(SPHINXBUILD) -b latexpdf $(SOURCEDIR) $(BUILDDIR)/latex

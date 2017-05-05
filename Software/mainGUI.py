@@ -932,49 +932,49 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             event.accept()
         else:
             event.ignore()
-#
-#if __name__ == "__main__":
-#    app = QtWidgets.QApplication(sys.argv)
-#    splash_pix = QtGui.QPixmap(':/splash.png')
-#    splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
-#    progressBar = QtWidgets.QProgressBar(splash)
-#    progressBar.setGeometry(250, 320, 100, 20)
-#    #progressBar.setStyleSheet(DEFAULT_STYLE)
-#    splash.show()
-#    app.processEvents()
-#    app.setWindowIcon(QtGui.QIcon(':/icon.png'))
-#
-#    if CURRENT_OS == 'win32':
-#        import ctypes
-#        myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
-#        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-#
-#    progressBar.setValue(15)
-#    from mainwindow import Ui_MainWindow
-#    progressBar.setValue(30)
-#    from channels import Ui_Dialog
-#    progressBar.setValue(50)
-#
-#    thread = Thread(target=heavy_import)
-#    thread.setDaemon(True)
-#    thread.start()
-#    i = 50
-#    while thread.is_alive():
-#        if i < 95:
-#            i += 1
-#            progressBar.setValue(i)
-#        sleep(0.2)
-#
-#    plt.rcParams.update({'font.size': 8})
-#
-#    main = Main()
-#    progressBar.setValue(100)
-#    main.show()
-#    splash.close()
-#    sys.exit(app.exec_())
 
-main = Main()
-progressBar.setValue(100)
-main.show()
-splash.close()
-sys.exit(app.exec_())
+if __name__ == "__main__":
+   app = QtWidgets.QApplication(sys.argv)
+   splash_pix = QtGui.QPixmap(':/splash.png')
+   splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
+   progressBar = QtWidgets.QProgressBar(splash)
+   progressBar.setGeometry(250, 320, 100, 20)
+   #progressBar.setStyleSheet(DEFAULT_STYLE)
+   splash.show()
+   app.processEvents()
+   app.setWindowIcon(QtGui.QIcon(':/icon.png'))
+
+   if CURRENT_OS == 'win32':
+       import ctypes
+       myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+       ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+
+   progressBar.setValue(15)
+   from mainwindow import Ui_MainWindow
+   progressBar.setValue(30)
+   from channels import Ui_Dialog
+   progressBar.setValue(50)
+
+   thread = Thread(target=heavy_import)
+   thread.setDaemon(True)
+   thread.start()
+   i = 50
+   while thread.is_alive():
+       if i < 95:
+           i += 1
+           progressBar.setValue(i)
+       sleep(0.2)
+
+   plt.rcParams.update({'font.size': 8})
+
+   main = Main()
+   progressBar.setValue(100)
+   main.show()
+   splash.close()
+   sys.exit(app.exec_())
+
+# main = Main()
+# progressBar.setValue(100)
+# main.show()
+# splash.close()
+# sys.exit(app.exec_())
