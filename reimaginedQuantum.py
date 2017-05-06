@@ -13,9 +13,9 @@ import os
 import sys
 import serial
 import codecs
+# from queue import Queue
 from itertools import combinations
 from threading import Thread, Timer
-from .exceptions import *
 from time import sleep, localtime, strftime, time, asctime
 import serial.tools.list_ports as find_ports
 #################
@@ -57,28 +57,6 @@ WRITE_VALUE = 0x0f #: Writing operation signal
 START_COMMUNICATION = 0x02 #: Begin message signal
 END_COMMUNICATION = 0x04 #: End of message
 MAXIMUM_WRITING_TRIES = 20 #: Number of tries done to write a value
-
-class Queue(object):
-    """
-    Implements a FIFO queue, two possible priorities are allowed.
-    """
-    def __init__(self):
-        self.high_objects = []
-        self.low_objects = []
-
-    def put(self, item, priority = 0):
-        if priority:
-            self.high_objects.append(item)
-        else:
-            self.low_objects.append(item)
-
-    def get(self):
-        if self.high_objects:
-            return self.high_objects.pop(0)
-        elif self.low_objects:
-            return self.low_objects.pop(0)
-        return None
-
 class CommunicationPort(object):
     """ Builds a serial port from pyserial.
 
@@ -101,12 +79,11 @@ class CommunicationPort(object):
         self.serial = self.begin_serial()
 
         # Implements a Queue to send messages
-        self.queue = Queue()
-        self.stop = False
-        self.answer = {}
-        self.thread = Thread(target=self.handle_queue)
-        self.thread.setDaemon(True)
-        self.thread.start()
+        # self.queue = Queue()
+        # self.stop = False
+        # self.answer = []
+        # self.thread = Thread(target=self.handle_queue)
+        # self.thread.start()
 
     def begin_serial(self):
         """ Initializes pyserial instance.
@@ -121,20 +98,6 @@ class CommunicationPort(object):
         return serial.Serial(port=self.device, baudrate=self.baudrate, parity=self.PARITY,
                                         stopbits=self.STOP_BITS,
                                         bytesize=self.BYTE_SIZE, timeout=self.TIMEOUT)
-
-    # def checksum(self, hex_list):
-    #     """ Implements a simple checksum to verify message integrity.
-    #
-    #     Raises:
-    #         CheckSumError(): in case checksum is wrong.
-    #     """
-    #     int_list = [int(value, 16) for value in hex_list]
-    #     int_score = sum(int_list[2:-1])
-    #     hex_score = "%04X"%int_score
-    #     last_values = hex_score[2:]
-    #     check = int(last_values, 16) + int(hex_list[-1], 16)
-    #     if check != 0xff:
-    #         raise CheckSumError()
 
     def checksum(self, hex_list):
         """ Implements a simple checksum to verify message integrity.
@@ -152,18 +115,6 @@ class CommunicationPort(object):
         else:
             return False
 
-    # def send(self, content):
-    #     """ Sends a message through the serial port.
-    #
-    #     Raises:
-    #         PySerialExceptions
-    #     """
-    #     try:
-    #         self.serial.write(content)
-    #     except:
-    #         self.serial.reset_input_buffer()
-    #         raise CommunicationError()
-
     def send(self, content):
         """ Sends a message through the serial port.
 
@@ -171,27 +122,6 @@ class CommunicationPort(object):
             PySerialExceptions
         """
         self.serial.write(content)
-
-    # def read(self):
-    #     """ Reads a message through the serial port.
-    #
-    #     Returns:
-    #         list: hexadecimal values decoded as strings.
-    #
-    #     Raises:
-    #         CommunicationError:
-    #     """
-    #     hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
-    #     if hexa[0] != "7e":
-    #         self.serial.reset_output_buffer()
-    #         raise CommunicationError()
-    #     while True:
-    #         byte = codecs.encode(self.serial.read(1), "hex_codec").decode()
-    #         if byte == '':
-    #             break
-    #         hexa.append(byte)
-    #     self.serial.flush()
-    #     return hexa
 
     def read(self):
         """ Reads a message through the serial port.
@@ -218,35 +148,11 @@ class CommunicationPort(object):
 
     def handle_queue(self):
         while not self.stop:
-            item = self.queue.get()
-            if item != None:
-                conf, content, wait_for_answer = item
+            while not self.queue.empty():
+                conf, content, wait_for_answer = self.queue.get()
                 answer = self.message_internal(content, wait_for_answer) # call function
-                self.answer[conf] = answer
-            else:
-                sleep(self.MESSAGE_TRIGGER)
-    #
-    # def receive(self):
-    #     """ Organices information according to project requirements.
-    #
-    #     Returns:
-    #         list: each position on list is made up with a tuple containing
-    #             channel and value in hexadecimal base.
-    #
-    #     Raises:
-    #         CheckSumError: if wrong checksum.
-    #     """
-    #
-    #     hexa = self.read()
-    #     self.checksum(hexa) # checks if checksum is correct
-    #     hexa = hexa[2:-1]
-    #     ans = []
-    #     n = int(len(hexa)/3) #signal comes in groups of three
-    #     for i in range(n):
-    #         channel = int(hexa[3*i], 16)
-    #         value = hexa[3*i+1] + hexa[3*i+2]
-    #         ans.append((channel, value))
-    #     return ans
+                self.answer.append((conf, content, answer))
+            sleep(self.MESSAGE_TRIGGER)
 
     def receive(self):
         """ Organices information according to project requirements.
@@ -273,43 +179,16 @@ class CommunicationPort(object):
             raise Exception("Message corrupted. Incorrect checksum.")
 
     def message(self, content, wait_for_answer = False):
-        conf = np.random.random()
-        self.queue.put((conf, content, wait_for_answer))
-        if wait_for_answer:
-            while not self.stop:
-                if conf in self.answer:
-                    value = self.answer[conf]
-                    del self.answer[conf]
-                    return value
-                sleep(self.MESSAGE_TRIGGER)
-        else:
-            return None
+        return self.message_internal(content, wait_for_answer)
+        # conf = np.random.random()
+        # self.queue.put((conf, content, wait_for_answer))
+        # while not self.stop:
+        #     for (i, item) in enumerate(self.answer):
+        #         if conf == item[0] and content == item[1]:
+        #             value = item[1]
+        #             del self.answer[i]
+        #             return value
         # raise Exception("Port is closed.")
-
-    # def message_internal(self, content, wait_for_answer = False):
-    #     """ Sends a message, and waits for answer.
-    #
-    #     Returns:
-    #         list: each postion on list is made up with a tuple containing
-    #             channel and value in hexadecimal base.
-    #
-    #     Raises:
-    #         Exception: any type ocurred with during `bounce_timeout`.
-    #     """
-    #     if wait_for_answer:
-    #         for i in range(self.bounce_timeout):
-    #             try:
-    #                 self.send(content)
-    #                 return self.receive()
-    #             except Exception as e:
-    #                 pass
-    #             # sleep(self.MESSAGE_TRIGGER)
-    #             if i == self.bounce_timeout - 1:
-    #                 print(i)
-    #                 # raise CommunicationError()
-    #     else:
-    #         self.send(content)
-    #         return None
 
     def message_internal(self, content, wait_for_answer = False):
         """ Sends a message, and waits for answer.
@@ -339,7 +218,7 @@ class CommunicationPort(object):
     def close(self):
         """ Closes the serial port."""
         self.serial.close()
-        self.stop = True
+        # self.stop = True
 
 class Channel(object):
     """ Implements a channel, an object representation of a memory address.
@@ -752,7 +631,7 @@ class Experiment(object):
                             if (detector in key) and (not key in coins_identifiers):
                                coins_identifiers[key] = self.coins_dict[key]
                     else:
-                        raise ExperimentError("The following detector is not withing our experiment: %s."%detector)
+                        raise Exception("The following detector is not withing our experiment: %s."%detector)
 
             detectors = [self.detectors[self.detector_dict[identifier]] for identifier in detector_identifiers]
             coins = [self.coin_channels[coins_identifiers[key]] for key in coins_identifiers]

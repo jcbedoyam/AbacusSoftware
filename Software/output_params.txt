@@ -163,3 +163,10 @@ Reimagined Quantum experiment began at Sat May  6 10:15:54 2017
 10:39:56 	Sampling Time: 500 ms
 10:39:56 	Coincidence window: 5 ns
 10:39:56 	Streaming started.
+10:48:17 	Detector A (Delay): 0 ns
+10:48:17 	Detector A (Sleep): 0 ns
+10:48:17 	Detector B (Delay): 0 ns
+10:48:17 	Detector B (Sleep): 0 ns
+10:48:19 	Sampling Time: 500 ms
+10:48:19 	Coincidence window: 5 ns
+10:48:19 	Streaming started.
