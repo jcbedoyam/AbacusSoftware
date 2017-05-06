@@ -15,6 +15,7 @@ import serial
 import codecs
 from itertools import combinations
 from threading import Thread, Timer
+from .exceptions import *
 from time import sleep, localtime, strftime, time, asctime
 import serial.tools.list_ports as find_ports
 #################
@@ -104,6 +105,7 @@ class CommunicationPort(object):
         self.stop = False
         self.answer = {}
         self.thread = Thread(target=self.handle_queue)
+        self.thread.setDaemon(True)
         self.thread.start()
 
     def begin_serial(self):
@@ -143,6 +145,7 @@ class CommunicationPort(object):
         try:
             self.serial.write(content)
         except:
+            self.serial.reset_input_buffer()
             raise CommunicationError()
 
     def read(self):
@@ -156,22 +159,25 @@ class CommunicationPort(object):
         """
         hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
         if hexa[0] != "7e":
-            self.serial.flush()
+            self.serial.reset_output_buffer()
             raise CommunicationError()
         while True:
             byte = codecs.encode(self.serial.read(1), "hex_codec").decode()
             if byte == '':
                 break
             hexa.append(byte)
+        self.serial.flush()
         return hexa
 
     def handle_queue(self):
         while not self.stop:
-            while not self.queue.empty():
-                conf, content, wait_for_answer = self.queue.get()
+            item = self.queue.get()
+            if item != None:
+                conf, content, wait_for_answer = item
                 answer = self.message_internal(content, wait_for_answer) # call function
                 self.answer[conf] = answer
-            sleep(self.MESSAGE_TRIGGER)
+            else:
+                sleep(self.MESSAGE_TRIGGER)
 
     def receive(self):
         """ Organices information according to project requirements.
@@ -198,12 +204,15 @@ class CommunicationPort(object):
     def message(self, content, wait_for_answer = False):
         conf = np.random.random()
         self.queue.put((conf, content, wait_for_answer))
-        while not self.stop:
-            if conf in self.answer:
-                value = self.answer[conf]
-                del self.answer[conf]
-                return value
-            sleep(self.MESSAGE_TRIGGER)
+        if wait_for_answer:
+            while not self.stop:
+                if conf in self.answer:
+                    value = self.answer[conf]
+                    del self.answer[conf]
+                    return value
+                sleep(self.MESSAGE_TRIGGER)
+        else:
+            return None
         # raise Exception("Port is closed.")
 
     def message_internal(self, content, wait_for_answer = False):
@@ -216,20 +225,19 @@ class CommunicationPort(object):
         Raises:
             Exception: any type ocurred with during `bounce_timeout`.
         """
-        self.send(content)
         if wait_for_answer:
             for i in range(self.bounce_timeout):
                 try:
+                    self.send(content)
                     return self.receive()
-                except CheckSumError as ex1:
-                    try:
-                        self.send(content)
-                    except CommunicationError as ex2:
-                        pass
-                    if i == self.bounce_timeout - 1:
-                        raise CommunicationError()
-                sleep(self.MESSAGE_TRIGGER)
+                except Exception as e:
+                    pass
+                # sleep(self.MESSAGE_TRIGGER)
+                if i == self.bounce_timeout - 1:
+                    print(i)
+                    # raise CommunicationError()
         else:
+            self.send(content)
             return None
 
     def close(self):

@@ -973,8 +973,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 #    splash.close()
 #    sys.exit(app.exec_())
 
-# main = Main()
-# progressBar.setValue(100)
-# main.show()
-# splash.close()
-# sys.exit(app.exec_())
+main = Main()
+progressBar.setValue(100)
+main.show()
+splash.close()
+sys.exit(app.exec_())
