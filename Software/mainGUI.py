@@ -103,7 +103,6 @@ class propertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         for i in range(self.number_channels):
             name = self.widgets[0][i].text()[:-1]
             if self.widgets[1][i].value() != values[i][0]: # delay
-                print(self.widgets[1][i].value(), values[i][0])
                 self.widgets[1][i].setValue(values[i][0])
                 self.parent.save_param("%s (Delay)"%name, self.widgets[1][i].value(), 'ns')
             if self.widgets[2][i].value() != values[i][1]: # sleep

@@ -16,6 +16,7 @@ import codecs
 from itertools import combinations
 from threading import Thread, Timer
 from .exceptions import *
+from queue import Queue
 from time import sleep, localtime, strftime, time, asctime
 import serial.tools.list_ports as find_ports
 #################
@@ -58,26 +59,26 @@ START_COMMUNICATION = 0x02 #: Begin message signal
 END_COMMUNICATION = 0x04 #: End of message
 MAXIMUM_WRITING_TRIES = 20 #: Number of tries done to write a value
 
-class Queue(object):
-    """
-    Implements a FIFO queue, two possible priorities are allowed.
-    """
-    def __init__(self):
-        self.high_objects = []
-        self.low_objects = []
-
-    def put(self, item, priority = 0):
-        if priority:
-            self.high_objects.append(item)
-        else:
-            self.low_objects.append(item)
-
-    def get(self):
-        if self.high_objects:
-            return self.high_objects.pop(0)
-        elif self.low_objects:
-            return self.low_objects.pop(0)
-        return None
+# class Queue(object):
+#     """
+#     Implements a FIFO queue, two possible priorities are allowed.
+#     """
+#     def __init__(self):
+#         self.high_objects = []
+#         self.low_objects = []
+#
+#     def put(self, item, priority = 0):
+#         if priority:
+#             self.high_objects.append(item)
+#         else:
+#             self.low_objects.append(item)
+#
+#     def get(self):
+#         if self.high_objects:
+#             return self.high_objects.pop(0)
+#         elif self.low_objects:
+#             return self.low_objects.pop(0)
+#         return None
 
 class CommunicationPort(object):
     """ Builds a serial port from pyserial.
@@ -92,7 +93,7 @@ class CommunicationPort(object):
     PARITY = serial.PARITY_NONE #: Message will not have any parity
     STOP_BITS = serial.STOPBITS_ONE #: Message contains only one stop bit
     BYTE_SIZE = serial.EIGHTBITS #: One byte = 8 bits
-    MESSAGE_TRIGGER = 1e-3 #: If queue is empty
+    MESSAGE_TRIGGER = 1e-6 #: If queue is empty
     def __init__(self, device, baudrate = BAUDRATE, timeout = TIMEOUT, bounce_timeout = BOUNCE_TIMEOUT):
         self.device = device
         self.baudrate = baudrate
@@ -122,47 +123,19 @@ class CommunicationPort(object):
                                         stopbits=self.STOP_BITS,
                                         bytesize=self.BYTE_SIZE, timeout=self.TIMEOUT)
 
-    # def checksum(self, hex_list):
-    #     """ Implements a simple checksum to verify message integrity.
-    #
-    #     Raises:
-    #         CheckSumError(): in case checksum is wrong.
-    #     """
-    #     int_list = [int(value, 16) for value in hex_list]
-    #     int_score = sum(int_list[2:-1])
-    #     hex_score = "%04X"%int_score
-    #     last_values = hex_score[2:]
-    #     check = int(last_values, 16) + int(hex_list[-1], 16)
-    #     if check != 0xff:
-    #         raise CheckSumError()
-
     def checksum(self, hex_list):
         """ Implements a simple checksum to verify message integrity.
 
-        Returns:
-            bool: The return value. True for success, False otherwise.
+        Raises:
+            CheckSumError(): in case checksum is wrong.
         """
         int_list = [int(value, 16) for value in hex_list]
         int_score = sum(int_list[2:-1])
         hex_score = "%04X"%int_score
         last_values = hex_score[2:]
         check = int(last_values, 16) + int(hex_list[-1], 16)
-        if check == 0xff:
-            return True
-        else:
-            return False
-
-    # def send(self, content):
-    #     """ Sends a message through the serial port.
-    #
-    #     Raises:
-    #         PySerialExceptions
-    #     """
-    #     try:
-    #         self.serial.write(content)
-    #     except:
-    #         self.serial.reset_input_buffer()
-    #         raise CommunicationError()
+        if check != 0xff:
+            raise CheckSumError()
 
     def send(self, content):
         """ Sends a message through the serial port.
@@ -170,28 +143,9 @@ class CommunicationPort(object):
         Raises:
             PySerialExceptions
         """
+        self.serial.flushOutput()
+        self.serial.flushInput()
         self.serial.write(content)
-
-    # def read(self):
-    #     """ Reads a message through the serial port.
-    #
-    #     Returns:
-    #         list: hexadecimal values decoded as strings.
-    #
-    #     Raises:
-    #         CommunicationError:
-    #     """
-    #     hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
-    #     if hexa[0] != "7e":
-    #         self.serial.reset_output_buffer()
-    #         raise CommunicationError()
-    #     while True:
-    #         byte = codecs.encode(self.serial.read(1), "hex_codec").decode()
-    #         if byte == '':
-    #             break
-    #         hexa.append(byte)
-    #     self.serial.flush()
-    #     return hexa
 
     def read(self):
         """ Reads a message through the serial port.
@@ -200,53 +154,17 @@ class CommunicationPort(object):
             list: hexadecimal values decoded as strings.
 
         Raises:
-            Exception: Noisy answer, or timeout.
+            CommunicationError:
         """
         hexa = [codecs.encode(self.serial.read(1), "hex_codec").decode()]
         if hexa[0] != "7e":
-            answer = "Timeout: noisy answer '%s'"%hexa[0]
-            if hexa[0] == "":
-                answer = 'Timeout: device does not answer.'
-            self.serial.flush()
-            raise Exception(answer)
-        while True:
-            byte = codecs.encode(self.serial.read(1), "hex_codec").decode()
-            if byte == '':
-                break
-            hexa.append(byte)
+            raise CommunicationError()
+        hexa += [codecs.encode(self.serial.read(1), "hex_codec").decode()]
+        N = int(hexa[1], 16)
+        byte = codecs.encode(self.serial.read(N+1), "hex_codec").decode()
+        byte = list(map(''.join, zip(*[iter(byte)]*2)))
+        hexa += byte
         return hexa
-
-    def handle_queue(self):
-        while not self.stop:
-            item = self.queue.get()
-            if item != None:
-                conf, content, wait_for_answer = item
-                answer = self.message_internal(content, wait_for_answer) # call function
-                self.answer[conf] = answer
-            else:
-                sleep(self.MESSAGE_TRIGGER)
-    #
-    # def receive(self):
-    #     """ Organices information according to project requirements.
-    #
-    #     Returns:
-    #         list: each position on list is made up with a tuple containing
-    #             channel and value in hexadecimal base.
-    #
-    #     Raises:
-    #         CheckSumError: if wrong checksum.
-    #     """
-    #
-    #     hexa = self.read()
-    #     self.checksum(hexa) # checks if checksum is correct
-    #     hexa = hexa[2:-1]
-    #     ans = []
-    #     n = int(len(hexa)/3) #signal comes in groups of three
-    #     for i in range(n):
-    #         channel = int(hexa[3*i], 16)
-    #         value = hexa[3*i+1] + hexa[3*i+2]
-    #         ans.append((channel, value))
-    #     return ans
 
     def receive(self):
         """ Organices information according to project requirements.
@@ -256,21 +174,26 @@ class CommunicationPort(object):
                 channel and value in hexadecimal base.
 
         Raises:
-            Exception: if wrong checksum.
+            CheckSumError: if wrong checksum.
         """
-
         hexa = self.read()
-        if self.checksum(hexa):
-            hexa = hexa[2:-1]
-            ans = []
-            n = int(len(hexa)/3) #signal comes in groups of three
-            for i in range(n):
-                channel = int(hexa[3*i], 16)
-                value = hexa[3*i+1] + hexa[3*i+2]
-                ans.append((channel, value))
-            return ans
-        else:
-            raise Exception("Message corrupted. Incorrect checksum.")
+        self.checksum(hexa) # checks if checksum is correct
+        hexa = hexa[2:-1]
+        ans = []
+        n = int(len(hexa)/3) #signal comes in groups of three
+        for i in range(n):
+            channel = int(hexa[3*i], 16)
+            value = hexa[3*i+1] + hexa[3*i+2]
+            ans.append((channel, value))
+        return ans
+
+    def handle_queue(self):
+        while not self.stop:
+            item = self.queue.get()
+            conf, content, wait_for_answer = item
+            answer = self.message_internal(content, wait_for_answer) # call function
+            if wait_for_answer:
+                self.answer[conf] = answer
 
     def message(self, content, wait_for_answer = False):
         conf = np.random.random()
@@ -278,38 +201,11 @@ class CommunicationPort(object):
         if wait_for_answer:
             while not self.stop:
                 if conf in self.answer:
-                    value = self.answer[conf]
-                    del self.answer[conf]
+                    value = self.answer.pop(conf)
                     return value
-                sleep(self.MESSAGE_TRIGGER)
+            raise CommunicationError()
         else:
             return None
-        # raise Exception("Port is closed.")
-
-    # def message_internal(self, content, wait_for_answer = False):
-    #     """ Sends a message, and waits for answer.
-    #
-    #     Returns:
-    #         list: each postion on list is made up with a tuple containing
-    #             channel and value in hexadecimal base.
-    #
-    #     Raises:
-    #         Exception: any type ocurred with during `bounce_timeout`.
-    #     """
-    #     if wait_for_answer:
-    #         for i in range(self.bounce_timeout):
-    #             try:
-    #                 self.send(content)
-    #                 return self.receive()
-    #             except Exception as e:
-    #                 pass
-    #             # sleep(self.MESSAGE_TRIGGER)
-    #             if i == self.bounce_timeout - 1:
-    #                 print(i)
-    #                 # raise CommunicationError()
-    #     else:
-    #         self.send(content)
-    #         return None
 
     def message_internal(self, content, wait_for_answer = False):
         """ Sends a message, and waits for answer.
@@ -321,19 +217,18 @@ class CommunicationPort(object):
         Raises:
             Exception: any type ocurred with during `bounce_timeout`.
         """
-        self.send(content)
         if wait_for_answer:
             for i in range(self.bounce_timeout):
                 try:
+                    self.send(content)
                     return self.receive()
-                except Exception as ex1:
-                    try:
-                        self.send(content)
-                    except Exception as ex2:
-                        pass
-                    if i == self.bounce_timeout - 1:
-                        raise ex1
+                except Exception as e:
+                    pass
+                if i == self.bounce_timeout - 1:
+                    self.stop = True
+                    raise CommunicationError()
         else:
+            self.send(content)
             return None
 
     def close(self):
@@ -733,7 +628,8 @@ class Experiment(object):
 
     def periodic_check(self):
         try:
-            values = self.port.message(self.construct_message(data = False), wait_for_answer = True)
+            message = self.construct_message(data = False)
+            values = self.port.message(message, wait_for_answer = True)
             for i in range(self.number_detectors):
                 last = 8*(i+1)
                 self.detectors[i].set_timers_values(values[8*i:last])

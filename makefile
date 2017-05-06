@@ -7,10 +7,8 @@ BUILDDIR      = build
 
 run : install run_software
 
-
-#	cd Software & make & ../
 install :
-	cd Python && python setup.py install
+	cd Python && python setup.py install && rm -r build
 
 run_software : Software/mainwindow.py Software/channels.py Software/mainGUI.py Software/GUI_images.py
 	cd Software && python mainGUI.py && rm -r __pycache__ && clear
