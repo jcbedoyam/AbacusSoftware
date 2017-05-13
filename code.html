@@ -287,7 +287,7 @@ expected.</dd>
 
 <dl class="method">
 <dt id="reimaginedQuantum.core.CommunicationPort.message_internal">
-<code class="descname">message_internal</code><span class="sig-paren">(</span><em>content</em>, <em>wait_for_answer=False</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.message_internal" title="Permalink to this definition">¶</a></dt>
+<code class="descname">message_internal</code><span class="sig-paren">(</span><em>content</em>, <em>wait_for_answer=False</em>, <em>tries=-1</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.message_internal" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends a message, and waits for answer.</p>
 <dl class="docutils">
 <dt>Returns:</dt>
@@ -336,6 +336,16 @@ expected.</dd>
 <dl class="docutils">
 <dt>Raises:</dt>
 <dd>PySerialExceptions</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.core.CommunicationPort.test">
+<code class="descname">test</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.test" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tests whether or not the CommunicationPort corresponds to a ReimaginedQuantum one.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>boolean: True if it does, False otherwise.</dd>
 </dl>
 </dd></dl>
 
@@ -687,7 +697,7 @@ if values are different raises and Exception.</p>
 <span id="constants"></span><h2>Constants<a class="headerlink" href="#module-reimaginedQuantum.constants" title="Permalink to this headline">¶</a></h2>
 <dl class="data">
 <dt id="reimaginedQuantum.constants.ADDRESS">
-<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">ADDRESS</code><em class="property"> = {'sleepTimeA_ms': 10, 'sleepTimeB_ns': 12, 'delayA_s': 3, 'samplingTime_us': 17, 'sleepTimeA_s': 11, 'samplingTime_ns': 16, 'samplingTime_s': 19, 'coincidenceWindow_us': 21, 'countsB_MSB': 27, 'sleepTimeB_ms': 14, 'sleepTimeA_us': 9, 'countsA_LSB': 24, 'sleepTimeB_us': 13, 'coincidencesAB_LSB': 28, 'samplingTime_ms': 18, 'coincidenceWindow_ns': 20, 'delayB_s': 7, 'coincidencesAB_MSB': 29, 'delayB_ns': 4, 'delayB_us': 5, 'delayA_ms': 2, 'coincidenceWindow_ms': 22, 'sleepTimeB_s': 15, 'countsA_MSB': 25, 'delayA_ns': 0, 'countsB_LSB': 26, 'delayA_us': 1, 'sleepTimeA_ns': 8, 'coincidenceWindow_s': 23, 'delayB_ms': 6}</em><a class="headerlink" href="#reimaginedQuantum.constants.ADDRESS" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">ADDRESS</code><em class="property"> = {'coincidencesAB_LSB': 28, 'samplingTime_ms': 18, 'countsB_MSB': 27, 'samplingTime_s': 19, 'samplingTime_us': 17, 'sleepTimeA_us': 9, 'coincidenceWindow_us': 21, 'delayB_ns': 4, 'countsA_LSB': 24, 'delayB_ms': 6, 'coincidenceWindow_ns': 20, 'sleepTimeA_s': 11, 'samplingTime_ns': 16, 'sleepTimeA_ms': 10, 'delayB_us': 5, 'delayA_us': 1, 'sleepTimeB_us': 13, 'coincidencesAB_MSB': 29, 'sleepTimeB_ns': 12, 'coincidenceWindow_ms': 22, 'countsA_MSB': 25, 'countsB_LSB': 26, 'sleepTimeB_ms': 14, 'delayA_ns': 0, 'delayA_ms': 2, 'delayA_s': 3, 'delayB_s': 7, 'sleepTimeB_s': 15, 'coincidenceWindow_s': 23, 'sleepTimeA_ns': 8}</em><a class="headerlink" href="#reimaginedQuantum.constants.ADDRESS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Memory addresses</p>
 </dd></dl>
 
