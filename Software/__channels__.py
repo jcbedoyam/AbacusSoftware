@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'GUI/channels.ui'
+# Form implementation generated from reading ui file 'Software/GUI/channels.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -40,17 +40,8 @@ class Ui_Dialog(object):
         self.gridLayout.addWidget(self.frame, 0, 0, 1, 1)
         self.groupBox = QtWidgets.QGroupBox(self.widget)
         self.groupBox.setObjectName("groupBox")
-        self.gridLayout_2 = QtWidgets.QGridLayout(self.groupBox)
-        self.gridLayout_2.setObjectName("gridLayout_2")
-        self.label_3 = QtWidgets.QLabel(self.groupBox)
-        self.label_3.setObjectName("label_3")
-        self.gridLayout_2.addWidget(self.label_3, 0, 1, 1, 1)
-        self.label_2 = QtWidgets.QLabel(self.groupBox)
-        self.label_2.setObjectName("label_2")
-        self.gridLayout_2.addWidget(self.label_2, 0, 0, 1, 1)
-        self.label_4 = QtWidgets.QLabel(self.groupBox)
-        self.label_4.setObjectName("label_4")
-        self.gridLayout_2.addWidget(self.label_4, 0, 2, 1, 1)
+        self.verticalLayoutDetectors = QtWidgets.QVBoxLayout(self.groupBox)
+        self.verticalLayoutDetectors.setObjectName("verticalLayoutDetectors")
         self.gridLayout.addWidget(self.groupBox, 2, 0, 1, 1)
         self.verticalLayout.addWidget(self.widget)
         self.buttonBox = QtWidgets.QDialogButtonBox(Dialog)
@@ -70,7 +61,4 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(_translate("Dialog", "Channels configuration"))
         self.label.setText(_translate("Dialog", "Number of channels:"))
         self.groupBox.setTitle(_translate("Dialog", "Channels"))
-        self.label_3.setText(_translate("Dialog", "Delay (ns)"))
-        self.label_2.setText(_translate("Dialog", "Channel"))
-        self.label_4.setText(_translate("Dialog", "Sleep (ns)"))
 

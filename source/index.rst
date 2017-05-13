@@ -3,19 +3,58 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Reimagined Quantum's documentation!
+Reimagined Quantum
 ==============================================
+
+Reimagined Quantum is a suite of tools build to ensure your experience with Tausand's
+`light detectors`_ becomes simplified.
+
+.. _light detectors: https://www.tausand.com/
+
+.. figure:: logo.png
+   :scale: 50 %
+   :alt: map to buried treasure
+   :align: center
+
+Written in Python3 Reimagined Quantum relies on the following modules:
+
+* `Matplotlib`_
+* `PySerial`_
+* `NumPy`_
+* `PyQt5`_
+* `threading`
+* `itertools`
+* `codecs`
+* `queue`
+* `time`
+* `sys`
+* `re`
+* `os`
+
+.. _Matplotlib: http://matplotlib.org/
+.. _NumPy: http://www.numpy.org/
+.. _PySerial: http://pyserial.readthedocs.io/en/latest/
+.. _PyQt5: http://doc.qt.io/qt-5/
+
+
+Contents
+==================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Installation guide:
+
+   install
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Documentation:
 
    code
 
 
 
-Indices and tables
+Indices
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`

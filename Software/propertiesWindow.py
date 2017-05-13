@@ -1,0 +1,307 @@
+from __channels__ import Ui_Dialog
+from reimaginedQuantum.core import *
+from reimaginedQuantum.constants import *
+from PyQt5 import QtCore, QtGui, QtWidgets
+
+class WidgetLine(object):
+    """
+        Defines a single widget line in the PropertiesWindow.
+
+        **Constants**
+    """
+
+    MIN_DELAY = 0 #: Minimum delay time value.
+    MAX_DELAY = 200 #: Maximum delay time value.
+    STEP_DELAY = 5 #: Increase ratio on the delay time value.
+    DEFAULT_DELAY = 100 #: Default delay time value (ns).
+    MIN_SLEEP = 0 #: Minimum sleep time value.
+    MAX_SLEEP = 200 #: Maximum sleep time value.
+    STEP_SLEEP = 5 #: Increase ratio on the sleep time value.
+    DEFAULT_SLEEP = 25 #: Default sleep time value (ns).
+
+    def __init__(self, identifier, parent, delay_value = DEFAULT_DELAY,
+                sleep_value = DEFAULT_SLEEP):
+        self.parent = parent
+        self.identifier = identifier
+        self.delay_value = delay_value
+        self.sleep_value = sleep_value
+
+        self.name = "Detector %s"%self.identifier
+        self.widget = QtWidgets.QWidget(self.parent.groupBox)
+        self.label = QtWidgets.QLabel("%s:"%self.name)
+        self.delay_spinBox = QtWidgets.QSpinBox()
+        self.sleep_spinBox = QtWidgets.QSpinBox()
+        self.__init_spinBoxes__()
+        self.__init_layout__()
+
+    def __init_spinBoxes__(self):
+        self.delay_spinBox.setMinimum(self.MIN_DELAY)
+        self.delay_spinBox.setMaximum(self.MAX_DELAY)
+        self.delay_spinBox.setSingleStep(self.STEP_DELAY)
+
+        self.sleep_spinBox.setMinimum(self.MIN_SLEEP)
+        self.sleep_spinBox.setMaximum(self.MAX_SLEEP)
+        self.sleep_spinBox.setSingleStep(self.STEP_SLEEP)
+
+        self.__init_corrections__(self.delay_spinBox)
+        self.__init_corrections__(self.sleep_spinBox)
+
+        self.update_values()
+
+    def __init_corrections__(self, widget):
+        widget.setCorrectionMode(QtWidgets.QAbstractSpinBox.CorrectToNearestValue)
+        widget.setKeyboardTracking(False)
+
+    def __init_layout__(self):
+        layout = QtWidgets.QHBoxLayout(self.widget)
+        layout.addWidget(self.label)
+        layout.addWidget(self.delay_spinBox)
+        layout.addWidget(self.sleep_spinBox)
+        self.widget.setLayout(layout)
+        self.parent.verticalLayoutDetectors.addWidget(self.widget)
+
+    def set_values(self, delay_sleep_value):
+        """ Verifies if incomming values are different to stored ones.
+
+        If they are different than older ones, saves the incoming one
+        in the params file. It also updates the spinBox values.
+        """
+        delay_value, sleep_value = delay_sleep_value
+        update = False
+        if delay_value != self.delay_value:
+            self.delay_value = delay_value
+            self.parent.parent.save_param("%s (Delay)"%self.name,
+                                    self.delay_spinBox.value(), 'ns')
+            update = True
+        if sleep_value != self.sleep_value:
+            self.sleep_value = sleep_value
+            self.parent.parent.save_param("%s (Sleep)"%self.name,
+                                    self.sleep_spinBox.value(), 'ns')
+            update = True
+
+        if update:
+            self.update_values()
+
+    def reset(self):
+        """ Sets delay_value and sleep_value to the default ones. It also updates
+        them to the spinboxes.
+        """
+        self.delay_value = self.DEFAULT_DELAY
+        self.sleep_value = self.DEFAULT_SLEEP
+        self.update_values()
+
+    def update_values(self):
+        """ Updates the spinBox values, from the attributes.
+        """
+        self.delay_spinBox.setValue(self.delay_value)
+        self.sleep_spinBox.setValue(self.sleep_value)
+
+class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
+    """
+        Defines the channel configuration dialog.
+    """
+
+    DEFAULT_CHANNELS = 2 #: Default number of channels
+
+    global DELIMITER
+    def __init__(self, parent=None):
+        super(PropertiesWindow, self).__init__(parent)
+        self.setupUi(self)
+
+        self.parent = parent
+        self.current_n = 0
+        self.number_channels = self.DEFAULT_CHANNELS
+        self.channel_spinBox.setValue(self.number_channels)
+        self.channel_spinBox.valueChanged.connect(self.creator)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.update)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reset)
+
+        widget = QtWidgets.QWidget(self.groupBox)
+        layout = QtWidgets.QHBoxLayout(widget)
+        detectors_label = QtWidgets.QLabel("Detectors")
+        delay_label = QtWidgets.QLabel("Delay time (ns)")
+        sleep_label = QtWidgets.QLabel("Sleep time (ns)")
+
+        layout.addWidget(detectors_label)
+        layout.addWidget(delay_label)
+        layout.addWidget(sleep_label)
+        widget.setLayout(layout)
+
+        self.verticalLayoutDetectors.addWidget(widget)
+
+        self.widgets = []
+        self.creator(self.number_channels)
+        self.error_ocurred = False
+        self.last_time = ""
+
+    def set_values(self, values):
+        """ Updates the incoming values to the spinboxes.
+        
+        Args:
+            values (list): list of tuples, each position of the list
+            has the values of delay and sleep time for a channel.
+        """
+        for i in range(self.number_channels):
+            self.widgets[i].set_values(values[i])
+
+    def creator(self, n):
+        """
+            Creates the spinboxes and labels required by the user
+        """
+
+        if n > self.current_n:
+            self.widgets += [None]*(n-self.current_n)
+        while self.current_n < n:
+            self.widgets[self.current_n] = WidgetLine(chr(self.current_n \
+                                                   + ord("A")), self)
+            self.current_n += 1
+        self.delete(n)
+        self.number_channels = n
+
+    def send_data(self, error_capable = True):
+        try:
+            for i in range(self.number_channels):
+                delay = self.widgets[i].delay_value
+                sleep = self.widgets[i].sleep_value
+                self.parent.experiment.detectors[i].set_times(delay, sleep)
+            self.error_ocurred = False
+        except Exception as e:
+            if error_capable:
+                self.parent.errorWindow(e)
+            else:
+                raise e
+
+    def update(self):
+        """
+            Sends a message with the updated information
+        """
+        try:
+            self.parent.experiment = Experiment(self.parent.serial, self.number_channels)
+            self.send_data(error_capable = False)
+            self.channel_spinBox.setEnabled(False)
+            self.saveParams()
+            self.parent.start_experiment()
+            self.error_ocurred = False
+        except Exception as e:
+            self.error_ocurred = True
+            self.parent.errorWindow(e)
+
+    def saveParams(self, delimiter = DELIMITER):
+        for i in range(self.number_channels):
+            widget = self.widgets[i]
+            self.parent.save_param("%s (Delay)"%widget.name, widget.delay_value, 'ns')
+            self.parent.save_param("%s (Sleep)"%widget.name, widget.sleep_value, 'ns')
+
+    def delete(self, n):
+        """
+            Delets unneccesary rows of labels and spinboxes
+        """
+        while self.current_n > n:
+            widget = self.widgets[self.current_n - 1].widget
+            self.verticalLayoutDetectors.removeWidget(widget)
+            widget.deleteLater()
+            del self.widgets[self.current_n - 1]
+            self.current_n -= 1
+
+    def reset(self):
+        """
+            Sets every detector to the default values
+        """
+        self.channel_spinBox.setValue(self.DEFAULT_CHANNELS)
+        for i in range(self.number_channels):
+            self.widgets[i].reset()
+
+
+class AutoSizeLabel(QtWidgets.QLabel):
+    """ From reclosedev at http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour
+    and Jean-Sébastien http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt
+    """
+    MAX_CHARS = 25 #: Maximum number of letters in a label.
+    MAX_DIGITS = 7 #: Maximum number of digits of a number in label.
+    global CURRENT_OS
+    def __init__(self, text, value):
+        QtWidgets.QLabel.__init__(self)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+        self.installEventFilter(self)
+        self.initial = True
+        self.font_name = "Monospace"
+        if CURRENT_OS == "win32":
+            self.font_name = "Courier New"
+        self.setFont(QtGui.QFont(self.font_name))
+        self.initial = False
+        self.initial_font_size = 10
+        self.font_size = 10
+        self.MAX_TRY = 40
+        self.height = self.contentsRect().height()
+        self.width = self.contentsRect().width()
+        self.name = text
+        self.setText(self.stylish_text(text, value))
+        self.set_font_size(self.font_size)
+
+    def set_font_size(self, size):
+        """ Changes the size of the font to `size` """
+        f = self.font()
+        f.setPixelSize(size)
+        self.setFont(f)
+
+    def set_color(self, color):
+        """ Sets the font color.
+
+        Args:
+            color (string): six digit hexadecimal color representation.
+        """
+        self.setStyleSheet('color: %s'%color)
+
+    def stylish_text(self, text, value):
+        """ Uses and incomning `text` and `value` to create and text of length
+        `MAX_CHARS`, filled with spaces.
+
+        Returns:
+            string: text of length `MAX_CHARS`.
+        """
+        n_text = len(text)
+        n_value = len(value)
+        N = n_text + n_value
+        spaces = [" " for i in range(self.MAX_CHARS - N-1)]
+        spaces = "".join(spaces)
+        text = "%s: %s%s"%(text, spaces, value)
+        return text
+
+    def change_value(self, value):
+        """ Sets the text in label with its name and its value. """
+        self.setText(self.stylish_text(self.name, value))
+
+    def eventFilter(self, object, evt):
+        """ Checks if there is the window size has changed.
+
+        Returns:
+            boolean: True if it has not changed. False otherwise. """
+        if not self.initial:
+            ty = evt.type()
+            if ty == 97: # DONT KNOW WHY
+                self.resizeEvent(evt)
+                return False
+            elif ty == 12:
+                self.resizeEvent(evt)
+                return False
+        return True
+
+    def resizeEvent(self, evt):
+        """ Finds the best font size to use if the size of the window changes. """
+        f = self.font()
+        cr = self.contentsRect()
+        height = cr.height()
+        width = cr.width()
+        if abs(height*width - self.height*self.width) > 1:
+            self.font_size = self.initial_font_size
+            for i in range(self.MAX_TRY):
+                f.setPixelSize(self.font_size)
+                br =  QtGui.QFontMetrics(f).boundingRect(self.text())
+                if br.height() <= cr.height() and br.width() <= cr.width():
+                    self.font_size += 1
+                else:
+                    f.setPixelSize(max(self.font_size - 1, 1))
+                    break
+            self.setFont(f)
+            self.height = height
+            self.width = width

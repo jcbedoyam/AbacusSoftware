@@ -10,17 +10,17 @@ run : install run_software
 install :
 	cd Python && python setup.py install && rm -r build
 
-run_software : Software/mainwindow.py Software/channels.py Software/mainGUI.py Software/GUI_images.py
+run_software : Software/__mainwindow__.py Software/__channels__.py Software/mainGUI.py Software/__GUI_images__.py
 	cd Software && python mainGUI.py && rm -r __pycache__ && clear
 
-Software/GUI_images.py : Software/GUI/icon.png Software/GUI/splash.png Software/GUI/GUI_images.qrc
-	pyrcc5 Software/GUI/GUI_images.qrc > Software/GUI_images.py
+Software/__GUI_images__.py : Software/GUI/icon.png Software/GUI/splash.png Software/GUI/GUI_images.qrc
+	pyrcc5 Software/GUI/GUI_images.qrc > Software/__GUI_images__.py
 
-Software/channels.py : Software/GUI/channels.ui
-	pyuic5 Software/GUI/channels.ui > Software/channels.py
+Software/__channels__.py : Software/GUI/channels.ui
+	pyuic5 Software/GUI/channels.ui > Software/__channels__.py
 
-Software/mainwindow.py : Software/GUI/mainwindow.ui
-	pyuic5 Software/GUI/mainwindow.ui > Software/mainwindow.py
+Software/__mainwindow__.py : Software/GUI/mainwindow.ui
+	pyuic5 Software/GUI/mainwindow.ui > Software/__mainwindow__.py
 
 html :
 	$(SPHINXBUILD) -b html $(SOURCEDIR) $(BUILDDIR)/html
