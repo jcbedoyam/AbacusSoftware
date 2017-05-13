@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Documentation &mdash; Reimagined Quantum 1.0.0 documentation</title>
+  <title>ReimaginedQuantum library &mdash; Reimagined Quantum 1.0.0 documentation</title>
   
 
   
@@ -36,7 +36,7 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Reimagined Quantum 1.0.0 documentation" href="index.html"/>
-        <link rel="prev" title="Welcome to Reimagined Quantum’s documentation!" href="index.html"/> 
+        <link rel="prev" title="ReimaginedQuantum installation" href="install.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -89,14 +89,21 @@
               
             
             
-              <p class="caption"><span class="caption-text">Contents:</span></p>
+              <p class="caption"><span class="caption-text">Installation guide:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="install.html">ReimaginedQuantum installation</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Documentation:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Documentation</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#module-reimaginedQuantum.core">ReimaginedQuantum library</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#module-reimaginedQuantum.exceptions">Exceptions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">ReimaginedQuantum library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-reimaginedQuantum.core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-reimaginedQuantum.channels">Channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-reimaginedQuantum.constants">Constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-reimaginedQuantum.exceptions">Exceptions</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#module-mainGUI">Graphical User Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="#module-mainGUI">Graphical User Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-propertiesWindow">PropertiesWindow</a></li>
 </ul>
 </li>
 </ul>
@@ -143,7 +150,7 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Documentation</li>
+      <li>ReimaginedQuantum library</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -162,80 +169,18 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="documentation">
-<h1>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="reimaginedquantum-library">
+<h1>ReimaginedQuantum library<a class="headerlink" href="#reimaginedquantum-library" title="Permalink to this headline">¶</a></h1>
+<p>ReimaginedQuantum is divided into the following modules.</p>
+<ul class="simple">
+<li>Core</li>
+<li>Channels</li>
+<li>Constants</li>
+<li>Exceptions</li>
+</ul>
 <div class="section" id="module-reimaginedQuantum.core">
-<span id="reimaginedquantum-library"></span><h2>ReimaginedQuantum library<a class="headerlink" href="#module-reimaginedQuantum.core" title="Permalink to this headline">¶</a></h2>
-<p>Created on Mon Apr 10 11:19:25 2017</p>
-<p>&#64;author: juan</p>
-<dl class="data">
-<dt id="reimaginedQuantum.core.ADDRESS">
-<code class="descclassname">reimaginedQuantum.core.</code><code class="descname">ADDRESS</code><em class="property"> = {'delayB_us': 5, 'sleepTimeB_us': 13, 'coincidencesAB_LSB': 28, 'sleepTimeA_ns': 8, 'sleepTimeB_ms': 14, 'delayB_ns': 4, 'delayB_ms': 6, 'sleepTimeA_us': 9, 'sleepTimeA_s': 11, 'delayA_ns': 0, 'samplingTime_us': 17, 'sleepTimeB_ns': 12, 'sleepTimeB_s': 15, 'delayA_s': 3, 'countsA_MSB': 25, 'coincidencesAB_MSB': 29, 'samplingTime_s': 19, 'coincidenceWindow_ns': 20, 'countsB_MSB': 27, 'delayA_ms': 2, 'coincidenceWindow_us': 21, 'samplingTime_ns': 16, 'sleepTimeA_ms': 10, 'countsA_LSB': 24, 'samplingTime_ms': 18, 'delayA_us': 1, 'delayB_s': 7, 'coincidenceWindow_ms': 22, 'coincidenceWindow_s': 23, 'countsB_LSB': 26}</em><a class="headerlink" href="#reimaginedQuantum.core.ADDRESS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Memory addresses</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="reimaginedQuantum.core.Channel">
-<em class="property">class </em><code class="descclassname">reimaginedQuantum.core.</code><code class="descname">Channel</code><span class="sig-paren">(</span><em>name</em>, <em>port</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements a channel, an object representation of a memory address.</p>
-<p><strong>Constants</strong></p>
-<dl class="method">
-<dt id="reimaginedQuantum.core.Channel.construct_message">
-<code class="descname">construct_message</code><span class="sig-paren">(</span><em>read=False</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel.construct_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>Construcs a message with project requirements.</p>
-<dl class="docutils">
-<dt>Returns:</dt>
-<dd>list: list of bytes containing channel info.</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.Channel.exchange_values">
-<code class="descname">exchange_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel.exchange_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Exchanges values from computer to utility.</p>
-<p>Returns: can return None, or a list containing a <cite>hex_list</cite></p>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.Channel.read_value">
-<code class="descname">read_value</code><span class="sig-paren">(</span><em>hex_list</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel.read_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reads a <cite>hex_list</cite> and updates class attributes values.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.Channel.set_value">
-<code class="descname">set_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel.set_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Writes and incoming int value to class attributes.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.Channel.split_value">
-<code class="descname">split_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel.split_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Updates the most/least significant byte.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.Channel.update_values">
-<code class="descname">update_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel.update_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Updates values read from device.</p>
-<dl class="docutils">
-<dt>Returns:</dt>
-<dd>list of string hexadecimal values</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.Channel.verify_values">
-<code class="descname">verify_values</code><span class="sig-paren">(</span><em>hex_list</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Channel.verify_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Verifies if current values have changed.</p>
-<dl class="docutils">
-<dt>Returns:</dt>
-<dd>bool: The return value. True if values are the same, False otherwise.</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
+<span id="core"></span><h2>Core<a class="headerlink" href="#module-reimaginedQuantum.core" title="Permalink to this headline">¶</a></h2>
+<p><em>Required modules</em></p>
 <dl class="class">
 <dt id="reimaginedQuantum.core.CommunicationPort">
 <em class="property">class </em><code class="descclassname">reimaginedQuantum.core.</code><code class="descname">CommunicationPort</code><span class="sig-paren">(</span><em>device</em>, <em>baudrate=115200</em>, <em>timeout=0.02</em>, <em>bounce_timeout=20</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort" title="Permalink to this definition">¶</a></dt>
@@ -262,7 +207,7 @@
 
 <dl class="attribute">
 <dt id="reimaginedQuantum.core.CommunicationPort.MESSAGE_TRIGGER">
-<code class="descname">MESSAGE_TRIGGER</code><em class="property"> = 0.001</em><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.MESSAGE_TRIGGER" title="Permalink to this definition">¶</a></dt>
+<code class="descname">MESSAGE_TRIGGER</code><em class="property"> = 1e-06</em><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.MESSAGE_TRIGGER" title="Permalink to this definition">¶</a></dt>
 <dd><p>If queue is empty</p>
 </dd></dl>
 
@@ -311,6 +256,33 @@ SerialException: if it could not open port</dd>
 <dt id="reimaginedQuantum.core.CommunicationPort.close">
 <code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.close" title="Permalink to this definition">¶</a></dt>
 <dd><p>Closes the serial port.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.core.CommunicationPort.handle_queue">
+<code class="descname">handle_queue</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.handle_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Permanent loop in charge of sending any message withing the queue
+one by one.</p>
+<dl class="docutils">
+<dt>Raises:</dt>
+<dd>Exception: any type of error withing serial.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.core.CommunicationPort.message">
+<code class="descname">message</code><span class="sig-paren">(</span><em>content</em>, <em>wait_for_answer=False</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.CommunicationPort.message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Method to which different instances have access. Instances use this
+method in order to communicate a message &#8216;content&#8217; to the serial port.
+The content of the message is added to the queue and waits for an answer
+inside a loop.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>list: of hexadecimal values.</dd>
+<dt>Raises:</dt>
+<dd>CommunicationError: if communication port is closed, and a answer is
+expected.</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -364,64 +336,6 @@ SerialException: if it could not open port</dd>
 <dl class="docutils">
 <dt>Raises:</dt>
 <dd>PySerialExceptions</dd>
-</dl>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="reimaginedQuantum.core.DataChannel">
-<em class="property">class </em><code class="descclassname">reimaginedQuantum.core.</code><code class="descname">DataChannel</code><span class="sig-paren">(</span><em>prefix</em>, <em>port</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.DataChannel" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements a data channel, an object representation of multiple memory addresses.
-Timer channels are a construction of two simple channels, one for the Most Significant Bytes (MSB)
-and another for the Least Significant Bytes (LSB).</p>
-<p><strong>Constants</strong></p>
-<dl class="attribute">
-<dt id="reimaginedQuantum.core.DataChannel.NUMBER_OF_CHANNELS">
-<code class="descname">NUMBER_OF_CHANNELS</code><em class="property"> = 2</em><a class="headerlink" href="#reimaginedQuantum.core.DataChannel.NUMBER_OF_CHANNELS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of channels in data channel.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="reimaginedQuantum.core.DataChannel.SIGNIFICANT_BYTES">
-<code class="descname">SIGNIFICANT_BYTES</code><em class="property"> = ['MSB', 'LSB']</em><a class="headerlink" href="#reimaginedQuantum.core.DataChannel.SIGNIFICANT_BYTES" title="Permalink to this definition">¶</a></dt>
-<dd><p>Significant bytes.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.DataChannel.construct_message">
-<code class="descname">construct_message</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.DataChannel.construct_message" title="Permalink to this definition">¶</a></dt>
-<dd><p>Constructs the message to be send to the device in order to get its current values.</p>
-<dl class="docutils">
-<dt>Returns:</dt>
-<dd>list: containing integer representations of hexadecimal values.</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.DataChannel.get_value">
-<code class="descname">get_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.DataChannel.get_value" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the current value.</p>
-<dl class="docutils">
-<dt>Returns:</dt>
-<dd>int: current value.</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.DataChannel.read_values">
-<code class="descname">read_values</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.DataChannel.read_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saves an incoming set of tuples containg the values of each channel.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="reimaginedQuantum.core.DataChannel.update_values">
-<code class="descname">update_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.DataChannel.update_values" title="Permalink to this definition">¶</a></dt>
-<dd><p>Sends a message to the device, the answer contains current device values.
-It then stores them with the help of <cite>read_values(values)</cite>.</p>
-<dl class="docutils">
-<dt>Returns:</dt>
-<dd>int: current value.</dd>
 </dl>
 </dd></dl>
 
@@ -491,12 +405,6 @@ A detector is made of one data channel and two timer channels.</p>
 
 </dd></dl>
 
-<dl class="data">
-<dt id="reimaginedQuantum.core.END_COMMUNICATION">
-<code class="descclassname">reimaginedQuantum.core.</code><code class="descname">END_COMMUNICATION</code><em class="property"> = 4</em><a class="headerlink" href="#reimaginedQuantum.core.END_COMMUNICATION" title="Permalink to this definition">¶</a></dt>
-<dd><p>End of message</p>
-</dd></dl>
-
 <dl class="class">
 <dt id="reimaginedQuantum.core.Experiment">
 <em class="property">class </em><code class="descclassname">reimaginedQuantum.core.</code><code class="descname">Experiment</code><span class="sig-paren">(</span><em>port</em>, <em>number_detectors=2</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.Experiment" title="Permalink to this definition">¶</a></dt>
@@ -515,51 +423,174 @@ A detector is made of one data channel and two timer channels.</p>
 
 </dd></dl>
 
-<dl class="data">
-<dt id="reimaginedQuantum.core.MAXIMUM_WRITING_TRIES">
-<code class="descclassname">reimaginedQuantum.core.</code><code class="descname">MAXIMUM_WRITING_TRIES</code><em class="property"> = 20</em><a class="headerlink" href="#reimaginedQuantum.core.MAXIMUM_WRITING_TRIES" title="Permalink to this definition">¶</a></dt>
-<dd><p>Number of tries done to write a value</p>
+<dl class="class">
+<dt id="reimaginedQuantum.core.RingBuffer">
+<em class="property">class </em><code class="descclassname">reimaginedQuantum.core.</code><code class="descname">RingBuffer</code><span class="sig-paren">(</span><em>rows</em>, <em>columns</em>, <em>output_file</em>, <em>fmt</em>, <em>delimiter='t'</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.RingBuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Based on <a class="reference external" href="https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/">https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/</a></p>
+<dl class="method">
+<dt id="reimaginedQuantum.core.RingBuffer.extend">
+<code class="descname">extend</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.RingBuffer.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds array x to ring buffer</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.core.RingBuffer.get">
+<code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.RingBuffer.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the first-in-first-out data in the ring buffer</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.core.RingBuffer.save">
+<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.RingBuffer.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves the buffer</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-reimaginedQuantum.channels">
+<span id="channels"></span><h2>Channels<a class="headerlink" href="#module-reimaginedQuantum.channels" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="reimaginedQuantum.channels.Channel">
+<em class="property">class </em><code class="descclassname">reimaginedQuantum.channels.</code><code class="descname">Channel</code><span class="sig-paren">(</span><em>name</em>, <em>port</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements a channel, an object representation of a memory address.</p>
+<p><strong>Constants</strong></p>
+<dl class="method">
+<dt id="reimaginedQuantum.channels.Channel.construct_message">
+<code class="descname">construct_message</code><span class="sig-paren">(</span><em>read=False</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel.construct_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construcs a message with project requirements.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>list: list of bytes containing channel info.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.Channel.exchange_values">
+<code class="descname">exchange_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel.exchange_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exchanges values from computer to utility.</p>
+<p>Returns: can return None, or a list containing a <cite>hex_list</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.Channel.read_value">
+<code class="descname">read_value</code><span class="sig-paren">(</span><em>hex_list</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel.read_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a <cite>hex_list</cite> and updates class attributes values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.Channel.set_value">
+<code class="descname">set_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel.set_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes and incoming int value to class attributes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.Channel.split_value">
+<code class="descname">split_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel.split_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the most/least significant byte.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.Channel.update_values">
+<code class="descname">update_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel.update_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates values read from device.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>list of string hexadecimal values</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.Channel.verify_values">
+<code class="descname">verify_values</code><span class="sig-paren">(</span><em>hex_list</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.Channel.verify_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verifies if current values have changed.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>bool: The return value. True if values are the same, False otherwise.</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
-<dt id="reimaginedQuantum.core.Queue">
-<em class="property">class </em><code class="descclassname">reimaginedQuantum.core.</code><code class="descname">Queue</code><a class="headerlink" href="#reimaginedQuantum.core.Queue" title="Permalink to this definition">¶</a></dt>
-<dd><p>Implements a FIFO queue, two possible priorities are allowed.</p>
+<dt id="reimaginedQuantum.channels.DataChannel">
+<em class="property">class </em><code class="descclassname">reimaginedQuantum.channels.</code><code class="descname">DataChannel</code><span class="sig-paren">(</span><em>prefix</em>, <em>port</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.DataChannel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements a data channel, an object representation of multiple memory addresses.
+Timer channels are a construction of two simple channels, one for the Most Significant Bytes (MSB)
+and another for the Least Significant Bytes (LSB).</p>
+<p><strong>Constants</strong></p>
+<dl class="attribute">
+<dt id="reimaginedQuantum.channels.DataChannel.NUMBER_OF_CHANNELS">
+<code class="descname">NUMBER_OF_CHANNELS</code><em class="property"> = 2</em><a class="headerlink" href="#reimaginedQuantum.channels.DataChannel.NUMBER_OF_CHANNELS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of channels in data channel.</p>
 </dd></dl>
 
-<dl class="data">
-<dt id="reimaginedQuantum.core.READ_VALUE">
-<code class="descclassname">reimaginedQuantum.core.</code><code class="descname">READ_VALUE</code><em class="property"> = 14</em><a class="headerlink" href="#reimaginedQuantum.core.READ_VALUE" title="Permalink to this definition">¶</a></dt>
-<dd><p>Reading operation signal</p>
+<dl class="attribute">
+<dt id="reimaginedQuantum.channels.DataChannel.SIGNIFICANT_BYTES">
+<code class="descname">SIGNIFICANT_BYTES</code><em class="property"> = ['MSB', 'LSB']</em><a class="headerlink" href="#reimaginedQuantum.channels.DataChannel.SIGNIFICANT_BYTES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Significant bytes.</p>
 </dd></dl>
 
-<dl class="data">
-<dt id="reimaginedQuantum.core.START_COMMUNICATION">
-<code class="descclassname">reimaginedQuantum.core.</code><code class="descname">START_COMMUNICATION</code><em class="property"> = 2</em><a class="headerlink" href="#reimaginedQuantum.core.START_COMMUNICATION" title="Permalink to this definition">¶</a></dt>
-<dd><p>Begin message signal</p>
+<dl class="method">
+<dt id="reimaginedQuantum.channels.DataChannel.construct_message">
+<code class="descname">construct_message</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.DataChannel.construct_message" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructs the message to be send to the device in order to get its current values.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>list: containing integer representations of hexadecimal values.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.DataChannel.get_value">
+<code class="descname">get_value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.DataChannel.get_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the current value.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>int: current value.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.DataChannel.read_values">
+<code class="descname">read_values</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.DataChannel.read_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves an incoming set of tuples containg the values of each channel.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="reimaginedQuantum.channels.DataChannel.update_values">
+<code class="descname">update_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.DataChannel.update_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends a message to the device, the answer contains current device values.
+It then stores them with the help of <cite>read_values(values)</cite>.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>int: current value.</dd>
+</dl>
+</dd></dl>
+
 </dd></dl>
 
 <dl class="class">
-<dt id="reimaginedQuantum.core.TimerChannel">
-<em class="property">class </em><code class="descclassname">reimaginedQuantum.core.</code><code class="descname">TimerChannel</code><span class="sig-paren">(</span><em>prefix</em>, <em>port</em>, <em>base</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel">
+<em class="property">class </em><code class="descclassname">reimaginedQuantum.channels.</code><code class="descname">TimerChannel</code><span class="sig-paren">(</span><em>prefix</em>, <em>port</em>, <em>base</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel" title="Permalink to this definition">¶</a></dt>
 <dd><p>Implements a timer channel, an object representation of multiple memory addresses.</p>
 <p>Timer channels are a construction of four simple channels, each for every time unit.</p>
 <p><strong>Constants</strong></p>
 <dl class="attribute">
-<dt id="reimaginedQuantum.core.TimerChannel.NUMBER_OF_CHANNELS">
-<code class="descname">NUMBER_OF_CHANNELS</code><em class="property"> = 4</em><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.NUMBER_OF_CHANNELS" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.NUMBER_OF_CHANNELS">
+<code class="descname">NUMBER_OF_CHANNELS</code><em class="property"> = 4</em><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.NUMBER_OF_CHANNELS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Number of channels in a timer channel.</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="reimaginedQuantum.core.TimerChannel.UNITS">
-<code class="descname">UNITS</code><em class="property"> = ['ns', 'us', 'ms', 's']</em><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.UNITS" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.UNITS">
+<code class="descname">UNITS</code><em class="property"> = ['ns', 'us', 'ms', 's']</em><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.UNITS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Units contained in each channel.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.check_values">
-<code class="descname">check_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.check_values" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.check_values">
+<code class="descname">check_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.check_values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sends message and waits for answer, in which current device values are stored.
 Checks if those values are the same with the channel ones.</p>
 <dl class="docutils">
@@ -569,8 +600,8 @@ Checks if those values are the same with the channel ones.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.construct_message">
-<code class="descname">construct_message</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.construct_message" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.construct_message">
+<code class="descname">construct_message</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.construct_message" title="Permalink to this definition">¶</a></dt>
 <dd><p>Constructs the message to be send to the device to
 gather the values written in memory for all four channels.</p>
 <dl class="docutils">
@@ -580,36 +611,36 @@ gather the values written in memory for all four channels.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.exchange_values">
-<code class="descname">exchange_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.exchange_values" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.exchange_values">
+<code class="descname">exchange_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.exchange_values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Exchanges information with device.</p>
 <p>If <cite>read = True</cite> means it will only send a message to device in order to get its answer.
 Otherwise the communication will try to write at the device.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.parse_to_units">
-<code class="descname">parse_to_units</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.parse_to_units" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.parse_to_units">
+<code class="descname">parse_to_units</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.parse_to_units" title="Permalink to this definition">¶</a></dt>
 <dd><p>Breaks a simple value representation to time units.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.read_values">
-<code class="descname">read_values</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.read_values" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.read_values">
+<code class="descname">read_values</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.read_values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Writes an incoming tuple of hexadecimal values to memory and constructs
 simple representation.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.set_value">
-<code class="descname">set_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.set_value" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.set_value">
+<code class="descname">set_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.set_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>Writes an incoming integer value to memory, and parses it into time units.
 Information is passed down the tree.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.set_write_value">
-<code class="descname">set_write_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.set_write_value" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.set_write_value">
+<code class="descname">set_write_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.set_write_value" title="Permalink to this definition">¶</a></dt>
 <dd><p>Sets the incoming value to the class attribute, writtes them to device.
 The process is done as many times are in <cite>MAXIMUM_WRITING_TRIES</cite>,
 if values are different raises and Exception.</p>
@@ -620,8 +651,8 @@ if values are different raises and Exception.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.unnested_values">
-<code class="descname">unnested_values</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.unnested_values" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.unnested_values">
+<code class="descname">unnested_values</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.unnested_values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes addresses from incoming hexadecimal values.</p>
 <dl class="docutils">
 <dt>Returns:</dt>
@@ -630,8 +661,8 @@ if values are different raises and Exception.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.update_values">
-<code class="descname">update_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.update_values" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.update_values">
+<code class="descname">update_values</code><span class="sig-paren">(</span><em>read=True</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.update_values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Updates current values with the device ones.</p>
 <dl class="docutils">
 <dt>Returns:</dt>
@@ -640,8 +671,8 @@ if values are different raises and Exception.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="reimaginedQuantum.core.TimerChannel.verify_values">
-<code class="descname">verify_values</code><span class="sig-paren">(</span><em>values_to_verify</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.core.TimerChannel.verify_values" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.channels.TimerChannel.verify_values">
+<code class="descname">verify_values</code><span class="sig-paren">(</span><em>values_to_verify</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.channels.TimerChannel.verify_values" title="Permalink to this definition">¶</a></dt>
 <dd><p>Verifies if incoming values are equal to the stored ones.</p>
 <dl class="docutils">
 <dt>Return:</dt>
@@ -651,14 +682,48 @@ if values are different raises and Exception.</p>
 
 </dd></dl>
 
+</div>
+<div class="section" id="module-reimaginedQuantum.constants">
+<span id="constants"></span><h2>Constants<a class="headerlink" href="#module-reimaginedQuantum.constants" title="Permalink to this headline">¶</a></h2>
 <dl class="data">
-<dt id="reimaginedQuantum.core.WRITE_VALUE">
-<code class="descclassname">reimaginedQuantum.core.</code><code class="descname">WRITE_VALUE</code><em class="property"> = 15</em><a class="headerlink" href="#reimaginedQuantum.core.WRITE_VALUE" title="Permalink to this definition">¶</a></dt>
+<dt id="reimaginedQuantum.constants.ADDRESS">
+<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">ADDRESS</code><em class="property"> = {'sleepTimeA_ms': 10, 'sleepTimeB_ns': 12, 'delayA_s': 3, 'samplingTime_us': 17, 'sleepTimeA_s': 11, 'samplingTime_ns': 16, 'samplingTime_s': 19, 'coincidenceWindow_us': 21, 'countsB_MSB': 27, 'sleepTimeB_ms': 14, 'sleepTimeA_us': 9, 'countsA_LSB': 24, 'sleepTimeB_us': 13, 'coincidencesAB_LSB': 28, 'samplingTime_ms': 18, 'coincidenceWindow_ns': 20, 'delayB_s': 7, 'coincidencesAB_MSB': 29, 'delayB_ns': 4, 'delayB_us': 5, 'delayA_ms': 2, 'coincidenceWindow_ms': 22, 'sleepTimeB_s': 15, 'countsA_MSB': 25, 'delayA_ns': 0, 'countsB_LSB': 26, 'delayA_us': 1, 'sleepTimeA_ns': 8, 'coincidenceWindow_s': 23, 'delayB_ms': 6}</em><a class="headerlink" href="#reimaginedQuantum.constants.ADDRESS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Memory addresses</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="reimaginedQuantum.constants.END_COMMUNICATION">
+<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">END_COMMUNICATION</code><em class="property"> = 4</em><a class="headerlink" href="#reimaginedQuantum.constants.END_COMMUNICATION" title="Permalink to this definition">¶</a></dt>
+<dd><p>End of message</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="reimaginedQuantum.constants.MAXIMUM_WRITING_TRIES">
+<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">MAXIMUM_WRITING_TRIES</code><em class="property"> = 20</em><a class="headerlink" href="#reimaginedQuantum.constants.MAXIMUM_WRITING_TRIES" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of tries done to write a value</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="reimaginedQuantum.constants.READ_VALUE">
+<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">READ_VALUE</code><em class="property"> = 14</em><a class="headerlink" href="#reimaginedQuantum.constants.READ_VALUE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reading operation signal</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="reimaginedQuantum.constants.START_COMMUNICATION">
+<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">START_COMMUNICATION</code><em class="property"> = 2</em><a class="headerlink" href="#reimaginedQuantum.constants.START_COMMUNICATION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Begin message signal</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="reimaginedQuantum.constants.WRITE_VALUE">
+<code class="descclassname">reimaginedQuantum.constants.</code><code class="descname">WRITE_VALUE</code><em class="property"> = 15</em><a class="headerlink" href="#reimaginedQuantum.constants.WRITE_VALUE" title="Permalink to this definition">¶</a></dt>
 <dd><p>Writing operation signal</p>
 </dd></dl>
 
+</div>
 <div class="section" id="module-reimaginedQuantum.exceptions">
-<span id="exceptions"></span><h3>Exceptions<a class="headerlink" href="#module-reimaginedQuantum.exceptions" title="Permalink to this headline">¶</a></h3>
+<span id="exceptions"></span><h2>Exceptions<a class="headerlink" href="#module-reimaginedQuantum.exceptions" title="Permalink to this headline">¶</a></h2>
 <dl class="exception">
 <dt id="reimaginedQuantum.exceptions.CheckSumError">
 <em class="property">exception </em><code class="descclassname">reimaginedQuantum.exceptions.</code><code class="descname">CheckSumError</code><span class="sig-paren">(</span><em>message='An error ocurred while doing check sum.'</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.exceptions.CheckSumError" title="Permalink to this definition">¶</a></dt>
@@ -667,29 +732,21 @@ if values are different raises and Exception.</p>
 
 <dl class="exception">
 <dt id="reimaginedQuantum.exceptions.CommunicationError">
-<em class="property">exception </em><code class="descclassname">reimaginedQuantum.exceptions.</code><code class="descname">CommunicationError</code><span class="sig-paren">(</span><em>message='An error ocurred at the communication port.'</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.exceptions.CommunicationError" title="Permalink to this definition">¶</a></dt>
-<dd><p>An error ocurred at the communication port.</p>
+<em class="property">exception </em><code class="descclassname">reimaginedQuantum.exceptions.</code><code class="descname">CommunicationError</code><span class="sig-paren">(</span><em>message='Fatal Error. An error ocurred at the communication port.      Port is either closed or disconnected.'</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.exceptions.CommunicationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fatal Error. An error ocurred at the communication port.
+Port is either closed or disconnected.</p>
 </dd></dl>
 
 <dl class="exception">
 <dt id="reimaginedQuantum.exceptions.ExperimentError">
 <em class="property">exception </em><code class="descclassname">reimaginedQuantum.exceptions.</code><code class="descname">ExperimentError</code><span class="sig-paren">(</span><em>message='An error ocurred in the experiment.'</em><span class="sig-paren">)</span><a class="headerlink" href="#reimaginedQuantum.exceptions.ExperimentError" title="Permalink to this definition">¶</a></dt>
-<dd><p>An error ocurred in the experiment.</p>
+<dd><p>An error ocurred while in the experiment.</p>
 </dd></dl>
 
 </div>
 </div>
 <div class="section" id="module-mainGUI">
-<span id="graphical-user-interface"></span><h2>Graphical User Interface<a class="headerlink" href="#module-mainGUI" title="Permalink to this headline">¶</a></h2>
-<p>Created on Tue Apr 11 11:31:32 2017</p>
-<p>&#64;author: juan</p>
-<dl class="class">
-<dt id="mainGUI.AutoSizeLabel">
-<em class="property">class </em><code class="descclassname">mainGUI.</code><code class="descname">AutoSizeLabel</code><span class="sig-paren">(</span><em>text</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.AutoSizeLabel" title="Permalink to this definition">¶</a></dt>
-<dd><p>from reclosedev at <a class="reference external" href="http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour">http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour</a>
-and Jean-Sébastien <a class="reference external" href="http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt">http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt</a></p>
-</dd></dl>
-
+<span id="graphical-user-interface"></span><h1>Graphical User Interface<a class="headerlink" href="#module-mainGUI" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mainGUI.Main">
 <em class="property">class </em><code class="descclassname">mainGUI.</code><code class="descname">Main</code><a class="headerlink" href="#mainGUI.Main" title="Permalink to this definition">¶</a></dt>
@@ -746,30 +803,6 @@ and Jean-Sébastien <a class="reference external" href="http://stackoverflow.com
 
 </dd></dl>
 
-<dl class="class">
-<dt id="mainGUI.RingBuffer">
-<em class="property">class </em><code class="descclassname">mainGUI.</code><code class="descname">RingBuffer</code><span class="sig-paren">(</span><em>rows</em>, <em>columns</em>, <em>output_file</em>, <em>fmt</em>, <em>delimiter='t'</em><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.RingBuffer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Based on <a class="reference external" href="https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/">https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/</a></p>
-<dl class="method">
-<dt id="mainGUI.RingBuffer.extend">
-<code class="descname">extend</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.RingBuffer.extend" title="Permalink to this definition">¶</a></dt>
-<dd><p>adds array x to ring buffer</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mainGUI.RingBuffer.get">
-<code class="descname">get</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.RingBuffer.get" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the first-in-first-out data in the ring buffer</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="mainGUI.RingBuffer.save">
-<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.RingBuffer.save" title="Permalink to this definition">¶</a></dt>
-<dd><p>Saves the buffer</p>
-</dd></dl>
-
-</dd></dl>
-
 <dl class="function">
 <dt id="mainGUI.heavy_import">
 <code class="descclassname">mainGUI.</code><code class="descname">heavy_import</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.heavy_import" title="Permalink to this definition">¶</a></dt>
@@ -777,38 +810,195 @@ and Jean-Sébastien <a class="reference external" href="http://stackoverflow.com
 <p>Useful to be combined with threading processes.</p>
 </dd></dl>
 
+<div class="section" id="module-propertiesWindow">
+<span id="propertieswindow"></span><h2>PropertiesWindow<a class="headerlink" href="#module-propertiesWindow" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
-<dt id="mainGUI.propertiesWindow">
-<em class="property">class </em><code class="descclassname">mainGUI.</code><code class="descname">propertiesWindow</code><span class="sig-paren">(</span><em>parent=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.propertiesWindow" title="Permalink to this definition">¶</a></dt>
+<dt id="propertiesWindow.AutoSizeLabel">
+<em class="property">class </em><code class="descclassname">propertiesWindow.</code><code class="descname">AutoSizeLabel</code><span class="sig-paren">(</span><em>text</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.AutoSizeLabel" title="Permalink to this definition">¶</a></dt>
+<dd><p>From reclosedev at <a class="reference external" href="http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour">http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour</a>
+and Jean-Sébastien <a class="reference external" href="http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt">http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt</a></p>
+<dl class="attribute">
+<dt id="propertiesWindow.AutoSizeLabel.MAX_CHARS">
+<code class="descname">MAX_CHARS</code><em class="property"> = 25</em><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.MAX_CHARS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of letters in a label.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.AutoSizeLabel.MAX_DIGITS">
+<code class="descname">MAX_DIGITS</code><em class="property"> = 7</em><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.MAX_DIGITS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum number of digits of a number in label.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.AutoSizeLabel.change_value">
+<code class="descname">change_value</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.change_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the text in label with its name and its value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.AutoSizeLabel.eventFilter">
+<code class="descname">eventFilter</code><span class="sig-paren">(</span><em>object</em>, <em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.eventFilter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checks if there is the window size has changed.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>boolean: True if it has not changed. False otherwise.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.AutoSizeLabel.resizeEvent">
+<code class="descname">resizeEvent</code><span class="sig-paren">(</span><em>evt</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.resizeEvent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds the best font size to use if the size of the window changes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.AutoSizeLabel.set_color">
+<code class="descname">set_color</code><span class="sig-paren">(</span><em>color</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.set_color" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets the font color.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>color (string): six digit hexadecimal color representation.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.AutoSizeLabel.set_font_size">
+<code class="descname">set_font_size</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.set_font_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changes the size of the font to <cite>size</cite></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.AutoSizeLabel.stylish_text">
+<code class="descname">stylish_text</code><span class="sig-paren">(</span><em>text</em>, <em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.AutoSizeLabel.stylish_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Uses and incomning <cite>text</cite> and <cite>value</cite> to create and text of length
+<cite>MAX_CHARS</cite>, filled with spaces.</p>
+<dl class="docutils">
+<dt>Returns:</dt>
+<dd>string: text of length <cite>MAX_CHARS</cite>.</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="propertiesWindow.PropertiesWindow">
+<em class="property">class </em><code class="descclassname">propertiesWindow.</code><code class="descname">PropertiesWindow</code><span class="sig-paren">(</span><em>parent=None</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.PropertiesWindow" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines the channel configuration dialog.</p>
 <dl class="attribute">
-<dt id="mainGUI.propertiesWindow.DEFAULT_CHANNELS">
-<code class="descname">DEFAULT_CHANNELS</code><em class="property"> = 2</em><a class="headerlink" href="#mainGUI.propertiesWindow.DEFAULT_CHANNELS" title="Permalink to this definition">¶</a></dt>
+<dt id="propertiesWindow.PropertiesWindow.DEFAULT_CHANNELS">
+<code class="descname">DEFAULT_CHANNELS</code><em class="property"> = 2</em><a class="headerlink" href="#propertiesWindow.PropertiesWindow.DEFAULT_CHANNELS" title="Permalink to this definition">¶</a></dt>
 <dd><p>Default number of channels</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mainGUI.propertiesWindow.creator">
-<code class="descname">creator</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.propertiesWindow.creator" title="Permalink to this definition">¶</a></dt>
-<dd><p>creates the spinboxes and labels required by the user</p>
+<dt id="propertiesWindow.PropertiesWindow.creator">
+<code class="descname">creator</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.PropertiesWindow.creator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates the spinboxes and labels required by the user</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mainGUI.propertiesWindow.delete">
-<code class="descname">delete</code><span class="sig-paren">(</span><em>n</em>, <em>N</em><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.propertiesWindow.delete" title="Permalink to this definition">¶</a></dt>
-<dd><p>delets unneccesary rows of labels and spinboxes</p>
+<dt id="propertiesWindow.PropertiesWindow.delete">
+<code class="descname">delete</code><span class="sig-paren">(</span><em>n</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.PropertiesWindow.delete" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delets unneccesary rows of labels and spinboxes</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mainGUI.propertiesWindow.reset">
-<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.propertiesWindow.reset" title="Permalink to this definition">¶</a></dt>
-<dd><p>sets everything to default</p>
+<dt id="propertiesWindow.PropertiesWindow.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.PropertiesWindow.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets every detector to the default values</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="mainGUI.propertiesWindow.update">
-<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mainGUI.propertiesWindow.update" title="Permalink to this definition">¶</a></dt>
-<dd><p>sends message with the updated information</p>
+<dt id="propertiesWindow.PropertiesWindow.set_values">
+<code class="descname">set_values</code><span class="sig-paren">(</span><em>values</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.PropertiesWindow.set_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the incoming values to the spinboxes.</p>
+<dl class="docutils">
+<dt>Args:</dt>
+<dd>values (list): list of tuples, each position of the list
+has the values of delay and sleep time for a channel.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.PropertiesWindow.update">
+<code class="descname">update</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.PropertiesWindow.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends a message with the updated information</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="propertiesWindow.WidgetLine">
+<em class="property">class </em><code class="descclassname">propertiesWindow.</code><code class="descname">WidgetLine</code><span class="sig-paren">(</span><em>identifier</em>, <em>parent</em>, <em>delay_value=100</em>, <em>sleep_value=25</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.WidgetLine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines a single widget line in the PropertiesWindow.</p>
+<p><strong>Constants</strong></p>
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.DEFAULT_DELAY">
+<code class="descname">DEFAULT_DELAY</code><em class="property"> = 100</em><a class="headerlink" href="#propertiesWindow.WidgetLine.DEFAULT_DELAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default delay time value (ns).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.DEFAULT_SLEEP">
+<code class="descname">DEFAULT_SLEEP</code><em class="property"> = 25</em><a class="headerlink" href="#propertiesWindow.WidgetLine.DEFAULT_SLEEP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default sleep time value (ns).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.MAX_DELAY">
+<code class="descname">MAX_DELAY</code><em class="property"> = 200</em><a class="headerlink" href="#propertiesWindow.WidgetLine.MAX_DELAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum delay time value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.MAX_SLEEP">
+<code class="descname">MAX_SLEEP</code><em class="property"> = 200</em><a class="headerlink" href="#propertiesWindow.WidgetLine.MAX_SLEEP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Maximum sleep time value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.MIN_DELAY">
+<code class="descname">MIN_DELAY</code><em class="property"> = 0</em><a class="headerlink" href="#propertiesWindow.WidgetLine.MIN_DELAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimum delay time value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.MIN_SLEEP">
+<code class="descname">MIN_SLEEP</code><em class="property"> = 0</em><a class="headerlink" href="#propertiesWindow.WidgetLine.MIN_SLEEP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minimum sleep time value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.STEP_DELAY">
+<code class="descname">STEP_DELAY</code><em class="property"> = 5</em><a class="headerlink" href="#propertiesWindow.WidgetLine.STEP_DELAY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increase ratio on the delay time value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="propertiesWindow.WidgetLine.STEP_SLEEP">
+<code class="descname">STEP_SLEEP</code><em class="property"> = 5</em><a class="headerlink" href="#propertiesWindow.WidgetLine.STEP_SLEEP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Increase ratio on the sleep time value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.WidgetLine.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.WidgetLine.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets delay_value and sleep_value to the default ones. It also updates
+them to the spinboxes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.WidgetLine.set_values">
+<code class="descname">set_values</code><span class="sig-paren">(</span><em>delay_sleep_value</em><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.WidgetLine.set_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Verifies if incomming values are different to stored ones.</p>
+<p>If they are different than older ones, saves the incoming one
+in the params file. It also updates the spinBox values.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="propertiesWindow.WidgetLine.update_values">
+<code class="descname">update_values</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#propertiesWindow.WidgetLine.update_values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the spinBox values, from the attributes.</p>
 </dd></dl>
 
 </dd></dl>
@@ -827,7 +1017,7 @@ and Jean-Sébastien <a class="reference external" href="http://stackoverflow.com
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="index.html" class="btn btn-neutral" title="Welcome to Reimagined Quantum’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="install.html" class="btn btn-neutral" title="ReimaginedQuantum installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
