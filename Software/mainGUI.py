@@ -520,8 +520,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.stream_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
 
+        error = str(error)
+        self.save_param(str(error), None, None)
         msg.setText("An Error has ocurred.")
-        msg.setInformativeText(str(error))
+        msg.setInformativeText(error)
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msg.exec_()

@@ -3,8 +3,8 @@ import sys
 
 # Dependencies are automatically detected, but it might need
 # fine tuning.
-include = '/home/juan/anaconda3/lib/libmkl_avx.so'
-#include = '/home/juan/.anaconda3/lib/libmkl_avx.so'
+#include = '/home/juan/anaconda3/lib/libmkl_avx.so'
+include = '/home/juan/.anaconda3/lib/libmkl_avx.so'
 buildOptions = dict(packages = ['numpy.core._methods', 'numpy.lib.format'], excludes = [], include_files = include)
 
 base = 'Win32GUI' if sys.platform=='win32' else None
