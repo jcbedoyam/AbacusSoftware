@@ -136,7 +136,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
 
     def set_values(self, values):
         """ Updates the incoming values to the spinboxes.
-        
+
         Args:
             values (list): list of tuples, each position of the list
             has the values of delay and sleep time for a channel.
@@ -158,18 +158,12 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         self.delete(n)
         self.number_channels = n
 
-    def send_data(self, error_capable = True):
-        try:
-            for i in range(self.number_channels):
-                delay = self.widgets[i].delay_value
-                sleep = self.widgets[i].sleep_value
-                self.parent.experiment.detectors[i].set_times(delay, sleep)
-            self.error_ocurred = False
-        except Exception as e:
-            if error_capable:
-                self.parent.errorWindow(e)
-            else:
-                raise e
+    def send_data(self):
+        for i in range(self.number_channels):
+            delay = self.widgets[i].delay_value
+            sleep = self.widgets[i].sleep_value
+            self.parent.experiment.detectors[i].set_times(delay, sleep)
+
 
     def update(self):
         """
@@ -177,14 +171,15 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         """
         try:
             self.parent.experiment = Experiment(self.parent.serial, self.number_channels)
-            self.send_data(error_capable = False)
+            self.send_data()
             self.channel_spinBox.setEnabled(False)
             self.saveParams()
             self.parent.start_experiment()
-            self.error_ocurred = False
+            
         except Exception as e:
-            self.error_ocurred = True
-            self.parent.errorWindow(e)
+            if type(e) == CommunicationError or type(e) == ExperimentError:
+                self.error_ocurred = True
+                self.parent.errorWindow(e)
 
     def saveParams(self, delimiter = DELIMITER):
         for i in range(self.number_channels):

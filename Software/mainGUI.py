@@ -4,7 +4,6 @@
 import re
 import sys
 import __GUI_images__
-from plotting import *
 from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -16,12 +15,12 @@ def heavy_import():
 
     Useful to be combined with threading processes.
     """
-    global plt, FigureCanvas, NavigationToolbar, EngFormatter
+    global plt, FigureCanvas, NavigationToolbar, EngFormatter, Axes
     import matplotlib.pyplot as plt
     from matplotlib.backends.backend_qt5agg import (
                             FigureCanvasQTAgg as FigureCanvas,
                             NavigationToolbar2QT as NavigationToolbar)
-    from matplotlib.ticker import EngFormatter
+    from plotting import Axes
 
 if CURRENT_OS == 'win32':
     import ctypes
@@ -181,16 +180,18 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 with open(self.output_name, "r") as old:
                     for line in old:
                         file_.write(line)
-
-            with open(params, "a") as file_:
-                with open(self.params_file, "r") as old:
-                    for line in old:
-                        file_.write(line)
             self.data.output_file = new
-            self.include_params(self.output_name, self.params_file)
             if remove_old:
                 os.remove(self.output_name)
-                os.remove(self.params_file)
+            if params != self.params_file:
+                with open(params, "a") as file_:
+                    with open(self.params_file, "r") as old:
+                        print(params, self.params_file)
+                        for line in old:
+                            file_.write(line)
+                if remove_old:
+                    os.remove(self.params_file)
+
         self.output_name = new
         self.params_file = params
 
@@ -208,6 +209,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                                 file.write(line)
                     os.remove(params)
                     os.rename(temp, params)
+            elif end:
+                os.remove(self.params_file)
+                os.remove(self.output_name)
+
 
     def save_location(self):
         new = self.save_line.text()
@@ -235,11 +240,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         for x in current_ports.items():
             if x in self.ports.items():
                 n += 1
-        if n != len(current_ports):
+        if n != len(current_ports) or n == 0:
             self.port_box.clear()
             self.ports = current_ports
             for port in self.ports:
-                self.port_box.addItem(port)
+                if CommunicationPort(self.ports[port]).test():
+                    self.port_box.addItem(port)
+
         self.port_box.setCurrentIndex(-1)
 
     def select_serial(self, index, error_capable = True):
@@ -281,8 +288,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.setDisabled(status)
         self.coin_spinBox.setDisabled(status)
         self.channels_button.setDisabled(status)
-        if status:
-            self.stream_activate(status)
+        # if status:
+        self.stream_activate(status)
 
     def start_experiment(self):
         if self.format == None:
@@ -299,7 +306,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if self.serial != None and self.window != None:
             if not self.window.error_ocurred:
-                self.stream_activate(False)
+                self.widget_activate(False)
 
     def stream_activate(self, status):
         self.stream_button.setDisabled(status)
@@ -398,7 +405,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
             elif not self.timer.isActive():
                 self.stream_button.setStyleSheet("background-color: green")
-                self.window.send_data(error_capable = False)
+                self.window.send_data()
                 self.method_sampling(self.samp_spinBox.value(), error_capable = False)
                 self.method_coinWin(self.coin_spinBox.value(), error_capable = False)
                 self.save_param("Streaming started.", None, None)
@@ -502,17 +509,17 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.ax_coins.blit()
 
     def errorWindow(self, error):
-        self.stop_clocks()
         msg = QtWidgets.QMessageBox()
-        error = str(error)
-        if "write" in error or "Serial" in error:
+        msg.setIcon(QtWidgets.QMessageBox.Warning)
+
+        if type(error) == CommunicationError or type(error) == ExperimentError:
+            self.stop_clocks()
             self.serial = None
-            self.ports = {}
+            self.serial_refresh()
+            self.widget_activate(True)
+            self.stream_button.setStyleSheet("background-color: red")
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
 
-        self.serial_refresh()
-        self.stream_button.setStyleSheet("background-color: none")
-
-        msg.setIcon(QtWidgets.QMessageBox.Critical)
         msg.setText("An Error has ocurred.")
         msg.setInformativeText(str(error))
         msg.setWindowTitle("Error")

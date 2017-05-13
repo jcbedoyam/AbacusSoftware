@@ -36,6 +36,9 @@ class CommunicationPort(object):
     STOP_BITS = serial.STOPBITS_ONE #: Message contains only one stop bit
     BYTE_SIZE = serial.EIGHTBITS #: One byte = 8 bits
     MESSAGE_TRIGGER = 1e-6 #: If queue is empty
+    TEST_MESSAGE = [START_COMMUNICATION, READ_VALUE, 0x00,
+               0x00, 0x00, END_COMMUNICATION]
+
     def __init__(self, device, baudrate = BAUDRATE, timeout = TIMEOUT, bounce_timeout = BOUNCE_TIMEOUT):
         self.device = device
         self.baudrate = baudrate
@@ -167,7 +170,7 @@ class CommunicationPort(object):
         else:
             return None
 
-    def message_internal(self, content, wait_for_answer = False):
+    def message_internal(self, content, wait_for_answer = False, tries = -1):
         """ Sends a message, and waits for answer.
 
         Returns:
@@ -177,19 +180,35 @@ class CommunicationPort(object):
         Raises:
             Exception: any type ocurred with during `bounce_timeout`.
         """
+
+        if tries == -1:
+            tries = self.bounce_timeout
         if wait_for_answer:
-            for i in range(self.bounce_timeout):
+            for i in range(tries):
                 try:
                     self.send(content)
                     return self.receive()
                 except Exception as e:
                     pass
-                if i == self.bounce_timeout - 1:
+                if i == tries - 1:
                     self.stop = True
                     raise CommunicationError()
         else:
             self.send(content)
             return None
+
+    def test(self):
+        """ Tests whether or not the CommunicationPort corresponds to a ReimaginedQuantum one.
+
+        Returns:
+            boolean: True if it does, False otherwise.
+        """
+        try:
+            self.message_internal(serial.to_bytes(self.TEST_MESSAGE),
+                                    wait_for_answer = True, tries = 3)
+            return True
+        except Exception as e:
+            return False
 
     def close(self):
         """ Closes the serial port."""
@@ -304,7 +323,7 @@ class Experiment(object):
                 self.coin_channels[j].read_values(ans[2*(i+j+1):2*(i+j+1)+2])
                 coin_values.append(self.coin_channels[j].get_value())
         except Exception as e:
-            raise e
+            raise ExperimentError(str(e))
         return time(), detector_values, coin_values
 
     def set_sampling(self, value):
@@ -340,7 +359,7 @@ class Experiment(object):
             self.sampling_channel.read_values(values[last:4+last])
             self.coinWindow_channel.read_values(values[last+4:])
         except Exception as e:
-            raise e
+            raise ExperimentError(str(e))
 
     def measure_N_points(self, detector_identifiers, interval, N_points, print_ = True):
         if detector_identifiers != []:
