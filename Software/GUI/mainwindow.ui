@@ -187,7 +187,7 @@ Window (ns):</string>
                 <bool>false</bool>
                </property>
                <property name="minimum">
-                <number>30</number>
+                <number>20</number>
                </property>
                <property name="maximum">
                 <number>1000000</number>
@@ -304,7 +304,7 @@ Window (ns):</string>
      <x>0</x>
      <y>0</y>
      <width>650</width>
-     <height>22</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>

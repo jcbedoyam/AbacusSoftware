@@ -27,6 +27,16 @@ if CURRENT_OS == 'win32':
     myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+class Table(QtWidgets.QTableWidget):
+    TABLE_YGROW = 100
+    TABLE_SIZE = 100
+    def __init__(self):
+        QtWidgets.QLabel.__init__(self)
+
+        self.ylength = self.table.rowCount()
+        self.xlength = self.table.columnCount()
+
+
 class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     """
         Defines the mainwindow.
@@ -412,7 +422,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.start_clocks()
 
             time_, detectors, coins = self.experiment.current_values()
-
 
             actual = self.table.rowCount()
             if (actual - self.current_cell) <= self.TABLE_YGROW:

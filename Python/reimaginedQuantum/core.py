@@ -88,7 +88,7 @@ class CommunicationPort(object):
         Raises:
             PySerialExceptions
         """
-        self.serial.flushOutput()
+        # self.serial.flushOutput()
         self.serial.flushInput()
         self.serial.write(content)
 
@@ -166,6 +166,7 @@ class CommunicationPort(object):
                 if conf in self.answer:
                     value = self.answer.pop(conf)
                     return value
+                sleep(1e-3)
             raise CommunicationError()
         else:
             return None
