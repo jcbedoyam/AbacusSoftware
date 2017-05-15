@@ -1,7 +1,8 @@
 import os
 import smtplib
+import config
+from config import get_password
 import __GUI_images__
-from decouple import config
 from email.mime.text import MIMEText
 from reimaginedQuantum.constants import *
 from PyQt5 import QtCore, QtGui, QtWidgets
@@ -11,14 +12,11 @@ from __email__ import Ui_Dialog as Ui_Dialog_email
 from __default__ import Ui_Dialog as Ui_Dialog_default
 from reimaginedQuantum.core import save_default, reload_default
 
-from default import *
-
 class EmailWindow(QtWidgets.QDialog, Ui_Dialog_email):
     """
         Defines the email configuration dialog.
     """
-    FROM = config('FROM')
-    PASSWORD = config('PASSWORD')
+    FROM = config.FROM
     global USER_EMAIL, SEND_EMAIL
     def __init__(self, parent=None):
         super(EmailWindow, self).__init__(parent)
@@ -85,7 +83,8 @@ class EmailWindow(QtWidgets.QDialog, Ui_Dialog_email):
 
                 server = smtplib.SMTP('smtp.gmail.com', 587)
                 server.starttls()
-                server.login(self.FROM, self.PASSWORD)
+
+                server.login(self.FROM, get_password())
                 text = msg.as_string()
                 server.sendmail(self.FROM, toaddr, text)
                 server.quit()
