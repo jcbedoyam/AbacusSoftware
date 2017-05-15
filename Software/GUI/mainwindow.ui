@@ -228,36 +228,7 @@ Window (ns):</string>
           <attribute name="title">
            <string>Data</string>
           </attribute>
-          <layout class="QHBoxLayout" name="horizontalLayout_3">
-           <item>
-            <widget class="QTableWidget" name="table">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="dragEnabled">
-              <bool>true</bool>
-             </property>
-             <property name="rowCount">
-              <number>0</number>
-             </property>
-             <property name="columnCount">
-              <number>0</number>
-             </property>
-             <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
-              <bool>false</bool>
-             </attribute>
-             <attribute name="verticalHeaderDefaultSectionSize">
-              <number>16</number>
-             </attribute>
-             <attribute name="verticalHeaderMinimumSectionSize">
-              <number>16</number>
-             </attribute>
-             <attribute name="verticalHeaderShowSortIndicator" stdset="0">
-              <bool>false</bool>
-             </attribute>
-            </widget>
-           </item>
-          </layout>
+          <layout class="QHBoxLayout" name="horizontalLayout_3"/>
          </widget>
          <widget class="QWidget" name="tab_3">
           <attribute name="title">

@@ -74,3 +74,5 @@ STEP_COIN = 5
 FILE_NAME = 'Output.dat'
 USER_EMAIL = ''
 SEND_EMAIL = True
+
+TABLE_YGROW = 100

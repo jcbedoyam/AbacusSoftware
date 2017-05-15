@@ -32,42 +32,72 @@ if CURRENT_OS == 'win32':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class Table(QtWidgets.QTableWidget):
-    TABLE_YGROW = 100
-    TABLE_SIZE = 100
+    TABLE_SIZE = 10000
 
-    global DELIMITER
+    global DELIMITER, TABLE_YGROW
     def __init__(self, parent = None):
-        QtWidgets.QLabel.__init__(self)
-
+        QtWidgets.QTableWidget.__init__(self)
         self.parent = parent
+        self.setEnabled(True)
+        self.setDragEnabled(True)
+        self.setRowCount(0)
+        self.setColumnCount(0)
+        self.horizontalHeader().setSortIndicatorShown(False)
+        self.verticalHeader().setDefaultSectionSize(16)
+        self.verticalHeader().setMinimumSectionSize(16)
+        self.verticalHeader().setSortIndicatorShown(False)
+
         self.number_columns = 0
+        self.current_cell = 0
+        self.detectors = 0
+        self.coincidences = 0
         self.header = [None]
         self.ylength = self.rowCount()
         self.xlength = self.columnCount()
 
     def create_table(self):
-        model = QtGui.QStandardItemModel()
         experiment = self.parent.experiment
 
-        self.setRowCount(self.TABLE_YGROW)
-
-        self.number_columns = experiment.number_detectors + experiment.number_coins + 1
+        self.setRowCount(TABLE_YGROW)
+        self.detectors = experiment.number_detectors
+        self.coincidences = experiment.number_coins
+        self.number_columns = self.detectors + self.coincidences + 1
 
         self.setColumnCount(self.number_columns)
         self.headers = [None]*self.number_columns
         self.headers[0] = 'Time (s)'
-        for i in range(experiment.number_detectors):
+        for i in range(self.detectors):
             self.headers[i+1] = experiment.detectors[i].name
-        for j in range(experiment.number_coins):
+        for j in range(self.coincidences):
             self.headers[i+j+2] = experiment.coin_channels[j].name
 
-        print(self.headers)
-        model.setHorizontalHeaderLabels(self.headers)
-        # self.setModel(model)
-        # with open(self.output_name, 'a') as file_:
-        #     text = DELIMITER.join(headers)
-        #     file_.write("%s\n"%text)
+        self.setHorizontalHeaderLabels(self.headers)
 
+    def get_last_row(self, column):
+        return self.item((self.current_cell-1)%self.TABLE_SIZE, column).text()
+
+    def include(self, time_, detectors, coins):
+        actual = self.rowCount()
+        if (actual - self.current_cell) <= TABLE_YGROW and actual < self.TABLE_SIZE:
+            self.setRowCount(TABLE_YGROW + actual)
+
+        if type(detectors) is list:
+            for i in range(self.detectors):
+                value = "%d"%detectors[i]
+                cell = QtWidgets.QTableWidgetItem(value)
+                self.setItem(self.current_cell%self.TABLE_SIZE, i+1, cell)
+                cell.setFlags(QtCore.Qt.ItemIsEnabled)
+
+            for j in range(self.coincidences):
+                value = "%d"%coins[j]
+                cell = QtWidgets.QTableWidgetItem(value)
+                self.setItem(self.current_cell%self.TABLE_SIZE, i+j+2, cell)
+                cell.setFlags(QtCore.Qt.ItemIsEnabled)
+
+            cell = QtWidgets.QTableWidgetItem("%.3f"%time_)
+            self.setItem(self.current_cell%self.TABLE_SIZE, 0, cell)
+            self.scrollToItem(cell)
+            self.current_cell += 1
 
 class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     """
@@ -79,12 +109,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     DEFAULT_TPLOT = 100
     DEFAULT_TCHECK = 1000
     DEFAULT_CURRENT = 200
-    TABLE_YGROW = 100
     EXTENSION_DATA = '.dat'
     EXTENSION_PARAMS = '.txt'
     SUPPORTED_EXTENSIONS = {EXTENSION_DATA : 'Plain text data file (*.dat)', '.csv' : 'CSV data files (*.csv)'}
 
-    global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP
+    global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP, TABLE_YGROW
     global MIN_COIN, MAX_COIN, STEP_COIN, DEFAULT_CHANNELS, FILE_NAME, USER_EMAIL, SEND_EMAIL
 
     def __init__(self):
@@ -146,6 +175,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.port_box.currentIndexChanged.connect(self.select_serial)
         self.save_line.returnPressed.connect(self.save_location)
+
+        self.table = Table(self)
+        self.horizontalLayout_3.addWidget(self.table)
         self.ylength = self.table.rowCount()
         self.xlength = self.table.columnCount()
 
@@ -170,7 +202,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.port = None
         self.experiment = None
         self.ports = {}
-        self.current_cell = 0
         self.last_row_saved = 0
         self.number_columns = 0
         self.format = None
@@ -205,9 +236,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.plot_widget, coordinates=True)
 
         self.plot_layout.addWidget(self.toolbar)
-        self.ax_counts = Axes(self.fig, self.canvas, ax_counts, self.TABLE_YGROW,
+        self.ax_counts = Axes(self.fig, self.canvas, ax_counts, TABLE_YGROW,
                               "Counts", self.experiment.detectors)
-        self.ax_coins = Axes(self.fig, self.canvas, ax_coins, self.TABLE_YGROW,
+        self.ax_coins = Axes(self.fig, self.canvas, ax_coins, TABLE_YGROW,
                              "Coincidences", self.experiment.coin_channels)
 
         for i in range(self.experiment.number_detectors):
@@ -385,12 +416,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.format == None:
             self.stream_activate(False)
             self.create_table()
-            self.header = np.zeros(self.number_columns, dtype=object)
+            self.header = np.zeros(self.table.number_columns, dtype=object)
             self.widget_activate(False)
-            self.format = [r"%d" for i in range(self.number_columns)]
+            self.format = [r"%d" for i in range(self.table.number_columns)]
             self.format[0] = "%.3f"
             self.format = DELIMITER.join(self.format)
-            self.data = RingBuffer(self.TABLE_YGROW, self.number_columns, self.output_name, self.format)
+            self.data = RingBuffer(TABLE_YGROW, self.table.number_columns, self.output_name, self.format)
             self.create_current_labels()
             self.create_fig()
 
@@ -402,19 +433,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stream_button.setDisabled(status)
 
     def create_table(self):
-        self.temp.create_table()
-        self.number_columns = self.experiment.number_detectors + self.experiment.number_coins + 1
-        self.table.setRowCount(self.TABLE_YGROW)
-        self.table.setColumnCount(self.number_columns)
-        self.table.setItem(0, 0, QtWidgets.QTableWidgetItem("Time (s)"))
-        for i in range(self.experiment.number_detectors):
-            self.table.setItem(0, i+1, QtWidgets.QTableWidgetItem(self.experiment.detectors[i].name))
-        for j in range(self.experiment.number_coins):
-            self.table.setItem(0, i+j+2, QtWidgets.QTableWidgetItem(self.experiment.coin_channels[j].name))
-
-        headers = [self.table.item(0,i).text() for i in range(self.number_columns)]
+        self.table.create_table()
         with open(self.output_name, 'a') as file_:
-            text = DELIMITER.join(headers)
+            text = DELIMITER.join(self.table.headers)
             file_.write("%s\n"%text)
 
     def choose_file(self):
@@ -489,10 +510,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def update_current_labels(self):
         for i in range(self.experiment.number_detectors):
-            value = self.table.item(self.current_cell, i+1).text()
+            value = self.table.get_last_row(i+1)
             self.current_labels[i].change_value(value)
         for j in range(self.experiment.number_coins):
-            value = self.table.item(self.current_cell, j+i+2).text()
+            value = self.table.get_last_row(j+i+2)
             self.current_labels[j+i+1].change_value(value)
 
     def method_streamer(self):
@@ -513,12 +534,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
             time_, detectors, coins = self.experiment.current_values()
 
-            actual = self.table.rowCount()
-            if (actual - self.current_cell) <= self.TABLE_YGROW:
-                self.table.setRowCount(self.TABLE_YGROW + actual)
-
             if type(detectors) is list:
-                if self.current_cell == 0:
+                if self.table.current_cell == 0:
                     self.init_time = time()
                     current_time = asctime(localtime())
                     self.params_header = "Reimagined Quantum experiment began at %s"%current_time
@@ -529,22 +546,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 values = np.array(values)
                 values = values.reshape((1, values.shape[0]))
                 self.data.extend(values)
-                for i in range(self.experiment.number_detectors):
-                    value = "%d"%detectors[i]
-                    cell = QtWidgets.QTableWidgetItem(value)
-                    self.table.setItem(self.current_cell+1, i+1, cell)
-                    cell.setFlags(QtCore.Qt.ItemIsEnabled)
 
-                for j in range(self.experiment.number_coins):
-                    value = "%d"%coins[j]
-                    cell = QtWidgets.QTableWidgetItem(value)
-                    self.table.setItem(self.current_cell+1, i+j+2, cell)
-                    cell.setFlags(QtCore.Qt.ItemIsEnabled)
-
-                cell = QtWidgets.QTableWidgetItem("%.3f"%time_)
-                self.table.setItem(self.current_cell+1, 0, cell)
-                self.table.scrollToItem(cell)
-                self.current_cell += 1
+                self.table.include(time_, detectors, coins)
 
         except Exception as e:
             self.errorWindow(e)
@@ -585,7 +588,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ax_counts.set_background()
 
     def update_plot(self):
-        if self.current_cell > 1:
+        if self.table.current_cell > 1:
             data = self.data[:]
             times = np.arange(data.shape[0])
             ychanged1 = self.ax_counts.update_data(times, data)
