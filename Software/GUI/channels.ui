@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Channels configuration</string>
+   <string>Detectors configuration</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -41,7 +41,7 @@
          <item>
           <widget class="QLabel" name="label">
            <property name="text">
-            <string>Number of channels:</string>
+            <string>Number of detectors:</string>
            </property>
           </widget>
          </item>
@@ -67,7 +67,7 @@
       <item row="2" column="0">
        <widget class="QGroupBox" name="groupBox">
         <property name="title">
-         <string>Channels</string>
+         <string>Detectors</string>
         </property>
         <layout class="QVBoxLayout" name="verticalLayoutDetectors"/>
        </widget>

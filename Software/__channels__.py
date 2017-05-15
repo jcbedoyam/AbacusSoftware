@@ -58,7 +58,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Channels configuration"))
-        self.label.setText(_translate("Dialog", "Number of channels:"))
-        self.groupBox.setTitle(_translate("Dialog", "Channels"))
+        Dialog.setWindowTitle(_translate("Dialog", "Detectors configuration"))
+        self.label.setText(_translate("Dialog", "Number of detectors:"))
+        self.groupBox.setTitle(_translate("Dialog", "Detectors"))
 

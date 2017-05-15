@@ -10,6 +10,7 @@ import codecs
 from queue import Queue
 from itertools import combinations
 from threading import Thread, Timer
+from importlib import import_module
 from time import sleep, localtime, strftime, time, asctime
 import serial.tools.list_ports as find_ports
 #################
@@ -460,3 +461,20 @@ def findPort():
         else:
             ports["%s (%s)"%(port.description, port.device)] = port.device
     return ports
+
+def save_default(DEFAULT_CHANNELS = DEFAULT_CHANNELS, DEFAULT_DELAY = DEFAULT_DELAY,
+            DEFAULT_SLEEP = DEFAULT_SLEEP, DEFAULT_SAMP = DEFAULT_SAMP,
+            DEFAULT_COIN = DEFAULT_COIN, USER_EMAIL = USER_EMAIL, FILE_NAME = FILE_NAME,
+            SEND_EMAIL = SEND_EMAIL):
+    with open('default.py', 'w') as file:
+        file.write('DEFAULT_CHANNELS=%d\n'%DEFAULT_CHANNELS)
+        file.write('DEFAULT_DELAY=%d\n'%DEFAULT_DELAY)
+        file.write('DEFAULT_SLEEP=%d\n'%DEFAULT_SLEEP)
+        file.write('DEFAULT_SAMP=%d\n'%DEFAULT_SAMP)
+        file.write('DEFAULT_COIN=%d\n'%DEFAULT_COIN)
+        file.write("USER_EMAIL='%s'\n"%USER_EMAIL)
+        file.write("FILE_NAME='%s'\n"%FILE_NAME)
+        file.write("SEND_EMAIL=%s\n"%SEND_EMAIL)
+
+def reload_default():
+    import_module('reimaginedQuantum.constants')

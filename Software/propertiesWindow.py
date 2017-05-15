@@ -3,22 +3,14 @@ from reimaginedQuantum.core import *
 from reimaginedQuantum.constants import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+from default import *
+
 class WidgetLine(object):
     """
         Defines a single widget line in the PropertiesWindow.
-
-        **Constants**
     """
-
-    MIN_DELAY = 0 #: Minimum delay time value.
-    MAX_DELAY = 200 #: Maximum delay time value.
-    STEP_DELAY = 5 #: Increase ratio on the delay time value.
-    DEFAULT_DELAY = 100 #: Default delay time value (ns).
-    MIN_SLEEP = 0 #: Minimum sleep time value.
-    MAX_SLEEP = 200 #: Maximum sleep time value.
-    STEP_SLEEP = 5 #: Increase ratio on the sleep time value.
-    DEFAULT_SLEEP = 25 #: Default sleep time value (ns).
-
+    global MIN_DELAY, MAX_DELAY, STEP_DELAY, DEFAULT_DELAY
+    global MIN_SLEEP, MAX_SLEEP, STEP_SLEEP, DEFAULT_SLEEP
     def __init__(self, identifier, parent, delay_value = DEFAULT_DELAY,
                 sleep_value = DEFAULT_SLEEP):
         self.parent = parent
@@ -35,13 +27,13 @@ class WidgetLine(object):
         self.__init_layout__()
 
     def __init_spinBoxes__(self):
-        self.delay_spinBox.setMinimum(self.MIN_DELAY)
-        self.delay_spinBox.setMaximum(self.MAX_DELAY)
-        self.delay_spinBox.setSingleStep(self.STEP_DELAY)
+        self.delay_spinBox.setMinimum(MIN_DELAY)
+        self.delay_spinBox.setMaximum(MAX_DELAY)
+        self.delay_spinBox.setSingleStep(STEP_DELAY)
 
-        self.sleep_spinBox.setMinimum(self.MIN_SLEEP)
-        self.sleep_spinBox.setMaximum(self.MAX_SLEEP)
-        self.sleep_spinBox.setSingleStep(self.STEP_SLEEP)
+        self.sleep_spinBox.setMinimum(MIN_SLEEP)
+        self.sleep_spinBox.setMaximum(MAX_SLEEP)
+        self.sleep_spinBox.setSingleStep(STEP_SLEEP)
 
         self.__init_corrections__(self.delay_spinBox)
         self.__init_corrections__(self.sleep_spinBox)
@@ -86,8 +78,8 @@ class WidgetLine(object):
         """ Sets delay_value and sleep_value to the default ones. It also updates
         them to the spinboxes.
         """
-        self.delay_value = self.DEFAULT_DELAY
-        self.sleep_value = self.DEFAULT_SLEEP
+        self.delay_value = DEFAULT_DELAY
+        self.sleep_value = DEFAULT_SLEEP
         self.update_values()
 
     def update_values(self):
@@ -101,17 +93,18 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         Defines the channel configuration dialog.
     """
 
-    DEFAULT_CHANNELS = 2 #: Default number of channels
-
-    global DELIMITER
+    global DELIMITER, DEFAULT_CHANNELS, MIN_CHANNELS, MAX_CHANNELS
     def __init__(self, parent=None):
         super(PropertiesWindow, self).__init__(parent)
         self.setupUi(self)
 
         self.parent = parent
         self.current_n = 0
-        self.number_channels = self.DEFAULT_CHANNELS
+        self.number_channels = DEFAULT_CHANNELS
+        self.channel_spinBox.setMaximum(MAX_CHANNELS)
+        self.channel_spinBox.setMinimum(MIN_CHANNELS)
         self.channel_spinBox.setValue(self.number_channels)
+
         self.channel_spinBox.valueChanged.connect(self.creator)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.update)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.reset)
@@ -175,7 +168,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             self.channel_spinBox.setEnabled(False)
             self.saveParams()
             self.parent.start_experiment()
-            
+
         except Exception as e:
             if type(e) == CommunicationError or type(e) == ExperimentError:
                 self.error_ocurred = True
@@ -202,7 +195,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         """
             Sets every detector to the default values
         """
-        self.channel_spinBox.setValue(self.DEFAULT_CHANNELS)
+        self.channel_spinBox.setValue(DEFAULT_CHANNELS)
         for i in range(self.number_channels):
             self.widgets[i].reset()
 

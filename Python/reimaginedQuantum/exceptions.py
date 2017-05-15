@@ -3,10 +3,10 @@
 
 class CommunicationError(Exception):
     """ Fatal Error. An error ocurred at the communication port.
-    Port is either closed or disconnected. """
+Port is either closed or disconnected. """
 
     def __init__(self, message = "Fatal Error. An error ocurred at the communication port. \
-     Port is either closed or disconnected."):
+ Port is either closed or disconnected."):
         self.message = message
 
     def __repr__(self):
@@ -29,7 +29,7 @@ class CheckSumError(Exception):
 
 class ExperimentError(Exception):
     """ An error ocurred while in the experiment. """
-    
+
     def __init__(self, message = "An error ocurred in the experiment."):
         self.message = message
     def __repr__(self):

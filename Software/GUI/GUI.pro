@@ -29,4 +29,7 @@ SOURCES += main.cpp\
 HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui \
-    channels.ui
+    channels.ui \
+    email.ui \
+    default.ui \
+    about.ui
