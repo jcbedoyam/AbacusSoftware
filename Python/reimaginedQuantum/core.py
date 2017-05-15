@@ -356,10 +356,14 @@ class Experiment(object):
             message = self.construct_message(data = False)
             values = self.port.message(message, wait_for_answer = True)
             for i in range(self.number_detectors):
-                last = 8*(i+1)
-                self.detectors[i].set_timers_values(values[8*i:last])
-            self.sampling_channel.read_values(values[last:4+last])
-            self.coinWindow_channel.read_values(values[last+4:])
+                begin_delay = 4*i
+                delay = values[begin_delay: begin_delay + 4]
+                sleep = values[begin_delay + 8: begin_delay + 12]
+                value = delay + sleep
+                self.detectors[i].set_timers_values(value)
+            last = 8*(i+1)
+            self.sampling_channel.read_values(values[last: 4 + last])
+            self.coinWindow_channel.read_values(values[last+ 4:])
         except Exception as e:
             raise ExperimentError(str(e))
 

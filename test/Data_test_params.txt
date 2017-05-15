@@ -1,0 +1,13 @@
+##### PARAMETERS USED #####
+Reimagined Quantum experiment began at Mon May 15 00:00:30 2017
+00:00:11 	Detector A (Delay): 100 ns
+00:00:11 	Detector A (Sleep): 25 ns
+00:00:11 	Detector B (Delay): 100 ns
+00:00:11 	Detector B (Sleep): 25 ns
+00:00:15 	Sampling Time: 20 ms
+00:00:30 	Sampling Time: 20 ms
+00:00:30 	Coincidence window: 5 ns
+00:00:30 	Streaming started.
+00:00:31 	Detector A (Sleep): 25 ns
+00:00:31 	Detector B (Delay): 100 ns
+08:26:23 	Streaming stoped.

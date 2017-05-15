@@ -32,7 +32,7 @@ if CURRENT_OS == 'win32':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class Table(QtWidgets.QTableWidget):
-    TABLE_SIZE = 10000
+    TABLE_SIZE = 100000
 
     global DELIMITER, TABLE_YGROW
     def __init__(self, parent = None):

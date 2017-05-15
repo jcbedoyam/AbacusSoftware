@@ -157,7 +157,6 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             sleep = self.widgets[i].sleep_value
             self.parent.experiment.detectors[i].set_times(delay, sleep)
 
-
     def update(self):
         """
             Sends a message with the updated information
