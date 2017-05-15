@@ -34,7 +34,7 @@ class EmailWindow(QtWidgets.QDialog, Ui_Dialog_email):
         message = "Reimagined Quantum will notify you in case a fatal error occurs.\n\n\
         Writing an email is completely optional.\n\
         For example: contact@tausand.com\n\n"
-        message += "To stop poping up this screen go to Properties, Default and uncheck send email."
+        message += "To stop popping up this screen go to Properties, Default and uncheck send email."
         self.message_label.setText(message)
 
     def validate(self, email):
@@ -89,7 +89,7 @@ class EmailWindow(QtWidgets.QDialog, Ui_Dialog_email):
                 server.sendmail(self.FROM, toaddr, text)
                 server.quit()
             except Exception as e:
-                print(e)
+                pass
 
 class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
     global FILE_NAME, USER_EMAIL

@@ -1,0 +1,10 @@
+##### PARAMETERS USED #####
+Reimagined Quantum experiment began at Mon May 15 15:43:04 2017
+15:43:03 	Detector A (Delay): 100 ns
+15:43:03 	Detector A (Sleep): 25 ns
+15:43:03 	Detector B (Delay): 100 ns
+15:43:03 	Detector B (Sleep): 25 ns
+15:43:04 	Sampling Time: 50 ms
+15:43:04 	Coincidence window: 5 ns
+15:43:04 	Streaming started.
+15:43:16 	Fatal Error. An error ocurred at the communication port.  Port is either closed or disconnected.

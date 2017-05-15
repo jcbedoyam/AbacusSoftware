@@ -481,4 +481,6 @@ def save_default(DEFAULT_CHANNELS = DEFAULT_CHANNELS, DEFAULT_DELAY = DEFAULT_DE
         file.write("SEND_EMAIL=%s\n"%SEND_EMAIL)
 
 def reload_default():
+    global DEFAULT_CHANNELS, DEFAULT_DELAY, DEFAULT_SLEEP, DEFAULT_SLEEP, DEFAULT_COIN
+    global USER_EMAIL, FILE_NAME, SEND_EMAIL
     import_module('reimaginedQuantum.constants')

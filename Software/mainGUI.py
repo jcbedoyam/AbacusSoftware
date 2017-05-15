@@ -14,6 +14,8 @@ if not os.path.exists('default.py'):
 from propertiesWindow import *
 from menuBar import *
 
+from default import *
+
 def heavy_import():
     """ Imports matplotlib and NumPy.
 
