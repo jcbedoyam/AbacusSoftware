@@ -11,10 +11,8 @@ from reimaginedQuantum import *
 if not os.path.exists('default.py'):
     save_default()
 
-from propertiesWindow import *
 from menuBar import *
-
-from default import *
+from propertiesWindow import *
 
 def heavy_import():
     """ Imports matplotlib and NumPy.

@@ -12,6 +12,8 @@ from __email__ import Ui_Dialog as Ui_Dialog_email
 from __default__ import Ui_Dialog as Ui_Dialog_default
 from reimaginedQuantum.core import save_default, reload_default
 
+from default import *
+
 class EmailWindow(QtWidgets.QDialog, Ui_Dialog_email):
     """
         Defines the email configuration dialog.
