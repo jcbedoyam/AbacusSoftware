@@ -48,7 +48,7 @@ class Ui_Dialog(object):
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
-        Dialog.setWindowTitle(_translate("Dialog", "Configurate email"))
+        Dialog.setWindowTitle(_translate("Dialog", "Configure email"))
         self.message_label.setText(_translate("Dialog", "TextLabel"))
         self.label.setText(_translate("Dialog", "User email:"))
 
