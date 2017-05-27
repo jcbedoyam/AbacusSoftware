@@ -1,4 +1,4 @@
-# reimagined-quantum
+# ReimaginedQuantum
 ## Models
 
 [1](http://www.waveshare.com/ft232-usb-uart-board-type-a.htm)
