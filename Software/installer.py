@@ -133,7 +133,8 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 
     def browse_destination(self):
         name = QtWidgets.QFileDialog.getExistingDirectory()
-        self.destination_lineEdit.setText(name)
+        if name != '':
+            self.destination_lineEdit.setText(name)
 
     def errorWindow(self, error):
         error_text = str(error)
@@ -162,9 +163,9 @@ if CURRENT_OS == 'win32':
     import ctypes
     import admin
     if not admin.isUserAdmin():
-        # admin.runAsAdmin()
+        admin.runAsAdmin()
+    if admin.isUserAdmin():
         app = QtWidgets.QApplication(sys.argv)
-
         app.processEvents()
         app.setWindowIcon(QtGui.QIcon(':/icon.png'))
         myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string

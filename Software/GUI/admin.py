@@ -45,7 +45,7 @@ def runAsAdmin(cmdLine=None, wait=True):
     params = " ".join(['"%s"' % (x,) for x in cmdLine[1:]])
     cmdDir = ''
     showCmd = win32con.SW_SHOWNORMAL
-    # showCmd = win32con.SW_HIDE
+    #showCmd = win32con.SW_HIDE
     lpVerb = 'runas'  # causes UAC elevation prompt.
 
     # print "Running", cmd, params
@@ -53,7 +53,7 @@ def runAsAdmin(cmdLine=None, wait=True):
     # ShellExecute() doesn't seem to allow us to fetch the PID or handle
     # of the process, so we can't get anything useful from it. Therefore
     # the more complex ShellExecuteEx() must be used.
-    #
+
     # procHandle = win32api.ShellExecute(0, lpVerb, cmd, params, cmdDir, showCmd)
 
     procInfo = ShellExecuteEx(nShow=showCmd,
