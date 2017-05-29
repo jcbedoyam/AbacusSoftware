@@ -2,7 +2,6 @@
 
 block_cipher = None
 
-
 a = Analysis(['mainGUI.py'],
              #pathex=['/home/juan/Documents/reimagined-quantum/Software'],
              pathex=['D:\\Tausand\\ReimaginedQuantum\\Software'],
@@ -24,7 +23,7 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          console=False , icon='GUI/icon.ico')
+          console=False , icon='GUI/Program/icon.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,

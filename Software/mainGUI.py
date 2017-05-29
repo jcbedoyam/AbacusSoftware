@@ -35,7 +35,7 @@ if CURRENT_OS == 'win32':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class Table(QtWidgets.QTableWidget):
-    TABLE_SIZE = 200
+    TABLE_SIZE = 100000
 
     global DELIMITER, TABLE_YGROW
     def __init__(self, parent = None):
@@ -700,8 +700,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msg.exec_()
-        if message != None:
-            self.email_window.send(message)
+        # if message != None:
+        #     self.email_window.send(message)
 
     def closeEvent(self, event):
         quit_msg = "Are you sure you want to exit the program?"
