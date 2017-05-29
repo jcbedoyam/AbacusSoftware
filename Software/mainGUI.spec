@@ -4,7 +4,8 @@ block_cipher = None
 
 
 a = Analysis(['mainGUI.py'],
-             pathex=['/home/juan/Documents/reimagined-quantum/Software'],
+             #pathex=['/home/juan/Documents/reimagined-quantum/Software'],
+             pathex=['D:\\Tausand\\ReimaginedQuantum\\Software'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -30,4 +31,4 @@ coll = COLLECT(exe,
                a.datas,
                strip=False,
                upx=True,
-               name='mainGUI')
+               name='Quantum')

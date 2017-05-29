@@ -267,7 +267,7 @@ Window (ns):</string>
      <x>0</x>
      <y>0</y>
      <width>650</width>
-     <height>17</height>
+     <height>21</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -286,7 +286,6 @@ Window (ns):</string>
     <property name="title">
      <string>Properties</string>
     </property>
-    <addaction name="actionConfigure_email"/>
     <addaction name="actionDefault_properties"/>
    </widget>
    <widget class="QMenu" name="menuHelp">

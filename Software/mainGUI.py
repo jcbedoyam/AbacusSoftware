@@ -8,8 +8,11 @@ from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from reimaginedQuantum import *
+
+DEFAULT_EXIST = True
 if not os.path.exists('default.py'):
-    save_default()
+    save_default(None)
+    DEFAULT_EXIST = False
 
 from menuBar import *
 from propertiesWindow import *
@@ -32,7 +35,7 @@ if CURRENT_OS == 'win32':
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class Table(QtWidgets.QTableWidget):
-    TABLE_SIZE = 100000
+    TABLE_SIZE = 200
 
     global DELIMITER, TABLE_YGROW
     def __init__(self, parent = None):
@@ -72,14 +75,23 @@ class Table(QtWidgets.QTableWidget):
             self.headers[i+j+2] = experiment.coin_channels[j].name
 
         self.setHorizontalHeaderLabels(self.headers)
+        self.resizeRowsToContents()
+        self.resizeColumnsToContents()
 
     def get_last_row(self, column):
         return self.item((self.current_cell-1)%self.TABLE_SIZE, column).text()
+
+    def clean(self):
+        self.clearContents()
 
     def include(self, time_, detectors, coins):
         actual = self.rowCount()
         if (actual - self.current_cell) <= TABLE_YGROW and actual < self.TABLE_SIZE:
             self.setRowCount(TABLE_YGROW + actual)
+            self.resizeRowsToContents()
+
+        if self.current_cell%self.TABLE_SIZE == 0 and self.current_cell//self.TABLE_SIZE != 0:
+            self.clean()
 
         if type(detectors) is list:
             for i in range(self.detectors):
@@ -106,16 +118,16 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     Constants
     """
 
-    DEFAULT_TPLOT = 100
-    DEFAULT_TCHECK = 1000
-    DEFAULT_CURRENT = 200
+    DEFAULT_TPLOT = 100 #: Minimum time to update plot
+    DEFAULT_TCHECK = 1000 #: Minimum time to check values in device
+    DEFAULT_CURRENT = 200 #: Minimum time to update current labels
     EXTENSION_DATA = '.dat'
     EXTENSION_PARAMS = '.txt'
     SUPPORTED_EXTENSIONS = {EXTENSION_DATA : 'Plain text data file (*.dat)', '.csv' : 'CSV data files (*.csv)'}
 
     global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP, TABLE_YGROW
     global MIN_COIN, MAX_COIN, STEP_COIN, DEFAULT_CHANNELS, FILE_NAME, USER_EMAIL, SEND_EMAIL
-
+    global DEFAULT_EXIST, CURRENT_OS
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
 
@@ -126,25 +138,28 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception as e:
             from reimaginedQuantum.constants import FILE_NAME as name
 
+        self.LOCAL_NAMES = None
+        self.LOCAL_CONSTANTS = {}
+        self.local_constants()
         self.output_name = name
         self.save_line.setText(self.output_name)
         self.extension = self.EXTENSION_DATA
         self.params_file = "%s_params%s"%(self.output_name[:-4], self.EXTENSION_PARAMS)
 
-        self.samp_spinBox.setMinimum(MIN_SAMP)
-        self.samp_spinBox.setMaximum(MAX_SAMP)
-        self.coin_spinBox.setMinimum(MIN_COIN)
-        self.coin_spinBox.setMaximum(MAX_COIN)
-        self.coin_spinBox.setSingleStep(STEP_COIN)
+        self.samp_spinBox.setMinimum(self.MIN_SAMP)
+        self.samp_spinBox.setMaximum(self.MAX_SAMP)
+        self.coin_spinBox.setMinimum(self.MIN_COIN)
+        self.coin_spinBox.setMaximum(self.MAX_COIN)
+        self.coin_spinBox.setSingleStep(self.STEP_COIN)
 
-        self.samp_spinBox.setValue(DEFAULT_SAMP)
-        self.coin_spinBox.setValue(DEFAULT_COIN)
+        self.samp_spinBox.setValue(self.DEFAULT_SAMP)
+        self.coin_spinBox.setValue(self.DEFAULT_COIN)
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(DEFAULT_SAMP)
+        self.timer.setInterval(self.DEFAULT_SAMP)
         self.plot_timer = QtCore.QTimer()
-        if DEFAULT_SAMP > self.DEFAULT_TPLOT:
-            timer = DEFAULT_SAMP
+        if self.DEFAULT_SAMP > self.DEFAULT_TPLOT:
+            timer = self.DEFAULT_SAMP
         else:
             timer = self.DEFAULT_TPLOT
 
@@ -152,11 +167,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.check_timer = QtCore.QTimer()
         self.check_timer.setInterval(self.DEFAULT_TCHECK)
-        self.samp_spinBox.setValue(DEFAULT_SAMP)
+        self.samp_spinBox.setValue(self.DEFAULT_SAMP)
 
         self.current_timer = QtCore.QTimer()
-        if DEFAULT_SAMP > self.DEFAULT_CURRENT:
-            timer = DEFAULT_SAMP
+        if self.DEFAULT_SAMP > self.DEFAULT_CURRENT:
+            timer = self.DEFAULT_SAMP
         else:
             timer = self.DEFAULT_CURRENT
         self.current_timer.setInterval(timer)
@@ -174,7 +189,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.valueChanged.connect(self.method_sampling)
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.port_box.currentIndexChanged.connect(self.select_serial)
-        self.save_line.returnPressed.connect(self.save_location)
+        self.save_line.editingFinished.connect(self.save_location)
 
         self.table = Table(self)
         self.horizontalLayout_3.addWidget(self.table)
@@ -184,7 +199,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         menu bar
         """
-        self.actionConfigure_email.triggered.connect(self.email_window_caller)
         self.actionDefault_properties.triggered.connect(self.default_window_caller)
         self.actionAbout.triggered.connect(self.about_window_caller)
 
@@ -193,8 +207,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         set
         """
-        self.detectors_window = None
-        self.email_window = EmailWindow(self)
+        self.detectors_window = PropertiesWindow(self)
         self.default_window = DefaultWindow(self)
         self.about_window = AboutWindow()
 
@@ -205,6 +218,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.last_row_saved = 0
         self.number_columns = 0
         self.format = None
+        self.file_exists_warning = False
+        self.default_constants = False
 
         self.first_port = True
         """
@@ -218,8 +233,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.temp = Table(self)
 
-        if USER_EMAIL == '' and SEND_EMAIL:
-            self.email_window_caller()
+        if not DEFAULT_EXIST:
+            self.default_window_caller()
 
     def center(self):
         screen = QtWidgets.QDesktopWidget().screenGeometry()
@@ -227,6 +242,42 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         x = 0.5*(screen.width() - widget.width())
         y = 0.5*(screen.height() - widget.height())
         self.move(x, y)
+
+    def local_constants(self):
+        self.LOCAL_NAMES = ['DELIMITER', 'DEFAULT_SAMP', 'DEFAULT_COIN', 'MIN_SAMP',
+                'MAX_SAMP', 'TABLE_YGROW', 'MIN_COIN', 'MAX_COIN', 'STEP_COIN',
+                'DEFAULT_CHANNELS', 'FILE_NAME', 'USER_EMAIL', 'SEND_EMAIL']
+
+        for name in self.LOCAL_NAMES:
+            value = eval(name)
+            self.LOCAL_CONSTANTS[name] = value
+            if type(value) != str:
+                instruction = 'self.%s = %s'%(name, str(value))
+            else:
+                instruction = "self.%s = '%s'"%(name, value)
+            exec(instruction)
+
+    def update_constants(self, constants):
+        for name in self.LOCAL_NAMES:
+            if name in constants:
+                value = constants[name]
+                self.LOCAL_CONSTANTS[name] = value
+                if type(value) != str:
+                    instruction = 'self.%s = %s'%(name, str(value))
+                else:
+                    instruction = "self.%s = '%s'"%(name, value)
+                exec(instruction)
+
+        self.save_line.setText(self.FILE_NAME)
+        self.save_location()
+
+        self.samp_spinBox.setValue(self.DEFAULT_SAMP)
+        self.coin_spinBox.setValue(self.DEFAULT_COIN)
+        save = True
+        if not DEFAULT_EXIST and not self.default_constants:
+            save = False
+            self.default_constants = True
+        self.detectors_window.update_constants(constants, save)
 
     def create_fig(self):
         self.fig, (ax_counts, ax_coins) = plt.subplots(2, sharex=True, facecolor='None', edgecolor='None')
@@ -236,9 +287,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.plot_widget, coordinates=True)
 
         self.plot_layout.addWidget(self.toolbar)
-        self.ax_counts = Axes(self.fig, self.canvas, ax_counts, TABLE_YGROW,
+        self.ax_counts = Axes(self.fig, self.canvas, ax_counts, self.TABLE_YGROW,
                               "Counts", self.experiment.detectors)
-        self.ax_coins = Axes(self.fig, self.canvas, ax_coins, TABLE_YGROW,
+        self.ax_coins = Axes(self.fig, self.canvas, ax_coins, self.TABLE_YGROW,
                              "Coincidences", self.experiment.coin_channels)
 
         for i in range(self.experiment.number_detectors):
@@ -255,9 +306,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if value == None:
             message = label
             if units == None:
-                message = "%s %s%s\n"%(current_time, DELIMITER, label)
+                message = "%s %s%s\n"%(current_time, self.DELIMITER, label)
         else:
-            message = "%s %s%s: %d %s\n"%(current_time, DELIMITER, label, value, units)
+            message = "%s %s%s: %d %s\n"%(current_time, self.DELIMITER, label, value, units)
         with open(self.params_file, 'a') as file_:
             file_.write(message)
 
@@ -363,7 +414,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ports = current_ports
             for port in self.ports:
                 try:
-                    if CommunicationPort(self.ports[port]).test():
+                    if CURRENT_OS != 'win32':
+                        if CommunicationPort(self.ports[port]).test():
+                            self.port_box.addItem(port)
+                        CommunicationPort.close()
+                    else:
                         self.port_box.addItem(port)
                 except:
                     pass
@@ -389,9 +444,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.port = new_port
                 try:
                     self.serial = CommunicationPort(self.port)
+
                     self.channels_button.setDisabled(False)
-                    if self.detectors_window != None:
-                        self.detectors_window.update()
+                    # if self.detectors_window != None:
+                    # #     self.detectors_window.update()
+                    # self.detectors_window.update()
                 except Exception as e:
                     e = type(e)("Serial selection: %s"%str(e))
                     if error_capable:
@@ -420,12 +477,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.widget_activate(False)
             self.format = [r"%d" for i in range(self.table.number_columns)]
             self.format[0] = "%.3f"
-            self.format = DELIMITER.join(self.format)
+            self.format = self.DELIMITER.join(self.format)
             self.data = RingBuffer(TABLE_YGROW, self.table.number_columns, self.output_name, self.format)
             self.create_current_labels()
             self.create_fig()
 
-        if self.serial != None and self.detectors_window != None:
+        if self.serial != None:
             if not self.detectors_window.error_ocurred:
                 self.widget_activate(False)
 
@@ -435,7 +492,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def create_table(self):
         self.table.create_table()
         with open(self.output_name, 'a') as file_:
-            text = DELIMITER.join(self.table.headers)
+            text = self.DELIMITER.join(self.table.headers)
             file_.write("%s\n"%text)
 
     def choose_file(self):
@@ -463,17 +520,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         creates a property window to define number of channels
         """
-        if self.detectors_window == None:
-            ans1 = os.path.exists(self.output_name)
-            ans2 = os.path.exists(self.params_file)
+        if not self.file_exists_warning:
+            ans1 = os.path.exists(r'%s'%self.output_name)
+            ans2 = os.path.exists(r'%s'%self.params_file)
             if ans1 or ans2:
                 QtWidgets.QMessageBox.warning(self, "File exists",
                     "The selected file already exists.\nData will be appended.")
-            self.detectors_window = PropertiesWindow(self)
+            self.file_exists_warning = True
         self.detectors_window.show()
-
-    def email_window_caller(self):
-        self.email_window.show()
 
     def default_window_caller(self):
         self.default_window.show()
@@ -566,22 +620,29 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         try:
             self.experiment.set_sampling(value)
         except Exception as e:
-            if error_capable:
-                self.errorWindow(e)
+            if 'None' in str(e):
+                pass
             else:
-                raise e
-
-        self.save_param("Sampling Time", value, "ms")
+                if error_capable:
+                    self.errorWindow(e)
+                else:
+                    raise e
+        if self.default_constants or DEFAULT_EXIST:
+            self.save_param("Sampling Time", value, "ms")
 
     def method_coinWin(self, value, error_capable = True):
         try:
             self.experiment.set_coinWindow(value)
         except Exception as e:
-            if error_capable:
-                self.errorWindow(e)
+            if 'None' in str(e):
+                pass
             else:
-                raise e
-        self.save_param("Coincidence window", value, "ns")
+                if error_capable:
+                    self.errorWindow(e)
+                else:
+                    raise e
+        if self.default_constants or DEFAULT_EXIST:
+            self.save_param("Coincidence window", value, "ns")
 
     def _draw_event(self, *args):
         self.ax_coins.set_background()
@@ -625,14 +686,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.stream_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
 
-            if self.email_window != None:
-                current_time = strftime("%H:%M:%S", localtime())
-                message = """ An error ocurred at %s.
-
-                Error reads:
-                    %s
-                """%(current_time, error_text)
-                message += "\nReimagined Quantum."
+            # if self.email_window != None:
+            #     current_time = strftime("%H:%M:%S", localtime())
+            #     message = """ An error ocurred at %s.
+            #
+            #     Error reads:
+            #         %s
+            #     """%(current_time, error_text)
+            #     message += "\nReimagined Quantum."
 
         self.save_param(error_text, None, None)
         msg.setText('An Error has ocurred.\n%s'%error_text)
@@ -658,7 +719,6 @@ if __name__ == "__main__":
    splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
    progressBar = QtWidgets.QProgressBar(splash)
    progressBar.setGeometry(250, 320, 100, 20)
-   #progressBar.setStyleSheet(DEFAULT_STYLE)
    splash.show()
    app.processEvents()
    app.setWindowIcon(QtGui.QIcon(':/icon.png'))

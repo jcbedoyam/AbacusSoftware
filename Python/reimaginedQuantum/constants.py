@@ -76,3 +76,9 @@ USER_EMAIL = ''
 SEND_EMAIL = True
 
 TABLE_YGROW = 100
+
+"""
+Constant to save
+"""
+DEFAULT_TO_SAVE = ['DEFAULT_CHANNELS', 'DEFAULT_DELAY', 'DEFAULT_SLEEP', 'DEFAULT_SAMP',
+                                'DEFAULT_COIN', 'USER_EMAIL', 'FILE_NAME', 'SEND_EMAIL']

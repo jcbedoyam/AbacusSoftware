@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Software/GUI/mainwindow.ui'
+# Form implementation generated from reading ui file 'GUI\mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -145,7 +145,7 @@ class Ui_MainWindow(object):
         self.statusBar.setObjectName("statusBar")
         MainWindow.setStatusBar(self.statusBar)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 650, 17))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 650, 21))
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
@@ -171,7 +171,6 @@ class Ui_MainWindow(object):
         self.actionDefault_properties.setObjectName("actionDefault_properties")
         self.actionAbout = QtWidgets.QAction(MainWindow)
         self.actionAbout.setObjectName("actionAbout")
-        self.menuProperties.addAction(self.actionConfigure_email)
         self.menuProperties.addAction(self.actionDefault_properties)
         self.menuHelp.addAction(self.actionAbout)
         self.menuBar.addAction(self.menuProperties.menuAction())

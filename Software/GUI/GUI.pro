@@ -30,6 +30,5 @@ HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui \
     channels.ui \
-    email.ui \
     default.ui \
     about.ui

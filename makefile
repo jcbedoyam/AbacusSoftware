@@ -6,7 +6,7 @@ SOURCEDIR     = source
 BUILDDIR      = build
 
 TARGETS = Software/__mainwindow__.py Software/__channels__.py Software/mainGUI.py\
- 		Software/__GUI_images__.py Software/__email__.py Software/__default__.py\
+ 		Software/__GUI_images__.py Software/__default__.py\
 		Software/__about__.py
 
 run : install run_software
@@ -21,9 +21,6 @@ Software/__GUI_images__.py : Software/GUI/GUI_images.qrc Software/GUI/icon.png S
 	pyrcc5 $< > $@
 
 Software/__channels__.py : Software/GUI/channels.ui
-	pyuic5 $< > $@
-
-Software/__email__.py : Software/GUI/email.ui
 	pyuic5 $< > $@
 
 Software/__mainwindow__.py : Software/GUI/mainwindow.ui

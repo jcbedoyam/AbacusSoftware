@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Software/GUI/channels.ui'
+# Form implementation generated from reading ui file 'GUI\channels.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #

@@ -9,14 +9,15 @@ class WidgetLine(object):
     """
         Defines a single widget line in the PropertiesWindow.
     """
-    global MIN_DELAY, MAX_DELAY, STEP_DELAY, DEFAULT_DELAY
-    global MIN_SLEEP, MAX_SLEEP, STEP_SLEEP, DEFAULT_SLEEP
-    def __init__(self, identifier, parent, delay_value = DEFAULT_DELAY,
-                sleep_value = DEFAULT_SLEEP):
+    global MIN_DELAY, MAX_DELAY, STEP_DELAY
+    global MIN_SLEEP, MAX_SLEEP, STEP_SLEEP
+    def __init__(self, identifier, parent, delay_value, sleep_value):
         self.parent = parent
         self.identifier = identifier
         self.delay_value = delay_value
         self.sleep_value = sleep_value
+        self.allow_update_delay = True
+        self.allow_update_sleep = True
 
         self.name = "Detector %s"%self.identifier
         self.widget = QtWidgets.QWidget(self.parent.groupBox)
@@ -40,6 +41,9 @@ class WidgetLine(object):
 
         self.update_values()
 
+        self.delay_spinBox.valueChanged.connect(self.handle_delay)
+        self.sleep_spinBox.valueChanged.connect(self.handle_sleep)
+
     def __init_corrections__(self, widget):
         widget.setCorrectionMode(QtWidgets.QAbstractSpinBox.CorrectToNearestValue)
         widget.setKeyboardTracking(False)
@@ -52,7 +56,15 @@ class WidgetLine(object):
         self.widget.setLayout(layout)
         self.parent.verticalLayoutDetectors.addWidget(self.widget)
 
-    def set_values(self, delay_sleep_value):
+    def handle_delay(self, value):
+        self.delay_value = value
+        self.allow_update_delay = False
+
+    def handle_sleep(self, value):
+        self.sleep_value = value
+        self.allow_update_sleep = False
+
+    def set_values(self, delay_sleep_value, save = True):
         """ Verifies if incomming values are different to stored ones.
 
         If they are different than older ones, saves the incoming one
@@ -60,19 +72,25 @@ class WidgetLine(object):
         """
         delay_value, sleep_value = delay_sleep_value
         update = False
-        if delay_value != self.delay_value:
+        if delay_value != self.delay_value and self.allow_update_delay:
             self.delay_value = delay_value
-            self.parent.parent.save_param("%s (Delay)"%self.name,
-                                    self.delay_spinBox.value(), 'ns')
+            if save:
+                self.parent.parent.save_param("%s (Delay)"%self.name,
+                                        self.delay_spinBox.value(), 'ns')
             update = True
-        if sleep_value != self.sleep_value:
+        if sleep_value != self.sleep_value and self.allow_update_sleep:
             self.sleep_value = sleep_value
-            self.parent.parent.save_param("%s (Sleep)"%self.name,
-                                    self.sleep_spinBox.value(), 'ns')
+            if save:
+                self.parent.parent.save_param("%s (Sleep)"%self.name,
+                                        self.sleep_spinBox.value(), 'ns')
             update = True
 
         if update:
             self.update_values()
+
+    def allow_update(self):
+        self.allow_update_delay = True
+        self.allow_update_sleep = True
 
     def reset(self):
         """ Sets delay_value and sleep_value to the default ones. It also updates
@@ -94,15 +112,19 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
     """
 
     global DELIMITER, DEFAULT_CHANNELS, MIN_CHANNELS, MAX_CHANNELS
+    global DEFAULT_DELAY, DEFAULT_SLEEP
     def __init__(self, parent=None):
         super(PropertiesWindow, self).__init__(parent)
         self.setupUi(self)
 
         self.parent = parent
         self.current_n = 0
-        self.number_channels = DEFAULT_CHANNELS
-        self.channel_spinBox.setMaximum(MAX_CHANNELS)
-        self.channel_spinBox.setMinimum(MIN_CHANNELS)
+        self.LOCAL_NAMES = None
+        self.LOCAL_CONSTANTS = {}
+        self.local_constants()
+        self.number_channels = self.DEFAULT_CHANNELS
+        self.channel_spinBox.setMaximum(self.MAX_CHANNELS)
+        self.channel_spinBox.setMinimum(self.MIN_CHANNELS)
         self.channel_spinBox.setValue(self.number_channels)
 
         self.channel_spinBox.valueChanged.connect(self.creator)
@@ -127,7 +149,35 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         self.error_ocurred = False
         self.last_time = ""
 
-    def set_values(self, values):
+    def local_constants(self):
+        self.LOCAL_NAMES = ['DELIMITER', 'DEFAULT_CHANNELS', 'MIN_CHANNELS',
+                    'MAX_CHANNELS', 'DEFAULT_DELAY', 'DEFAULT_SLEEP']
+
+        for name in self.LOCAL_NAMES:
+            value = eval(name)
+            self.LOCAL_CONSTANTS[name] = value
+            if type(value) != str:
+                instruction = 'self.%s = %s'%(name, str(value))
+            else:
+                instruction = "self.%s = '%s'"%(name, value)
+            exec(instruction)
+
+    def update_constants(self, constants, save = True):
+        for name in self.LOCAL_NAMES:
+            if name in constants:
+                value = constants[name]
+                self.LOCAL_CONSTANTS[name] = value
+                if type(value) != str:
+                    instruction = 'self.%s = %s'%(name, str(value))
+                else:
+                    instruction = "self.%s = '%s'"%(name, value)
+                exec(instruction)
+
+        self.channel_spinBox.setValue(self.DEFAULT_CHANNELS)
+        values = [(self.DEFAULT_DELAY, self.DEFAULT_SLEEP) for i in range(self.DEFAULT_CHANNELS)]
+        self.set_values(values, save)
+
+    def set_values(self, values, save = True):
         """ Updates the incoming values to the spinboxes.
 
         Args:
@@ -135,7 +185,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             has the values of delay and sleep time for a channel.
         """
         for i in range(self.number_channels):
-            self.widgets[i].set_values(values[i])
+            self.widgets[i].set_values(values[i], save)
 
     def creator(self, n):
         """
@@ -146,7 +196,8 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             self.widgets += [None]*(n-self.current_n)
         while self.current_n < n:
             self.widgets[self.current_n] = WidgetLine(chr(self.current_n \
-                                                   + ord("A")), self)
+                                           + ord("A")), self, self.DEFAULT_DELAY,
+                                           self.DEFAULT_SLEEP)
             self.current_n += 1
         self.delete(n)
         self.number_channels = n
@@ -167,6 +218,8 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             self.channel_spinBox.setEnabled(False)
             self.saveParams()
             self.parent.start_experiment()
+            for widget in self.widgets:
+                self.widget.allow_update()
 
         except Exception as e:
             if type(e) == CommunicationError or type(e) == ExperimentError:
@@ -174,8 +227,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                 self.parent.errorWindow(e)
 
     def saveParams(self, delimiter = DELIMITER):
-        for i in range(self.number_channels):
-            widget = self.widgets[i]
+        for widget in self.widgets:
             self.parent.save_param("%s (Delay)"%widget.name, widget.delay_value, 'ns')
             self.parent.save_param("%s (Sleep)"%widget.name, widget.sleep_value, 'ns')
 
@@ -194,7 +246,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         """
             Sets every detector to the default values
         """
-        self.channel_spinBox.setValue(DEFAULT_CHANNELS)
+        self.channel_spinBox.setValue(self.DEFAULT_CHANNELS)
         for i in range(self.number_channels):
             self.widgets[i].reset()
 

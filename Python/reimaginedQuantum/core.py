@@ -89,9 +89,10 @@ class CommunicationPort(object):
         Raises:
             PySerialExceptions
         """
-        # self.serial.flushOutput()
         self.serial.flushInput()
+        self.serial.flush()
         self.serial.write(content)
+
 
     def read(self):
         """ Reads a message through the serial port.
@@ -131,6 +132,7 @@ class CommunicationPort(object):
             channel = int(hexa[3*i], 16)
             value = hexa[3*i+1] + hexa[3*i+2]
             ans.append((channel, value))
+        self.serial.flushOutput()
         return ans
 
     def handle_queue(self):
@@ -189,7 +191,11 @@ class CommunicationPort(object):
             for i in range(tries):
                 try:
                     self.send(content)
-                    return self.receive()
+                    answer = self.receive()
+                    expected = int(hex(content[-3]).replace('x', '') + hex(content[-2]).replace('x', ''), 16)
+                    if expected != len(answer) or content[2] != answer[0][0]:
+                        continue
+                    return answer
                 except Exception as e:
                     pass
                 if i == tries - 1:
@@ -215,9 +221,8 @@ class CommunicationPort(object):
     def close(self):
         """ Closes the serial port."""
         self.serial.close()
+        self.serial.__del__()
         self.stop = True
-
-
 
 class Detector(object):
     """ Implements a detector, an object representation of multiple memory addresses.
@@ -314,7 +319,12 @@ class Experiment(object):
                 msb, lsb, END_COMMUNICATION]
 
     def current_values(self):
+        # for i in range(5):
         ans = self.port.message(self.construct_message(), wait_for_answer = True)
+            # if len(ans) == 2*(self.number_detectors + self.number_coins):
+            #     break
+            # if i != 0:
+            #     print(i)
         detector_values = []
         coin_values = []
         try:
@@ -466,19 +476,22 @@ def findPort():
             ports["%s (%s)"%(port.description, port.device)] = port.device
     return ports
 
-def save_default(DEFAULT_CHANNELS = DEFAULT_CHANNELS, DEFAULT_DELAY = DEFAULT_DELAY,
-            DEFAULT_SLEEP = DEFAULT_SLEEP, DEFAULT_SAMP = DEFAULT_SAMP,
-            DEFAULT_COIN = DEFAULT_COIN, USER_EMAIL = USER_EMAIL, FILE_NAME = FILE_NAME,
-            SEND_EMAIL = SEND_EMAIL):
-    with open('default.py', 'w') as file:
-        file.write('DEFAULT_CHANNELS=%d\n'%DEFAULT_CHANNELS)
-        file.write('DEFAULT_DELAY=%d\n'%DEFAULT_DELAY)
-        file.write('DEFAULT_SLEEP=%d\n'%DEFAULT_SLEEP)
-        file.write('DEFAULT_SAMP=%d\n'%DEFAULT_SAMP)
-        file.write('DEFAULT_COIN=%d\n'%DEFAULT_COIN)
-        file.write("USER_EMAIL='%s'\n"%USER_EMAIL)
-        file.write("FILE_NAME='%s'\n"%FILE_NAME)
-        file.write("SEND_EMAIL=%s\n"%SEND_EMAIL)
+def save_value(file, name, value):
+    if type(value) != str:
+        file.write('%s=%s\n'%(name, str(value)))
+    else:
+        file.write("%s='%s'\n"%(name, value))
+
+def save_default(values):
+    if values == None:
+        with open('default.py', 'w') as file:
+            for name in DEFAULT_TO_SAVE:
+                save_value(file, name, eval(name))
+    else:
+        with open('default.py', 'w') as file:
+            for name in DEFAULT_TO_SAVE:
+                if name in values:
+                    save_value(file, name, values[name])
 
 def reload_default():
     global DEFAULT_CHANNELS, DEFAULT_DELAY, DEFAULT_SLEEP, DEFAULT_SLEEP, DEFAULT_COIN
