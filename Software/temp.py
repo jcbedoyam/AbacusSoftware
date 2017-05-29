@@ -2,6 +2,7 @@ import os
 import sys
 import __GUI_images__
 from zipfile import ZipFile
+from threading import Thread
 from __installer__ import Ui_Dialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 
@@ -38,7 +39,41 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.logo_label.setPixmap(image)
 
         self.destination_Button.clicked.connect(self.browse_destination)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.begin_install)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.cancel_install)
+
+        self.default_location()
         self.path = None
+        self.thread = None
+        self.create_thread()
+
+    def start_thread(self):
+        if self.thread != None:
+            try:
+                self.thread.start()
+            except:
+                self.create_thread()
+                self.thread.start()
+        else:
+            self.create_thread()
+            self.thread.start()
+
+    def create_thread(self):
+        self.thread = Thread(target = self.unzip)
+        self.thread.setDaemon(True)
+
+    def begin_install(self):
+        path = self.destination_lineEdit.text()
+        try:
+            self.make_destination(path)
+        except exception as e:
+            self.errorWindow(e)
+
+    def cancel_install(self):
+        pass
+
+    def unzip(self):
+        print("HERE")
 
     def make_destination(self, path):
         if os.path.exists(path):
@@ -46,19 +81,27 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         else:
             path_parent = os.path.dirname(path)
             if os.path.exists(path_parent):
-                os.mkdir(path_parent)
-                self.path = path
+                answer = QtWidgets.QMessageBox.warning(self, 'Warning', 'Folder does not exist,\n Do you want to create it?', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                if answer:
+                    os.mkdir(path_parent)
+                    self.path = path
             else:
-                self.errorWindow(Exception('Path does not exist'))
+                raise(Exception('Path does not exist'))
 
+    def default_location(self):
+        if CURRENT_OS == "win32":
+            possible = ['C:\Program Files (x86)', 'C:\Program Files']
+            for location in possible:
+                exists = os.path.exists(location)
+                if exists:
+                    break
+            if not exists:
+                location = os.path.dirname(os.path.realpath(__file__))
+            self.destination_lineEdit.setText("%s\ReimaginedQuantum"%location)
 
     def browse_destination(self):
         name = QtWidgets.QFileDialog.getExistingDirectory()
-        try:
-            self.make_destination(name)
-            self.destination_lineEdit.setText(name)
-        except:
-            pass
+        self.destination_lineEdit.setText(name)
 
     def errorWindow(self, error):
         error_text = str(error)
