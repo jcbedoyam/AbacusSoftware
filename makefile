@@ -14,22 +14,28 @@ run : install run_software
 install :
 	cd Python && python setup.py install && rm -r build
 
+installer : Software/installer.py Software/__installer__.py
+	cd Software && python installer.py
+
+Software/__installer__.py : Software/GUI/Installer/dialog.ui
+	pyuic5 $< > $@
+
 run_software : $(TARGETS)
 	cd Software && python mainGUI.py && rm -r __pycache__ && clear
 
-Software/__GUI_images__.py : Software/GUI/GUI_images.qrc Software/GUI/icon.png Software/GUI/splash.png
+Software/__GUI_images__.py : Software/GUI/Program/GUI_images.qrc Software/GUI/Program/icon.png Software/GUI/Program/splash.png
 	pyrcc5 $< > $@
 
-Software/__channels__.py : Software/GUI/channels.ui
+Software/__channels__.py : Software/GUI/Program/channels.ui
 	pyuic5 $< > $@
 
-Software/__mainwindow__.py : Software/GUI/mainwindow.ui
+Software/__mainwindow__.py : Software/GUI/Program/mainwindow.ui
 	pyuic5 $< > $@
 
-Software/__default__.py : Software/GUI/default.ui
+Software/__default__.py : Software/GUI/Program/default.ui
 	pyuic5 $< > $@
 
-Software/__about__.py : Software/GUI/about.ui
+Software/__about__.py : Software/GUI/Program/about.ui
 	pyuic5 $< > $@
 
 html :

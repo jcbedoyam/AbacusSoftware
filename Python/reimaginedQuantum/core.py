@@ -319,12 +319,8 @@ class Experiment(object):
                 msb, lsb, END_COMMUNICATION]
 
     def current_values(self):
-        # for i in range(5):
         ans = self.port.message(self.construct_message(), wait_for_answer = True)
-            # if len(ans) == 2*(self.number_detectors + self.number_coins):
-            #     break
-            # if i != 0:
-            #     print(i)
+
         detector_values = []
         coin_values = []
         try:
