@@ -14,8 +14,8 @@ run : install run_software
 install :
 	cd Python && python setup.py install && rm -r build
 
-installer : Software/installer.py Software/__installer__.py
-	cd Software && python installer.py
+installer : Software/installer.py Software/__installer__.py $(TARGETS)
+	cd Software && python compile.py
 
 Software/__installer__.py : Software/GUI/Installer/dialog.ui
 	pyuic5 $< > $@
