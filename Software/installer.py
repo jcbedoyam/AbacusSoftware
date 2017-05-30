@@ -7,6 +7,12 @@ from __installer__ import Ui_Dialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 CURRENT_OS = sys.platform
+COMPILED = True #: if compilation is wanted
+
+if CURRENT_OS == "win32":
+    import pythoncom
+    from win32com.shell import shell, shellcon
+
 LICENSE = """Reimagined Quantum
 Copyright (C) 2017 Juan Barbosa
 
@@ -25,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 class Main(QtWidgets.QDialog, Ui_Dialog):
     signal = QtCore.pyqtSignal(int)
-
+    global CURRENT_OS, COMPILED, LICENSE
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
         self.setupUi(self)
@@ -73,7 +79,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         try:
             self.make_destination(path)
             path_exists = True
-        except exception as e:
+        except Exception as e:
             self.errorWindow(e)
 
         if path_exists:
@@ -90,7 +96,13 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.deactivate(False)
 
     def unzip(self):
-        with ZipFile("Quantum.zip") as extractfile:
+        # when compiled
+        if COMPILED:
+            zipf = resource_path('Quantum.zip')
+        else:
+            zipf = 'Quantum.zip'
+
+        with ZipFile(zipf) as extractfile:
             members = extractfile.infolist()
             total = len(members)
             for (i, member) in enumerate(members):
@@ -105,6 +117,20 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(True)
             self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.close)
             self.progress_label.setText("Done")
+            self.create_shortcut()
+
+    def create_shortcut(self):
+        if CURRENT_OS == "win32":
+            executable = "%s\Quantum.exe"%self.path
+            shortcut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink,
+              None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
+            shortcut.SetPath(executable)
+            shortcut.SetDescription("Reimagined Quantum")
+            shortcut.SetIconLocation(executable, 0)
+
+            desktop_path = shell.SHGetFolderPath(0, shellcon.CSIDL_DESKTOP, 0, 0)
+            persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+            persist_file.Save(os.path.join(desktop_path, "Reimagined Quantum.lnk"), 0)
 
 
     def make_destination(self, path):
@@ -113,9 +139,9 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         else:
             path_parent = os.path.dirname(path)
             if os.path.exists(path_parent):
-                answer = QtWidgets.QMessageBox.warning(self, 'Warning', 'Folder does not exist,\n Do you want to create it?', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+                answer = QtWidgets.QMessageBox.warning(self, 'Warning', 'Folder does not exist,\nDo you want to create it?', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
                 if answer:
-                    os.mkdir(path_parent)
+                    os.mkdir(path)
                     self.path = path
             else:
                 raise(Exception('Path does not exist'))
@@ -158,6 +184,16 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
                 event.accept()
             else:
                 event.ignore()
+
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 if CURRENT_OS == 'win32':
     import ctypes

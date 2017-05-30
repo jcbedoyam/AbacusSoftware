@@ -2,11 +2,11 @@
 
 block_cipher = None
 
-a = Analysis(['mainGUI.py'],
-             #pathex=['/home/juan/Documents/reimagined-quantum/Software'],
+
+a = Analysis(['installer.py'],
              pathex=['D:\\Tausand\\ReimaginedQuantum\\Software'],
              binaries=[],
-             datas=[],
+             datas=[('D:\\Tausand\\ReimaginedQuantum\\Software\\Quantum.zip', '.')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -18,16 +18,11 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
-          exclude_binaries=True,
-          name='Quantum',
+          a.binaries,
+          a.zipfiles,
+          a.datas,
+          name='QuantumInstaller',
           debug=False,
           strip=False,
           upx=True,
-          console=False , icon='GUI/Program/icon.ico')
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               name='Quantum')
+          console=False, icon='GUI/Program/icon.ico' )
