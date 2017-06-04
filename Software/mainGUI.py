@@ -189,7 +189,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.valueChanged.connect(self.method_sampling)
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.port_box.currentIndexChanged.connect(self.select_serial)
-        self.save_line.editingFinished.connect(self.save_location)
+        # self.save_line.editingFinished.connect(self.save_location)
+        self.save_line.setDisabled(True)
 
         self.table = Table(self)
         self.horizontalLayout_3.addWidget(self.table)
@@ -220,6 +221,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.format = None
         self.file_exists_warning = False
         self.default_constants = False
+        # self.CommunicationPort()
 
         self.first_port = True
         """
@@ -405,6 +407,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """ Loads serial port described at user combobox.
         """
         current_ports = findPort()
+
+        if self.serial != None:
+            if self.serial.isOpenend:
+                for port in self.ports:
+                    if self.port in port:
+                        current_ports[port] = self.port
+
         n = 0
         for x in current_ports.items():
             if x in self.ports.items():
@@ -413,16 +422,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.port_box.clear()
             self.ports = current_ports
             for port in self.ports:
-                try:
-                    if CURRENT_OS != 'win32':
-                        if CommunicationPort(self.ports[port]).test():
-                            self.port_box.addItem(port)
-                        CommunicationPort.close()
-                    else:
-                        self.port_box.addItem(port)
-                except:
-                    pass
-
+                self.port_box.addItem(port)
         self.port_box.setCurrentIndex(-1)
 
     def select_serial(self, index, error_capable = True):
@@ -435,24 +435,25 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             except:
                 new_port = ''
             if new_port != '':
+                self.port = new_port
                 if self.serial != None:
                     try:
                         self.serial.close()
                     except CommunicationError:
                         pass
-                    self.serial = None
-                self.port = new_port
-                try:
-                    self.serial = CommunicationPort(self.port)
-
-                    self.channels_button.setDisabled(False)
-                    # if self.detectors_window != None:
-                    # #     self.detectors_window.update()
-                    # self.detectors_window.update()
-                except Exception as e:
-                    e = type(e)("Serial selection: %s"%str(e))
-                    if error_capable:
-                        self.errorWindow(e)
+                    try:
+                        self.serial.update_serial(self.port)
+                        self.channels_button.setDisabled(False)
+                    except:
+                        pass
+                else:
+                    try:
+                        self.serial = CommunicationPort(self.port)
+                        self.channels_button.setDisabled(False)
+                    except Exception as e:
+                        e = type(e)("Serial selection: %s"%str(e))
+                        if error_capable:
+                            self.errorWindow(e)
             else:
                 self.widget_activate(True)
 
@@ -680,7 +681,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         if type(error) == CommunicationError or type(error) == ExperimentError:
             self.stop_clocks()
-            self.serial = None
+            self.serial.close()
+            self.ports = {}
             self.serial_refresh()
             self.widget_activate(True)
             self.stream_button.setStyleSheet("background-color: red")

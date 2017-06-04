@@ -45,12 +45,17 @@ class CommunicationPort(object):
         self.baudrate = baudrate
         self.timeout = timeout
         self.bounce_timeout = bounce_timeout
-        self.serial = self.begin_serial()
 
+        self.is_opened = False
+        self.serial = self.begin_serial()
         # Implements a Queue to send messages
         self.queue = Queue()
         self.stop = False
         self.answer = {}
+        self.thread = None
+        self.begin_thread()
+
+    def begin_thread(self):
         self.thread = Thread(target=self.handle_queue)
         self.thread.setDaemon(True)
         self.thread.start()
@@ -65,6 +70,7 @@ class CommunicationPort(object):
             PermissionError: user is not allowed to use port.
             SerialException: if it could not open port
         """
+        self.is_opened = True
         return serial.Serial(port=self.device, baudrate=self.baudrate, parity=self.PARITY,
                                         stopbits=self.STOP_BITS,
                                         bytesize=self.BYTE_SIZE, timeout=self.TIMEOUT)
@@ -218,10 +224,20 @@ class CommunicationPort(object):
         except Exception as e:
             return False
 
+    def update_serial(self, port_name):
+        self.device = port_name
+        self.close()
+        self.serial = self.begin_serial()
+        self.stop = False
+        self.begin_thread()
+
+    def isOpenend(self):
+        return self.is_opened
+
     def close(self):
         """ Closes the serial port."""
         self.serial.close()
-        self.serial.__del__()
+        self.is_opened = False
         self.stop = True
 
 class Detector(object):
@@ -466,10 +482,18 @@ def findPort():
     ports = {}
     for i in range(len(ports_objects)):
         port = ports_objects[i]
-        if CURRENT_OS == "win32":
-            ports["%s"%port.description] = port.device
-        else:
-            ports["%s (%s)"%(port.description, port.device)] = port.device
+        try:
+            com =  CommunicationPort(port.device)
+            if com.test():
+                if CURRENT_OS == "win32":
+                    ports["%s"%port.description] = port.device
+                else:
+                    ports["%s (%s)"%(port.description, port.device)] = port.device
+                print("HERE: %s"%port.device)
+            com.close()
+        except:
+            pass
+
     return ports
 
 def save_value(file, name, value):

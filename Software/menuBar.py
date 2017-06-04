@@ -153,12 +153,10 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.parent.update_constants(self.LOCAL_CONSTANTS)
 
     def reset(self):
-        answer = self.confirm()
-        if answer:
-            reload_default()
-            self.set_values()
-            save_default(None)
-            self.parent.close()
+        reload_default()
+        self.local_constants()
+        self.set_values()
+        save_default(None)
 
 class AboutWindow(QtWidgets.QDialog, Ui_Dialog_about):
     def __init__(self, parent = None):
