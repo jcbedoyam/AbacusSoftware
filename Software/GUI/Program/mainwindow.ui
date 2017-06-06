@@ -56,7 +56,7 @@
        <item>
         <widget class="QPushButton" name="save_button">
          <property name="text">
-          <string>Open</string>
+          <string>Browse</string>
          </property>
         </widget>
        </item>

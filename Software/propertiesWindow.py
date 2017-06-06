@@ -3,6 +3,9 @@ from reimaginedQuantum.core import *
 from reimaginedQuantum.constants import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+from importlib.machinery import SourceFileLoader
+SourceFileLoader("default", DEFAULT_PATH).load_module()
+
 from default import *
 
 class WidgetLine(object):

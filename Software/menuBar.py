@@ -11,6 +11,9 @@ from __about__ import Ui_Dialog as Ui_Dialog_about
 from __default__ import Ui_Dialog as Ui_Dialog_default
 from reimaginedQuantum.core import save_default, reload_default
 
+from importlib.machinery import SourceFileLoader
+SourceFileLoader("default", DEFAULT_PATH).load_module()
+
 from default import *
 
 class Email():
@@ -74,6 +77,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.LOCAL_CONSTANTS = {}
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.update)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Reset).clicked.connect(self.reset)
+        self.browse_pushButton.clicked.connect(self.choose_file)
         self.email_checkBox.stateChanged.connect(self.enable_email)
 
         if not SEND_EMAIL:
@@ -151,6 +155,20 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
 
         save_default(self.LOCAL_CONSTANTS)
         self.parent.update_constants(self.LOCAL_CONSTANTS)
+
+    def choose_file(self):
+        """
+        user interaction with saving file
+        """
+        name = self.parent.fileDialog()
+        if name != None:
+            try:
+                extension = self.parent.split_extension(name)[1]
+                if extension == "":
+                    name += self.parent.extension
+                self.file_lineEdit.setText(name)
+            except Exception as e:
+                self.parent.errorWindow(e)
 
     def reset(self):
         reload_default()

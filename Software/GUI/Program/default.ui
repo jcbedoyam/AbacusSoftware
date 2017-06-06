@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>325</width>
-    <height>335</height>
+    <width>500</width>
+    <height>364</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -117,7 +117,7 @@
         </property>
         <layout class="QFormLayout" name="formLayout">
          <property name="labelAlignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
          <property name="formAlignment">
           <set>Qt::AlignHCenter|Qt::AlignTop</set>
@@ -193,27 +193,7 @@
         <property name="title">
          <string>General</string>
         </property>
-        <layout class="QFormLayout" name="formLayout_2">
-         <property name="labelAlignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_5">
-           <property name="text">
-            <string>File name:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_6">
-           <property name="text">
-            <string>Sampling time (ms): </string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="file_lineEdit"/>
-         </item>
+        <layout class="QGridLayout" name="gridLayout">
          <item row="1" column="1">
           <widget class="QSpinBox" name="sampling_spinBox">
            <property name="sizePolicy">
@@ -224,7 +204,35 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="1">
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>Coincidence window time (ns):</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>File name:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="file_lineEdit">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Sampling time (ms): </string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
           <widget class="QSpinBox" name="coincidence_spinBox">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -234,10 +242,10 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_7">
+         <item row="0" column="2">
+          <widget class="QPushButton" name="browse_pushButton">
            <property name="text">
-            <string>Coincidence window time (ns):</string>
+            <string>Browse</string>
            </property>
           </widget>
          </item>

@@ -6,11 +6,11 @@ import sys
 import __GUI_images__
 from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
-
 from reimaginedQuantum import *
 
 DEFAULT_EXIST = True
-if not os.path.exists('default.py'):
+
+if not os.path.exists(DEFAULT_PATH):
     save_default(None)
     DEFAULT_EXIST = False
 
@@ -189,7 +189,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.valueChanged.connect(self.method_sampling)
         self.coin_spinBox.valueChanged.connect(self.method_coinWin)
         self.port_box.currentIndexChanged.connect(self.select_serial)
-        # self.save_line.editingFinished.connect(self.save_location)
         self.save_line.setDisabled(True)
 
         self.table = Table(self)
@@ -496,10 +495,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             text = self.DELIMITER.join(self.table.headers)
             file_.write("%s\n"%text)
 
-    def choose_file(self):
-        """
-        user interaction with saving file
-        """
+    def fileDialog(self):
         dlg = QtWidgets.QFileDialog()
         dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
@@ -507,7 +503,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         dlg.setNameFilters(nameFilters)
         dlg.selectNameFilter(self.SUPPORTED_EXTENSIONS[self.extension])
         if dlg.exec_():
-            name = dlg.selectedFiles()[0]
+            return dlg.selectedFiles()[0]
+        return None
+
+    def choose_file(self):
+        """
+        user interaction with saving file
+        """
+        name = self.fileDialog()
+        if name != None:
             try:
                 extension = self.split_extension(name)[1]
                 if extension == "":

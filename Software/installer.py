@@ -1,5 +1,6 @@
 import os
 import sys
+from time import sleep
 import __GUI_images__
 from zipfile import ZipFile
 from threading import Thread
@@ -7,10 +8,13 @@ from __installer__ import Ui_Dialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 CURRENT_OS = sys.platform
-COMPILED = True #: if compilation is wanted
+COMPILED = False #: if compilation is wanted
 
 if CURRENT_OS == "win32":
+    import ctypes
+    import getpass
     import pythoncom
+    from specialfolders import *
     from win32com.shell import shell, shellcon
 
 LICENSE = """Reimagined Quantum
@@ -84,7 +88,20 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 
         if path_exists:
             self.deactivate(True)
-            self.start_thread()
+            try:
+                self.unzip()# self.start_thread()
+            except PermissionError as e:
+                self.permissionWindow()
+
+    def permissionWindow(self):
+        msg = "In order to install in the following folder we require admin privileges. \
+        \n\n\nPlease restart installer as admin."
+        reply = QtWidgets.QMessageBox.warning(self, 'Exit',
+                         msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            sys.exit()
+        else:
+            self.cancel_install()
 
     def deactivate(self, status):
         self.destination_lineEdit.setDisabled(status)
@@ -93,7 +110,11 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
     def cancel_install(self):
         self.stop_thread = True
         self.thread = None
+
+
         self.deactivate(False)
+        self.progress_label.setText("Canceled.")
+        self.signal.emit(0)
 
     def unzip(self):
         # when compiled
@@ -112,6 +133,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
                 self.signal.emit(100*(i+1)//total)
                 if self.stop_thread:
                     break
+
         if i == total -1:
             self.finished = True
             self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(True)
@@ -129,8 +151,11 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             shortcut.SetIconLocation(executable, 0)
 
             desktop_path = shell.SHGetFolderPath(0, shellcon.CSIDL_DESKTOP, 0, 0)
+            menu_path = get_path(FOLDERID.StartMenu).replace("Default", getpass.getuser())
+
             persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
             persist_file.Save(os.path.join(desktop_path, "Reimagined Quantum.lnk"), 0)
+            persist_file.Save(os.path.join(menu_path, "Reimagined Quantum.lnk"), 0)
 
 
     def make_destination(self, path):
@@ -141,20 +166,17 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             if os.path.exists(path_parent):
                 answer = QtWidgets.QMessageBox.warning(self, 'Warning', 'Folder does not exist,\nDo you want to create it?', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
                 if answer:
-                    os.mkdir(path)
-                    self.path = path
+                    try:
+                        os.mkdir(path)
+                        self.path = path
+                    except PermissionError:
+                        self.permissionWindow()
             else:
                 raise(Exception('Path does not exist'))
 
     def default_location(self):
         if CURRENT_OS == "win32":
-            possible = ['C:\Program Files (x86)', 'C:\Program Files']
-            for location in possible:
-                exists = os.path.exists(location)
-                if exists:
-                    break
-            if not exists:
-                location = os.path.dirname(os.path.realpath(__file__))
+            location = get_path(FOLDERID.ProgramFiles)
             self.destination_lineEdit.setText("%s\ReimaginedQuantum"%location)
 
     def browse_destination(self):
@@ -197,16 +219,16 @@ def resource_path(relative_path):
 
 if CURRENT_OS == 'win32':
     import ctypes
-    import admin
-    if not admin.isUserAdmin():
-        admin.runAsAdmin()
-    if admin.isUserAdmin():
-        app = QtWidgets.QApplication(sys.argv)
-        app.processEvents()
-        app.setWindowIcon(QtGui.QIcon(':/icon.png'))
-        myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    # import admin
+    # if not admin.isUserAdmin():
+    #     admin.runAsAdmin()
+    # if admin.isUserAdmin():
+    app = QtWidgets.QApplication(sys.argv)
+    app.processEvents()
+    app.setWindowIcon(QtGui.QIcon(':/icon.png'))
+    myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-        main = Main()
-        main.show()
-        sys.exit(app.exec_())
+    main = Main()
+    main.show()
+    sys.exit(app.exec_())

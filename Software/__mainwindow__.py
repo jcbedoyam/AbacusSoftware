@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'GUI\mainwindow.ui'
+# Form implementation generated from reading ui file 'Software/GUI/Program/mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -184,7 +184,7 @@ class Ui_MainWindow(object):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Quantum"))
         self.label.setText(_translate("MainWindow", "Save at: "))
-        self.save_button.setText(_translate("MainWindow", "Open"))
+        self.save_button.setText(_translate("MainWindow", "Browse"))
         self.channels_button.setText(_translate("MainWindow", "Channels"))
         self.groupBox.setTitle(_translate("MainWindow", "Global properties"))
         self.label_2.setText(_translate("MainWindow", "Port:"))
