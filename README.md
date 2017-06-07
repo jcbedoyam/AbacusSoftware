@@ -1,3 +1,5 @@
+
+
 # ReimaginedQuantum
 ## Models
 
@@ -79,3 +81,8 @@ sudo reboot
 ### GUI
 ### Binaries
 MS Visual C++ dll
+
+
+## Sello
+http://www.ofimax.org/publicitarios/tampografia.html
+http://impresion.com.co/productos-impresos.html
