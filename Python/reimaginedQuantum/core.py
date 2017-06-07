@@ -489,7 +489,6 @@ def findPort():
                     ports["%s"%port.description] = port.device
                 else:
                     ports["%s (%s)"%(port.description, port.device)] = port.device
-                print("HERE: %s"%port.device)
             com.close()
         except:
             pass
@@ -500,15 +499,28 @@ def save_value(file, name, value):
     if type(value) != str:
         file.write('%s=%s\n'%(name, str(value)))
     else:
-        file.write("%s='%s'\n"%(name, value))
+        if name != "FILE_NAME":
+            file.write("%s='%s'\n"%(name, value))
+        else:
+            if CURRENT_OS == "win32":
+                value = value.replace("\\", "/")
+                file.write("%s='%s'\n"%(name, value))
+            else:
+                file.write("%s='%s'\n"%(name, value))
 
 def save_default(values):
+    if CURRENT_OS == "win32":
+        default_path = DEFAULT_PATH.replace("\default.py", "")
+        try:
+            os.mkdir(default_path)
+        except:
+            pass
     if values == None:
-        with open('default.py', 'w') as file:
+        with open(DEFAULT_PATH, 'w') as file:
             for name in DEFAULT_TO_SAVE:
                 save_value(file, name, eval(name))
     else:
-        with open('default.py', 'w') as file:
+        with open(DEFAULT_PATH, 'w') as file:
             for name in DEFAULT_TO_SAVE:
                 if name in values:
                     save_value(file, name, values[name])

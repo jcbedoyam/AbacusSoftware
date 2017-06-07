@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import getpass
+from .specialfolders import *
 
 CURRENT_OS = sys.platform
 
@@ -72,6 +74,9 @@ DEFAULT_COIN = 5
 STEP_COIN = 5
 
 FILE_NAME = 'Output.dat'
+if CURRENT_OS == "win32":
+    FILE_NAME = "%s\%s"%(get_path(FOLDERID.Documents).replace("Default", getpass.getuser()), FILE_NAME)
+
 USER_EMAIL = ''
 SEND_EMAIL = True
 
@@ -82,3 +87,9 @@ Constant to save
 """
 DEFAULT_TO_SAVE = ['DEFAULT_CHANNELS', 'DEFAULT_DELAY', 'DEFAULT_SLEEP', 'DEFAULT_SAMP',
                                 'DEFAULT_COIN', 'USER_EMAIL', 'FILE_NAME', 'SEND_EMAIL']
+
+if CURRENT_OS == "win32":
+    _path = get_path(FOLDERID.LocalAppData).replace("Default", getpass.getuser())
+    DEFAULT_PATH = "%s\ReimaginedQuantum\default.py"%_path
+else:
+    DEFAULT_PATH = "default.py"
