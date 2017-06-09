@@ -3,9 +3,11 @@
 
 import sys
 import getpass
-from .specialfolders import *
 
 CURRENT_OS = sys.platform
+
+if CURRENT_OS == "win32":
+    from .specialfolders import *
 
 ADDRESS = {'delayA_ns': 0,
            'delayA_us': 1,
