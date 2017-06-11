@@ -2,10 +2,11 @@ import os
 import shutil
 import fnmatch
 from glob import glob
-from zipfile import ZipFile
+from zipfile import ZipFile, ZIP_DEFLATED
 
 
 ZIPFILE = 'dist/Quantum/Quantum.zip'
+IGNORE = ['_cffi_backend.pyd']
 
 def get_files():
     matches = []
@@ -21,10 +22,11 @@ def zipfile_():
     oldwd = os.getcwd()
     os.chdir('dist/Quantum')
     files = get_files()
-    with ZipFile('Quantum.zip', 'w') as zpf:
+    with ZipFile('Quantum.zip', 'w', compression=ZIP_DEFLATED) as zpf:
         for file_ in files:
-            zpf.write(file_)
-            print('Zipped: %s'%file_)
+            if not file_ in IGNORE:
+                zpf.write(file_)
+                print('Zipped: %s'%file_)
     os.chdir(oldwd)
 
 os.system('pyinstaller mainGUI.spec')
@@ -35,4 +37,5 @@ os.rename('dist/QuantumInstaller.exe', 'QuantumInstaller.exe')
 shutil.rmtree('build')
 shutil.rmtree('dist')
 shutil.rmtree('__pycache__')
-os.remove('Quantum.zip')
+
+os.rename('Quantum.zip', 'Quantum-win32-x86-1.0.zip')

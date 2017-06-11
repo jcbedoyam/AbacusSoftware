@@ -8,7 +8,7 @@ from __installer__ import Ui_Dialog
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 CURRENT_OS = sys.platform
-COMPILED = False #: if compilation is wanted
+COMPILED = True #: if compilation is wanted
 
 if CURRENT_OS == "win32":
     import ctypes
