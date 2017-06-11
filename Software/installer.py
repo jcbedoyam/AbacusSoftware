@@ -55,6 +55,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.cancel_install)
         self.signal.connect(self.progressBar.setValue)
 
+        self.extracted_files = []
         self.default_location()
         self.path = None
         self.thread = None
@@ -63,19 +64,25 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.create_thread()
 
     def start_thread(self):
+        self.stop_thread = False
         if self.thread != None:
             try:
                 self.thread.start()
             except:
-                self.create_thread()
+                self.thread = self.create_thread()
                 self.thread.start()
         else:
-            self.create_thread()
+            self.thread = self.create_thread()
             self.thread.start()
 
-    def create_thread(self):
-        self.thread = Thread(target = self.unzip)
-        self.thread.setDaemon(True)
+    def create_thread(self, target = "unzip"):
+        if target == "unzip":
+            target = self.unzip
+        elif target == "cancel":
+            target = self.delete_unzipped
+        thread = Thread(target = target)
+        thread.setDaemon(True)
+        return thread
 
     def begin_install(self):
         path = self.destination_lineEdit.text()
@@ -83,15 +90,14 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         try:
             self.make_destination(path)
             path_exists = True
+        except PermissionError:
+            self.permissionWindow()
         except Exception as e:
             self.errorWindow(e)
 
         if path_exists:
             self.deactivate(True)
-            try:
-                self.unzip()# self.start_thread()
-            except PermissionError as e:
-                self.permissionWindow()
+            self.start_thread()
 
     def permissionWindow(self):
         msg = "In order to install in the following folder we require admin privileges. \
@@ -106,15 +112,29 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
     def deactivate(self, status):
         self.destination_lineEdit.setDisabled(status)
         self.destination_Button.setDisabled(status)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(status)
+
+    def delete_unzipped(self):
+        for (i, file) in enumerate(self.extracted_files):
+            try:
+                os.remove(file)
+                self.progress_label.setText("Deleted %s"%file)
+                del self.extracted_files[i]
+            except:
+                pass
+        self.deactivate(False)
+        self.signal.emit(0)
+        self.progress_label.setText("Canceled.")
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(False)
 
     def cancel_install(self):
         self.stop_thread = True
         self.thread = None
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(True)
 
-
-        self.deactivate(False)
-        self.progress_label.setText("Canceled.")
-        self.signal.emit(0)
+        sleep(0.1)
+        thread = self.create_thread('cancel')
+        thread.start()
 
     def unzip(self):
         # when compiled
@@ -126,17 +146,28 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         with ZipFile(zipf) as extractfile:
             members = extractfile.infolist()
             total = len(members)
-            for (i, member) in enumerate(members):
-                name = member.filename
-                extractfile.extract(member, self.path)
-                self.progress_label.setText("Unziping %s, file %d of %d"%(name, i+1, total))
-                self.signal.emit(100*(i+1)//total)
-                if self.stop_thread:
-                    break
+            try:
+                for (i, member) in enumerate(members):
+                    name = member.filename
+                    self.extracted_files.append(os.path.join(self.path, name))
+                    extractfile.extract(member, self.path)
+                    self.progress_label.setText("Unziping %s, file %d of %d"%(name, i+1, total))
+                    self.signal.emit(100*(i+1)//total)
+                    if self.stop_thread:
+                        break
+            except PermissionError:
+                self.stop_thread = True
+                self.permissionWindow()
+
+            except Exception as e:
+                self.stop_thread = True
+                self.errorWindow(e)
 
         if i == total -1:
             self.finished = True
             self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(True)
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(False)
+            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText("Finish")
             self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.close)
             self.progress_label.setText("Done")
             self.create_shortcut()
@@ -157,20 +188,14 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             persist_file.Save(os.path.join(desktop_path, "Reimagined Quantum.lnk"), 0)
             persist_file.Save(os.path.join(menu_path, "Reimagined Quantum.lnk"), 0)
 
-
     def make_destination(self, path):
         if os.path.exists(path):
             self.path = path
         else:
             path_parent = os.path.dirname(path)
             if os.path.exists(path_parent):
-                answer = QtWidgets.QMessageBox.warning(self, 'Warning', 'Folder does not exist,\nDo you want to create it?', QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
-                if answer:
-                    try:
-                        os.mkdir(path)
-                        self.path = path
-                    except PermissionError:
-                        self.permissionWindow()
+                os.mkdir(path)
+                self.path = path
             else:
                 raise(Exception('Path does not exist'))
 
@@ -219,16 +244,16 @@ def resource_path(relative_path):
 
 if CURRENT_OS == 'win32':
     import ctypes
-    # import admin
-    # if not admin.isUserAdmin():
-    #     admin.runAsAdmin()
-    # if admin.isUserAdmin():
-    app = QtWidgets.QApplication(sys.argv)
-    app.processEvents()
-    app.setWindowIcon(QtGui.QIcon(':/icon.png'))
-    myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+    import admin
+    if not admin.isUserAdmin():
+        admin.runAsAdmin()
+    if admin.isUserAdmin():
+        app = QtWidgets.QApplication(sys.argv)
+        app.processEvents()
+        app.setWindowIcon(QtGui.QIcon(':/icon.png'))
+        myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-    main = Main()
-    main.show()
-    sys.exit(app.exec_())
+        main = Main()
+        main.show()
+        sys.exit(app.exec_())
