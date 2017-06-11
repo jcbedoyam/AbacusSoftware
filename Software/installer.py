@@ -35,6 +35,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 class Main(QtWidgets.QDialog, Ui_Dialog):
     signal = QtCore.pyqtSignal(int)
+    # extract_signal = QtCore.pyqtSignal(str)
+    finish_signal = QtCore.pyqtSignal()
+
     global CURRENT_OS, COMPILED, LICENSE
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
@@ -54,6 +57,8 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.begin_install)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.cancel_install)
         self.signal.connect(self.progressBar.setValue)
+        # self.extract_signal.connect(self.extra)
+        self.finish_signal.connect(self.finishInstall)
 
         self.extracted_files = []
         self.default_location()
@@ -62,6 +67,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.finished = False
         self.stop_thread = False
         self.create_thread()
+        self.current_working = os.getcwd()
 
     def start_thread(self):
         self.stop_thread = False
@@ -144,36 +150,40 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             zipf = resource_path('Quantum.zip')
         else:
             zipf = 'Quantum.zip'
+        try:
+            with ZipFile(zipf) as extractfile:
+                members = extractfile.namelist()
+                total = len(members)
+                for i, zipinfo in enumerate(members):
+                    self.extracted_files.append(os.path.join(self.path, zipinfo))
+                    extractfile.extract(zipinfo, self.path)
 
-        with ZipFile(zipf) as extractfile:
-            members = extractfile.infolist()
-            total = len(members)
-            try:
-                for (i, member) in enumerate(members):
-                    name = member.filename
-                    self.extracted_files.append(os.path.join(self.path, name))
-                    extractfile.extract(member, self.path)
-                    self.progress_label.setText("Unziping %s, file %d of %d"%(name, i+1, total))
+                    self.progress_label.setText("Unziping %s"%zipinfo)
                     self.signal.emit(100*(i+1)//total)
                     if self.stop_thread:
                         break
-            except PermissionError:
-                self.stop_thread = True
-                self.permissionWindow()
 
-            except Exception as e:
-                self.stop_thread = True
-                self.errorWindow(e)
+        except PermissionError:
+            self.stop_thread = True
+            self.permissionWindow()
 
-        if i == total -1:
+        except Exception as e:
+            self.stop_thread = True
+            self.errorWindow(e)
+
+        if i == total -1 and not self.stop_thread:
             self.finished = True
-            self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(True)
-            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(False)
-            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText("Finish")
-            self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.close)
-            self.progress_label.setText("Done")
-            self.signal.emit(100)
-            self.create_shortcut()
+            self.finish_signal.emit()
+
+    def finishInstall(self):
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(True)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(False)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(sys.exit)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText("Finish")
+        sleep(0.1)
+        self.progress_label.setText("Done")
+        self.signal.emit(100)
+        self.create_shortcut()
 
     def create_shortcut(self):
         if CURRENT_OS == "win32":
