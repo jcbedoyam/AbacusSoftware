@@ -112,6 +112,8 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
     def deactivate(self, status):
         self.destination_lineEdit.setDisabled(status)
         self.destination_Button.setDisabled(status)
+        self.desktop_checkBox.setDisabled(status)
+        self.startmenu_checkBox.setDisabled(status)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(status)
 
     def delete_unzipped(self):
@@ -119,11 +121,11 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             try:
                 os.remove(file)
                 self.progress_label.setText("Deleted %s"%file)
-                del self.extracted_files[i]
             except:
                 pass
         self.deactivate(False)
         self.signal.emit(0)
+        self.extracted_files = []
         self.progress_label.setText("Canceled.")
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(False)
 
@@ -170,6 +172,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText("Finish")
             self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.close)
             self.progress_label.setText("Done")
+            self.signal.emit(100)
             self.create_shortcut()
 
     def create_shortcut(self):
@@ -181,12 +184,14 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             shortcut.SetDescription("Reimagined Quantum")
             shortcut.SetIconLocation(executable, 0)
 
-            desktop_path = shell.SHGetFolderPath(0, shellcon.CSIDL_DESKTOP, 0, 0)
-            menu_path = get_path(FOLDERID.StartMenu).replace("Default", getpass.getuser())
-
             persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
-            persist_file.Save(os.path.join(desktop_path, "Reimagined Quantum.lnk"), 0)
-            persist_file.Save(os.path.join(menu_path, "Reimagined Quantum.lnk"), 0)
+            if self.desktop_checkBox.isChecked():
+                desktop_path = shell.SHGetFolderPath(0, shellcon.CSIDL_DESKTOP, 0, 0)
+                persist_file.Save(os.path.join(desktop_path, "Reimagined Quantum.lnk"), 0)
+
+            if self.startmenu_checkBox.isChecked():
+                menu_path = get_path(FOLDERID.StartMenu).replace("Default", getpass.getuser())
+                persist_file.Save(os.path.join(menu_path, "Reimagined Quantum.lnk"), 0)
 
     def make_destination(self, path):
         if os.path.exists(path):
@@ -235,7 +240,6 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
-        # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")

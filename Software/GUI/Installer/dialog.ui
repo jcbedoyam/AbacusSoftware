@@ -94,6 +94,35 @@
           </widget>
          </item>
          <item>
+          <widget class="QGroupBox" name="shortcuts_Box">
+           <property name="title">
+            <string>Shortcuts</string>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_3">
+            <item>
+             <widget class="QCheckBox" name="desktop_checkBox">
+              <property name="text">
+               <string>Create desktop shortcut.</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="startmenu_checkBox">
+              <property name="text">
+               <string>Create start menu shortcut.</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item>
           <widget class="QProgressBar" name="progressBar">
            <property name="value">
             <number>0</number>

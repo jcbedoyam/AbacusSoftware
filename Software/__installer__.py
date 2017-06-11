@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Software\GUI\Installer\dialog.ui'
+# Form implementation generated from reading ui file 'GUI\Installer\dialog.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -70,6 +70,21 @@ class Ui_Dialog(object):
         self.destination_Button.setObjectName("destination_Button")
         self.horizontalLayout.addWidget(self.destination_Button)
         self.verticalLayout.addWidget(self.destination_Box)
+        self.shortcuts_Box = QtWidgets.QGroupBox(self.frame)
+        self.shortcuts_Box.setObjectName("shortcuts_Box")
+        self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.shortcuts_Box)
+        self.verticalLayout_3.setContentsMargins(11, 11, 11, 11)
+        self.verticalLayout_3.setSpacing(6)
+        self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.desktop_checkBox = QtWidgets.QCheckBox(self.shortcuts_Box)
+        self.desktop_checkBox.setChecked(True)
+        self.desktop_checkBox.setObjectName("desktop_checkBox")
+        self.verticalLayout_3.addWidget(self.desktop_checkBox)
+        self.startmenu_checkBox = QtWidgets.QCheckBox(self.shortcuts_Box)
+        self.startmenu_checkBox.setChecked(True)
+        self.startmenu_checkBox.setObjectName("startmenu_checkBox")
+        self.verticalLayout_3.addWidget(self.startmenu_checkBox)
+        self.verticalLayout.addWidget(self.shortcuts_Box)
         self.progressBar = QtWidgets.QProgressBar(self.frame)
         self.progressBar.setProperty("value", 0)
         self.progressBar.setObjectName("progressBar")
@@ -95,4 +110,7 @@ class Ui_Dialog(object):
         self.name_label.setText(_translate("Dialog", "TextLabel"))
         self.destination_Box.setTitle(_translate("Dialog", "Destination Folder"))
         self.destination_Button.setText(_translate("Dialog", "Browse..."))
+        self.shortcuts_Box.setTitle(_translate("Dialog", "Shortcuts"))
+        self.desktop_checkBox.setText(_translate("Dialog", "Create desktop shortcut."))
+        self.startmenu_checkBox.setText(_translate("Dialog", "Create start menu shortcut."))
 
