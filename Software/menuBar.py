@@ -62,7 +62,7 @@ class Email():
         #     pass
 
 class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
-    global FILE_NAME, USER_EMAIL
+    global FILE_NAME, USE_DATETIME, USER_EMAIL
     global DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP, \
             MIN_COIN, MAX_COIN, STEP_COIN
     global DEFAULT_CHANNELS, MIN_CHANNELS, MAX_CHANNELS
@@ -93,7 +93,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
                 'DEFAULT_COIN', 'MIN_SAMP', 'MAX_SAMP', 'MIN_COIN', 'MAX_COIN',
                 'STEP_COIN', 'DEFAULT_CHANNELS', 'MIN_CHANNELS', 'MAX_CHANNELS',
                 'MIN_DELAY', 'MAX_DELAY', 'STEP_DELAY', 'DEFAULT_DELAY',
-                'MIN_SLEEP', 'MAX_SLEEP', 'STEP_SLEEP', 'DEFAULT_SLEEP']
+                'MIN_SLEEP', 'MAX_SLEEP', 'STEP_SLEEP', 'DEFAULT_SLEEP', 'USE_DATETIME']
 
         for name in self.LOCAL_NAMES:
             value = eval(name)
@@ -131,6 +131,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.coincidence_spinBox.setValue(self.DEFAULT_COIN)
         self.email_lineEdit.setText(self.USER_EMAIL)
         self.file_lineEdit.setText(self.FILE_NAME)
+        self.time_checkBox.setChecked(self.USE_DATETIME)
 
     def enable_email(self, state):
         if state == 0:
@@ -146,6 +147,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.DEFAULT_COIN = self.coincidence_spinBox.value()
         self.USER_EMAIL = self.email_lineEdit.text()
         self.FILE_NAME = self.file_lineEdit.text()
+        self.USE_DATETIME = self.time_checkBox.isChecked()
         self.SEND_EMAIL = True
         if self.email_checkBox.checkState() == 0:
             self.SEND_EMAIL = False

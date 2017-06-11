@@ -42,7 +42,7 @@
        <item>
         <widget class="QLabel" name="label">
          <property name="text">
-          <string>Save at: </string>
+          <string>Save as: </string>
          </property>
         </widget>
        </item>
@@ -284,8 +284,9 @@ Window (ns):</string>
    </property>
    <widget class="QMenu" name="menuProperties">
     <property name="title">
-     <string>Properties</string>
+     <string>Edit</string>
     </property>
+    <addaction name="actionChannels"/>
     <addaction name="actionDefault_properties"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -294,6 +295,15 @@ Window (ns):</string>
     </property>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionSave_as_2"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
+   </widget>
+   <addaction name="menuFile"/>
    <addaction name="menuProperties"/>
    <addaction name="menuHelp"/>
   </widget>
@@ -325,6 +335,21 @@ Window (ns):</string>
   <action name="actionAbout">
    <property name="text">
     <string>About</string>
+   </property>
+  </action>
+  <action name="actionSave_as_2">
+   <property name="text">
+    <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
+   </property>
+  </action>
+  <action name="actionChannels">
+   <property name="text">
+    <string>Channels</string>
    </property>
   </action>
  </widget>

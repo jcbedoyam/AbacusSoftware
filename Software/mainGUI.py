@@ -126,7 +126,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     SUPPORTED_EXTENSIONS = {EXTENSION_DATA : 'Plain text data file (*.dat)', '.csv' : 'CSV data files (*.csv)'}
 
     global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP, TABLE_YGROW
-    global MIN_COIN, MAX_COIN, STEP_COIN, DEFAULT_CHANNELS, FILE_NAME, USER_EMAIL, SEND_EMAIL
+    global MIN_COIN, MAX_COIN, STEP_COIN, DEFAULT_CHANNELS, FILE_NAME, USER_EMAIL, SEND_EMAIL, USE_DATETIME
     global DEFAULT_EXIST, CURRENT_OS
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
@@ -142,7 +142,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.LOCAL_CONSTANTS = {}
         self.local_constants()
         self.output_name = name
-        self.save_line.setText(self.output_name)
+        if USE_DATETIME:
+            name, ext = self.split_extension(self.output_name)
+            self.save_line.setText("%s%s%s"%(name, strftime("%Y%m%d_%H%M"), ext))
+        else:
+            self.save_line.setText(self.output_name)
         self.extension = self.EXTENSION_DATA
         self.params_file = "%s_params%s"%(self.output_name[:-4], self.EXTENSION_PARAMS)
 
@@ -199,8 +203,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         menu bar
         """
+        self.actionChannels.setDisabled(True)
         self.actionDefault_properties.triggered.connect(self.default_window_caller)
+        self.actionChannels.triggered.connect(self.detectors_window_caller)
         self.actionAbout.triggered.connect(self.about_window_caller)
+        self.actionSave_as_2.triggered.connect(self.choose_file)
+        self.actionExit.triggered.connect(self.close)
 
         self.data = None
         self.params_header = None
@@ -269,7 +277,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     instruction = "self.%s = '%s'"%(name, value)
                 exec(instruction)
 
-        self.save_line.setText(self.FILE_NAME)
+        if self.default_window.time_checkBox.isChecked():
+            name, ext = self.split_extension(self.FILE_NAME)
+            self.save_line.setText("%s%s%s"%(name, strftime("%Y%m%d_%H%M"), ext))
+        else:
+            self.save_line.setText(self.FILE_NAME)
         self.save_location()
 
         self.samp_spinBox.setValue(self.DEFAULT_SAMP)
@@ -383,7 +395,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 os.remove(self.params_file)
                 os.remove(self.output_name)
 
-
     def save_location(self):
         new = self.save_line.text()
         try:
@@ -443,12 +454,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     try:
                         self.serial.update_serial(self.port)
                         self.channels_button.setDisabled(False)
+                        self.actionChannels.setDisabled(False)
                     except:
                         pass
                 else:
                     try:
                         self.serial = CommunicationPort(self.port)
                         self.channels_button.setDisabled(False)
+                        self.actionChannels.setDisabled(False)
                     except Exception as e:
                         e = type(e)("Serial selection: %s"%str(e))
                         if error_capable:
@@ -466,6 +479,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.setDisabled(status)
         self.coin_spinBox.setDisabled(status)
         self.channels_button.setDisabled(status)
+        self.actionChannels.setDisabled(status)
         # if status:
         self.stream_activate(status)
 

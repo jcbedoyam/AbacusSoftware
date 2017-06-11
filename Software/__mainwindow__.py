@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'Software/GUI/Program/mainwindow.ui'
+# Form implementation generated from reading ui file 'GUI\Program\mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -158,6 +158,8 @@ class Ui_MainWindow(object):
         self.menuProperties.setObjectName("menuProperties")
         self.menuHelp = QtWidgets.QMenu(self.menuBar)
         self.menuHelp.setObjectName("menuHelp")
+        self.menuFile = QtWidgets.QMenu(self.menuBar)
+        self.menuFile.setObjectName("menuFile")
         MainWindow.setMenuBar(self.menuBar)
         self.actionSave_as = QtWidgets.QAction(MainWindow)
         self.actionSave_as.setObjectName("actionSave_as")
@@ -171,8 +173,19 @@ class Ui_MainWindow(object):
         self.actionDefault_properties.setObjectName("actionDefault_properties")
         self.actionAbout = QtWidgets.QAction(MainWindow)
         self.actionAbout.setObjectName("actionAbout")
+        self.actionSave_as_2 = QtWidgets.QAction(MainWindow)
+        self.actionSave_as_2.setObjectName("actionSave_as_2")
+        self.actionExit = QtWidgets.QAction(MainWindow)
+        self.actionExit.setObjectName("actionExit")
+        self.actionChannels = QtWidgets.QAction(MainWindow)
+        self.actionChannels.setObjectName("actionChannels")
+        self.menuProperties.addAction(self.actionChannels)
         self.menuProperties.addAction(self.actionDefault_properties)
         self.menuHelp.addAction(self.actionAbout)
+        self.menuFile.addAction(self.actionSave_as_2)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionExit)
+        self.menuBar.addAction(self.menuFile.menuAction())
         self.menuBar.addAction(self.menuProperties.menuAction())
         self.menuBar.addAction(self.menuHelp.menuAction())
 
@@ -183,7 +196,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Quantum"))
-        self.label.setText(_translate("MainWindow", "Save at: "))
+        self.label.setText(_translate("MainWindow", "Save as: "))
         self.save_button.setText(_translate("MainWindow", "Browse"))
         self.channels_button.setText(_translate("MainWindow", "Channels"))
         self.groupBox.setTitle(_translate("MainWindow", "Global properties"))
@@ -194,12 +207,16 @@ class Ui_MainWindow(object):
         self.stream_button.setText(_translate("MainWindow", "Stream"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab), _translate("MainWindow", "Data"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_3), _translate("MainWindow", "Current"))
-        self.menuProperties.setTitle(_translate("MainWindow", "Properties"))
+        self.menuProperties.setTitle(_translate("MainWindow", "Edit"))
         self.menuHelp.setTitle(_translate("MainWindow", "Help"))
+        self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.actionSave_as.setText(_translate("MainWindow", "Save as"))
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionExtract.setText(_translate("MainWindow", "Extract"))
         self.actionConfigure_email.setText(_translate("MainWindow", "Configure email"))
         self.actionDefault_properties.setText(_translate("MainWindow", "Default"))
         self.actionAbout.setText(_translate("MainWindow", "About"))
+        self.actionSave_as_2.setText(_translate("MainWindow", "Save as"))
+        self.actionExit.setText(_translate("MainWindow", "Exit"))
+        self.actionChannels.setText(_translate("MainWindow", "Channels"))
 
