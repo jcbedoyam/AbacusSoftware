@@ -373,7 +373,7 @@ class Experiment(object):
 
         return ["".join(values) for values in coins]
 
-    def periodic_check(self):
+    def periodicCheck(self):
         try:
             message = self.construct_message(data = False)
             values = self.port.message(message, wait_for_answer = True)

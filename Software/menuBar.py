@@ -156,7 +156,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
             self.LOCAL_CONSTANTS[name] = eval('self.%s'%name)
 
         save_default(self.LOCAL_CONSTANTS)
-        self.parent.update_constants(self.LOCAL_CONSTANTS)
+        self.parent.updateConstants(self.LOCAL_CONSTANTS)
 
     def choose_file(self):
         """

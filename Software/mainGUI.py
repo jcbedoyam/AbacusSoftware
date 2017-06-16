@@ -24,10 +24,8 @@ def heavy_import():
     """
     global plt, FigureCanvas, NavigationToolbar, EngFormatter, Axes
     import matplotlib.pyplot as plt
-    from matplotlib.backends.backend_qt5agg import (
-                            FigureCanvasQTAgg as FigureCanvas,
-                            NavigationToolbar2QT as NavigationToolbar)
-    from plotting import Axes
+    from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+    from plotting import Axes, NavigationToolbar
 
 if CURRENT_OS == 'win32':
     import ctypes
@@ -58,7 +56,7 @@ class Table(QtWidgets.QTableWidget):
         self.ylength = self.rowCount()
         self.xlength = self.columnCount()
 
-    def create_table(self):
+    def createTable(self):
         experiment = self.parent.experiment
 
         self.setRowCount(TABLE_YGROW)
@@ -78,7 +76,7 @@ class Table(QtWidgets.QTableWidget):
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
 
-    def get_last_row(self, column):
+    def getLastRow(self, column):
         return self.item((self.current_cell-1)%self.TABLE_SIZE, column).text()
 
     def clean(self):
@@ -133,7 +131,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.setupUi(self)
         try:
-            name, ext = self.split_extension(FILE_NAME)
+            name, ext = self.splitExtension(FILE_NAME)
             name += ext
         except Exception as e:
             from reimaginedQuantum.constants import FILE_NAME as name
@@ -143,7 +141,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.local_constants()
         self.output_name = name
         if USE_DATETIME:
-            name, ext = self.split_extension(self.output_name)
+            name, ext = self.splitExtension(self.output_name)
             self.output_name = "%s%s%s"%(name, strftime("%Y%m%d_%H%M"), ext)
         self.save_line.setText(self.output_name)
         # else:
@@ -188,16 +186,16 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         signals and events
         """
         self.port_box.installEventFilter(self)
-        self.timer.timeout.connect(self.method_streamer)
-        self.plot_timer.timeout.connect(self.update_plot)
-        self.check_timer.timeout.connect(self.periodic_check)
-        self.current_timer.timeout.connect(self.update_current_labels)
-        self.save_button.clicked.connect(self.choose_file)
-        self.stream_button.clicked.connect(self.method_streamer)
-        self.channels_button.clicked.connect(self.detectors_window_caller)
-        self.samp_spinBox.valueChanged.connect(self.method_sampling)
-        self.coin_spinBox.valueChanged.connect(self.method_coinWin)
-        self.port_box.currentIndexChanged.connect(self.select_serial)
+        self.timer.timeout.connect(self.methodStreamer)
+        self.plot_timer.timeout.connect(self.updatePlot)
+        self.check_timer.timeout.connect(self.periodicCheck)
+        self.current_timer.timeout.connect(self.updateCurrentLayout)
+        self.save_button.clicked.connect(self.chooseFile)
+        self.stream_button.clicked.connect(self.methodStreamer)
+        self.channels_button.clicked.connect(self.detectorsWindowCaller)
+        self.samp_spinBox.valueChanged.connect(self.methodSampling)
+        self.coin_spinBox.valueChanged.connect(self.methodCoinWin)
+        self.port_box.currentIndexChanged.connect(self.selectSerial)
         self.save_line.setDisabled(True)
 
         self.table = Table(self)
@@ -209,10 +207,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         menu bar
         """
         self.actionChannels.setDisabled(True)
-        self.actionDefault_properties.triggered.connect(self.default_window_caller)
-        self.actionChannels.triggered.connect(self.detectors_window_caller)
-        self.actionAbout.triggered.connect(self.about_window_caller)
-        self.actionSave_as_2.triggered.connect(self.choose_file)
+        self.actionDefault_properties.triggered.connect(self.defaultWindowCaller)
+        self.actionChannels.triggered.connect(self.detectorsWindowCaller)
+        self.actionAbout.triggered.connect(self.aboutWindowCaller)
+        self.actionSave_as_2.triggered.connect(self.chooseFile)
         self.actionExit.triggered.connect(self.close)
 
         self.data = None
@@ -230,11 +228,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ports = {}
         self.last_row_saved = 0
         self.number_columns = 0
-        self.current_labels = None
         self.format = None
         self.file_exists_warning = False
         self.default_constants = False
+        self.current_layout = CurrentLabels(self.tab_current)
 
+        self.currently_saving_fig = False
         self.first_port = True
         """
         fig
@@ -248,7 +247,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.temp = Table(self)
 
         if not DEFAULT_EXIST:
-            self.default_window_caller()
+            self.defaultWindowCaller()
 
     def center(self):
         screen = QtWidgets.QDesktopWidget().screenGeometry()
@@ -271,7 +270,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 instruction = "self.%s = '%s'"%(name, value)
             exec(instruction)
 
-    def update_constants(self, constants):
+    def updateConstants(self, constants):
         for name in self.LOCAL_NAMES:
             if name in constants:
                 value = constants[name]
@@ -283,11 +282,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 exec(instruction)
 
         if self.default_window.time_checkBox.isChecked():
-            name, ext = self.split_extension(self.FILE_NAME)
+            name, ext = self.splitExtension(self.FILE_NAME)
             self.save_line.setText("%s%s%s"%(name, strftime("%Y%m%d_%H%M"), ext))
         else:
             self.save_line.setText(self.FILE_NAME)
-        self.save_location()
+        self.saveLocation()
 
         self.samp_spinBox.setValue(self.DEFAULT_SAMP)
         self.coin_spinBox.setValue(self.DEFAULT_COIN)
@@ -295,14 +294,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if not DEFAULT_EXIST and not self.default_constants:
             save = False
             self.default_constants = True
-        self.detectors_window.update_constants(constants, save)
+        self.detectors_window.updateConstants(constants, save)
 
-    def create_fig(self):
+    def createFig(self):
         self.fig, (ax_counts, ax_coins) = plt.subplots(2, sharex=True, facecolor='None', edgecolor='None')
         self.canvas = FigureCanvas(self.fig)
         self.plot_layout.addWidget(self.canvas)
-        self.toolbar = NavigationToolbar(self.canvas,
-                self.plot_widget, coordinates=True)
+        self.toolbar = NavigationToolbar(self.canvas, self.plot_widget, self)
 
         self.plot_layout.addWidget(self.toolbar)
         self.ax_counts = Axes(self.fig, self.canvas, ax_counts, self.TABLE_YGROW,
@@ -314,13 +312,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         colors = [self.ax_counts.colors[detector.name] for detector in self.experiment.detectors] + \
                 [self.ax_coins.colors[coin.name] for coin in self.experiment.coin_channels]
 
-        self.current_labels.set_colors(colors)
+        self.current_layout.setColors(colors)
 
         self.canvas.mpl_connect('draw_event', self._draw_event)
-        self.canvas.draw_idle()
+        # self.canvas.draw_idle()
         self.fig.set_tight_layout(True)
 
-    def save_param(self, label, value, units):
+    def saveParam(self, label, value, units):
         current_time = strftime("%H:%M:%S", localtime())
         if value == None:
             message = label
@@ -331,7 +329,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         with open(self.params_file, 'a') as file_:
             file_.write(message)
 
-    def split_extension(self, text):
+    def splitExtension(self, text):
         try:
             name, ext = text.split('.')
             ext = ".%s"%ext
@@ -346,7 +344,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         return name, ext
 
-    def reallocate_output(self, name, remove_old = False):
+    def reallocateOutput(self, name, remove_old = False):
         params = "%s_params%s"%(name, self.EXTENSION_PARAMS)
         new = "%s%s"%(name, self.extension)
         if new != self.output_name and self.data != None:
@@ -368,20 +366,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.output_name = new
         self.params_file = params
 
-    def include_params(self, output, params, save = False, end = False):
+    def includeParams(self, output, params, save = False, end = False):
         if self.data != None:
             if not self.data.empty:
                 if save:
                     self.data.save()
-                # if end:
-                #     temp = "%sTEMP"%params
-                #     with open(temp, "w") as file:
-                #         file.write("##### PARAMETERS USED #####\n%s\n"%self.params_header)
-                #         with open(params, "r") as params_:
-                #             for line in params_:
-                #                 file.write(line)
-                #     os.remove(params)
-                #     os.rename(temp, params)
             elif end:
                 try:
                     os.remove(self.params_file)
@@ -398,13 +387,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 file.close()
 
 
-    def save_location(self):
+    def saveLocation(self):
         new = self.save_line.text()
         try:
-            name, ext = self.split_extension(new)
+            name, ext = self.splitExtension(new)
             if ext != '':
                 self.extension = ext
-            self.reallocate_output(name, remove_old = True)
+            self.reallocateOutput(name, remove_old = True)
         except Exception as e:
             self.save_line.setText(self.output_name)
             self.errorWindow(e)
@@ -413,10 +402,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """ Creates event to handle serial combobox opening.
         """
         if (event.type() == QtCore.QEvent.MouseButtonPress and source is self.port_box):
-            self.serial_refresh()
+            self.serialRefresh()
         return QtWidgets.QWidget.eventFilter(self, source, event)
 
-    def serial_refresh(self):
+    def serialRefresh(self):
         """ Loads serial port described at user combobox.
         """
         current_ports = findPort()
@@ -438,7 +427,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.port_box.addItem(port)
         self.port_box.setCurrentIndex(-1)
 
-    def select_serial(self, index, error_capable = True):
+    def selectSerial(self, index, error_capable = True):
         """ Selects port at index position of combobox.
         """
         if index != -1 and not self.first_port:
@@ -470,12 +459,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                         if error_capable:
                             self.errorWindow(e)
             else:
-                self.widget_activate(True)
+                self.widgetActivate(True)
 
         self.first_port = False
 
 
-    def widget_activate(self, status):
+    def widgetActivate(self, status):
         """
         most of the tools will be disabled if there is no UART detected
         """
@@ -483,30 +472,30 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.coin_spinBox.setDisabled(status)
         self.channels_button.setDisabled(status)
         self.actionChannels.setDisabled(status)
-        self.stream_activate(status)
+        self.streamActivate(status)
 
-    def start_experiment(self):
+    def startExperiment(self):
         if self.format == None:
-            self.stream_activate(False)
-            self.create_table()
+            self.streamActivate(False)
+            self.createTable()
             self.header = np.zeros(self.table.number_columns, dtype=object)
-            self.widget_activate(False)
+            self.widgetActivate(False)
             self.format = [r"%d" for i in range(self.table.number_columns)]
             self.format[0] = "%.3f"
             self.format = self.DELIMITER.join(self.format)
             self.data = RingBuffer(TABLE_YGROW, self.table.number_columns, self.output_name, self.format)
-            self.current_labels = CurrentLabels(self)
-            self.create_fig()
+            self.current_layout.createLabels(self.experiment.detectors, self.experiment.coin_channels)
+            self.createFig()
 
         if self.serial != None:
             if not self.detectors_window.error_ocurred:
-                self.widget_activate(False)
+                self.widgetActivate(False)
 
-    def stream_activate(self, status):
+    def streamActivate(self, status):
         self.stream_button.setDisabled(status)
 
-    def create_table(self):
-        self.table.create_table()
+    def createTable(self):
+        self.table.createTable()
         with open(self.output_name, 'a') as file_:
             text = self.DELIMITER.join(self.table.headers)
             file_.write("%s\n"%text)
@@ -522,22 +511,22 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             return dlg.selectedFiles()[0]
         return None
 
-    def choose_file(self):
+    def chooseFile(self):
         """
         user interaction with saving file
         """
         name = self.fileDialog()
         if name != None:
             try:
-                extension = self.split_extension(name)[1]
+                extension = self.splitExtension(name)[1]
                 if extension == "":
                     name += self.extension
                 self.save_line.setText(name)
-                self.save_location()
+                self.saveLocation()
             except Exception as e:
                 self.errorWindow(e)
 
-    def detectors_window_caller(self):
+    def detectorsWindowCaller(self):
         """
         creates a property window to define number of channels
         """
@@ -548,15 +537,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.file_exists_warning = True
         self.detectors_window.show()
 
-    def default_window_caller(self):
+    def defaultWindowCaller(self):
         self.default_window.show()
 
-    def about_window_caller(self):
+    def aboutWindowCaller(self):
         self.about_window.show()
 
-    def periodic_check(self):
+    def periodicCheck(self):
         try:
-            self.experiment.periodic_check()
+            self.experiment.periodicCheck()
         except Exception as e:
             self.errorWindow(e)
         samp = self.experiment.get_sampling_value()
@@ -567,40 +556,40 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.coin_spinBox.setValue(coin)
 
         values = self.experiment.get_detectors_timers_values()
-        self.detectors_window.set_values(values)
+        self.detectors_window.setValues(values)
 
-    def start_clocks(self):
+    def startClocks(self):
         self.timer.start()
         self.plot_timer.start()
         self.check_timer.start()
         self.current_timer.start()
 
-    def stop_clocks(self):
+    def stopClocks(self):
         self.timer.stop()
         self.plot_timer.stop()
         self.check_timer.stop()
         self.current_timer.stop()
 
-    def update_current_labels(self):
+    def updateCurrentLayout(self):
         for i in range(self.experiment.number_detectors):
-            self.current_labels.change_value(i, value = self.table.get_last_row(i+1))
+            self.current_layout.changeValue(i, value = self.table.getLastRow(i+1))
         for j in range(self.experiment.number_coins):
-            self.current_labels.change_value(j+i+1, value = self.table.get_last_row(j+i+2))
-    def method_streamer(self):
+            self.current_layout.changeValue(j+i+1, value = self.table.getLastRow(j+i+2))
+    def methodStreamer(self):
         try:
             if self.timer.isActive() and self.sender() == self.stream_button:
-                self.stop_clocks()
+                self.stopClocks()
                 self.data.save()
-                self.save_param("Streaming stoped.", None, None)
+                self.saveParam("Streaming stoped.", None, None)
                 self.stream_button.setStyleSheet("background-color: none")
 
             elif not self.timer.isActive():
                 self.stream_button.setStyleSheet("background-color: green")
-                self.detectors_window.send_data()
-                self.method_sampling(self.samp_spinBox.value(), error_capable = False)
-                self.method_coinWin(self.coin_spinBox.value(), error_capable = False)
-                self.save_param("Streaming started.", None, None)
-                self.start_clocks()
+                self.detectors_window.sendData()
+                self.methodSampling(self.samp_spinBox.value(), error_capable = False)
+                self.methodCoinWin(self.coin_spinBox.value(), error_capable = False)
+                self.saveParam("Streaming started.", None, None)
+                self.startClocks()
 
             time_, detectors, coins = self.experiment.current_values()
 
@@ -621,7 +610,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception as e:
             self.errorWindow(e)
 
-    def method_sampling(self, value, error_capable = True):
+    def methodSampling(self, value, error_capable = True):
         self.timer.setInterval(value)
         if value > self.DEFAULT_TPLOT:
             self.plot_timer.setInterval(value)
@@ -643,9 +632,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 else:
                     raise e
         if self.default_constants or DEFAULT_EXIST:
-            self.save_param("Sampling Time", value, "ms")
+            self.saveParam("Sampling Time", value, "ms")
 
-    def method_coinWin(self, value, error_capable = True):
+    def methodCoinWin(self, value, error_capable = True):
         try:
             self.experiment.set_coinWindow(value)
         except Exception as e:
@@ -657,34 +646,43 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 else:
                     raise e
         if self.default_constants or DEFAULT_EXIST:
-            self.save_param("Coincidence window", value, "ns")
+            self.saveParam("Coincidence window", value, "ns")
 
     def _draw_event(self, *args):
-        self.ax_coins.set_background()
-        self.ax_counts.set_background()
+        if self.currently_saving_fig:
+            pass
+        else:
+            self.ax_coins.set_background()
+            self.ax_counts.set_background()
 
-    def update_plot(self):
+    def fullPlot(self):
+        # self.ax_coins.clean()
+        # self.ax_counts.clean()
+        self.ax_coins.set_limits()
+        self.ax_counts.set_limits()
+        self.fig.canvas.draw()
+        self.ax_coins.draw_artist()
+        self.ax_counts.draw_artist()
+        # self.fig.canvas.flush_events()
+
+    def restorePlot(self):
+        self.fig.canvas.restore_region(self.ax_coins.background)
+        self.fig.canvas.restore_region(self.ax_counts.background)
+        self.ax_coins.draw_artist()
+        self.ax_counts.draw_artist()
+        self.ax_counts.blit()
+        self.ax_coins.blit()
+
+    def updatePlot(self):
         if self.table.current_cell > 1:
             data = self.data[:]
             times = np.arange(data.shape[0])
             ychanged1 = self.ax_counts.update_data(times, data)
             ychanged2 = self.ax_coins.update_data(times, data[:, self.experiment.number_detectors:])
-            if ychanged1 or ychanged2:
-                self.ax_coins.clean()
-                self.ax_counts.clean()
-                self.ax_coins.set_limits()
-                self.ax_counts.set_limits()
-                self.fig.canvas.draw()
-                self.ax_coins.draw_artist()
-                self.ax_counts.draw_artist()
-                self.fig.canvas.flush_events()
+            if (ychanged1 or ychanged2) and not self.currently_saving_fig:
+                self.fullPlot()
             else:
-                self.fig.canvas.restore_region(self.ax_coins.background)
-                self.fig.canvas.restore_region(self.ax_counts.background)
-                self.ax_coins.draw_artist()
-                self.ax_counts.draw_artist()
-                self.ax_counts.blit()
-                self.ax_coins.blit()
+                self.restorePlot()
 
     def errorWindow(self, error):
         error_text = str(error)
@@ -694,37 +692,26 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         msg.setIcon(QtWidgets.QMessageBox.Warning)
 
         if type(error) == CommunicationError or type(error) == ExperimentError:
-            self.stop_clocks()
+            self.stopClocks()
             self.serial.close()
             self.ports = {}
-            self.serial_refresh()
-            self.widget_activate(True)
+            self.serialRefresh()
+            self.widgetActivate(True)
             self.stream_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
 
-            # if self.email_window != None:
-            #     current_time = strftime("%H:%M:%S", localtime())
-            #     message = """ An error ocurred at %s.
-            #
-            #     Error reads:
-            #         %s
-            #     """%(current_time, error_text)
-            #     message += "\nReimagined Quantum."
-
-        self.save_param(error_text, None, None)
+        self.saveParam(error_text, None, None)
         msg.setText('An Error has ocurred.\n%s'%error_text)
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
         msg.exec_()
-        # if message != None:
-        #     self.email_window.send(message)
 
     def closeEvent(self, event):
         quit_msg = "Are you sure you want to exit the program?"
         reply = QtWidgets.QMessageBox.question(self, 'Exit',
                          quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
         if reply == QtWidgets.QMessageBox.Yes:
-            self.include_params(self.output_name, self.params_file, save = True, end = True)
+            self.includeParams(self.output_name, self.params_file, save = True, end = True)
             event.accept()
         else:
             event.ignore()

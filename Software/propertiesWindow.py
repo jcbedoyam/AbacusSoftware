@@ -19,8 +19,8 @@ class WidgetLine(object):
         self.identifier = identifier
         self.delay_value = delay_value
         self.sleep_value = sleep_value
-        self.allow_update_delay = True
-        self.allow_update_sleep = True
+        self.allowUpdate_delay = True
+        self.allowUpdate_sleep = True
 
         self.name = "Detector %s"%self.identifier
         self.widget = QtWidgets.QWidget(self.parent.groupBox)
@@ -42,10 +42,10 @@ class WidgetLine(object):
         self.__init_corrections__(self.delay_spinBox)
         self.__init_corrections__(self.sleep_spinBox)
 
-        self.update_values()
+        self.updateValues()
 
-        self.delay_spinBox.valueChanged.connect(self.handle_delay)
-        self.sleep_spinBox.valueChanged.connect(self.handle_sleep)
+        self.delay_spinBox.valueChanged.connect(self.handleDelay)
+        self.sleep_spinBox.valueChanged.connect(self.handleSleep)
 
     def __init_corrections__(self, widget):
         widget.setCorrectionMode(QtWidgets.QAbstractSpinBox.CorrectToNearestValue)
@@ -59,15 +59,15 @@ class WidgetLine(object):
         self.widget.setLayout(layout)
         self.parent.verticalLayoutDetectors.addWidget(self.widget)
 
-    def handle_delay(self, value):
+    def handleDelay(self, value):
         self.delay_value = value
-        self.allow_update_delay = False
+        self.allowUpdate_delay = False
 
-    def handle_sleep(self, value):
+    def handleSleep(self, value):
         self.sleep_value = value
-        self.allow_update_sleep = False
+        self.allowUpdate_sleep = False
 
-    def set_values(self, delay_sleep_value, save = True):
+    def setValues(self, delay_sleep_value, save = True):
         """ Verifies if incomming values are different to stored ones.
 
         If they are different than older ones, saves the incoming one
@@ -75,23 +75,23 @@ class WidgetLine(object):
         """
         delay_value, sleep_value = delay_sleep_value
         update = False
-        if delay_value != self.delay_value and self.allow_update_delay:
+        if delay_value != self.delay_value and self.allowUpdate_delay:
             self.delay_value = delay_value
             if save:
-                self.parent.parent.save_param("%s (Delay)"%self.name,
+                self.parent.parent.saveParam("%s (Delay)"%self.name,
                                         self.delay_spinBox.value(), 'ns')
             update = True
-        if sleep_value != self.sleep_value and self.allow_update_sleep:
+        if sleep_value != self.sleep_value and self.allowUpdate_sleep:
             self.sleep_value = sleep_value
             if save:
-                self.parent.parent.save_param("%s (Sleep)"%self.name,
+                self.parent.parent.saveParam("%s (Sleep)"%self.name,
                                         self.sleep_spinBox.value(), 'ns')
             update = True
 
         if update:
-            self.update_values()
+            self.updateValues()
 
-    def allow_update(self):
+    def allowUpdate(self):
         self.allow_update_delay = True
         self.allow_update_sleep = True
 
@@ -101,9 +101,9 @@ class WidgetLine(object):
         """
         self.delay_value = DEFAULT_DELAY
         self.sleep_value = DEFAULT_SLEEP
-        self.update_values()
+        self.updateValues()
 
-    def update_values(self):
+    def updateValues(self):
         """ Updates the spinBox values, from the attributes.
         """
         self.delay_spinBox.setValue(self.delay_value)
@@ -165,7 +165,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
                 instruction = "self.%s = '%s'"%(name, value)
             exec(instruction)
 
-    def update_constants(self, constants, save = True):
+    def updateConstants(self, constants, save = True):
         for name in self.LOCAL_NAMES:
             if name in constants:
                 value = constants[name]
@@ -178,9 +178,9 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
 
         self.channel_spinBox.setValue(self.DEFAULT_CHANNELS)
         values = [(self.DEFAULT_DELAY, self.DEFAULT_SLEEP) for i in range(self.DEFAULT_CHANNELS)]
-        self.set_values(values, save)
+        self.setValues(values, save)
 
-    def set_values(self, values, save = True):
+    def setValues(self, values, save = True):
         """ Updates the incoming values to the spinboxes.
 
         Args:
@@ -188,7 +188,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
             has the values of delay and sleep time for a channel.
         """
         for i in range(self.number_channels):
-            self.widgets[i].set_values(values[i], save)
+            self.widgets[i].setValues(values[i], save)
 
     def creator(self, n):
         """
@@ -205,7 +205,7 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         self.delete(n)
         self.number_channels = n
 
-    def send_data(self):
+    def sendData(self):
         for i in range(self.number_channels):
             delay = self.widgets[i].delay_value
             sleep = self.widgets[i].sleep_value
@@ -217,12 +217,12 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
         """
         try:
             self.parent.experiment = Experiment(self.parent.serial, self.number_channels)
-            self.send_data()
+            self.sendData()
             self.channel_spinBox.setEnabled(False)
             self.saveParams()
-            self.parent.start_experiment()
+            self.parent.startExperiment()
             for widget in self.widgets:
-                self.widget.allow_update()
+                self.widget.allowUpdate()
 
         except Exception as e:
             if type(e) == CommunicationError or type(e) == ExperimentError:
@@ -231,8 +231,8 @@ class PropertiesWindow(QtWidgets.QDialog, Ui_Dialog):
 
     def saveParams(self, delimiter = DELIMITER):
         for widget in self.widgets:
-            self.parent.save_param("%s (Delay)"%widget.name, widget.delay_value, 'ns')
-            self.parent.save_param("%s (Sleep)"%widget.name, widget.sleep_value, 'ns')
+            self.parent.saveParam("%s (Delay)"%widget.name, widget.delay_value, 'ns')
+            self.parent.saveParam("%s (Sleep)"%widget.name, widget.sleep_value, 'ns')
 
     def delete(self, n):
         """
@@ -277,16 +277,16 @@ class AutoSizeLabel(QtWidgets.QLabel):
         self.height = self.contentsRect().height()
         self.width = self.contentsRect().width()
         self.name = text
-        self.setText(self.stylish_text(text, value))
-        self.set_font_size(self.font_size)
+        self.setText(self.stylishText(text, value))
+        self.setFontSize(self.font_size)
 
-    def set_font_size(self, size):
+    def setFontSize(self, size):
         """ Changes the size of the font to `size` """
         f = self.font()
         f.setPixelSize(size)
         self.setFont(f)
 
-    def set_color(self, color):
+    def setColor(self, color):
         """ Sets the font color.
 
         Args:
@@ -294,7 +294,7 @@ class AutoSizeLabel(QtWidgets.QLabel):
         """
         self.setStyleSheet('color: %s'%color)
 
-    def stylish_text(self, text, value):
+    def stylishText(self, text, value):
         """ Uses and incomning `text` and `value` to create and text of length
         `MAX_CHARS`, filled with spaces.
 
@@ -309,9 +309,9 @@ class AutoSizeLabel(QtWidgets.QLabel):
         text = "%s: %s%s"%(text, spaces, value)
         return text
 
-    def change_value(self, value):
+    def changeValue(self, value):
         """ Sets the text in label with its name and its value. """
-        self.setText(self.stylish_text(self.name, value))
+        self.setText(self.stylishText(self.name, value))
 
     def eventFilter(self, object, evt):
         """ Checks if there is the window size has changed.
@@ -348,36 +348,31 @@ class AutoSizeLabel(QtWidgets.QLabel):
             self.height = height
             self.width = width
 
-            print(self.text(), self.font_size)
-
-class CurrentLabels(object):
-    # self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.tab_3)
+class CurrentLabels(QtWidgets.QWidget):
     def __init__(self, parent=None):
         self.parent = parent
+        self.layout = QtWidgets.QVBoxLayout(self.parent)
         self.labels = []
-        if self.parent != None:
-            self.create_labels()
 
-    def create_labels(self):
-        for detector in self.parent.experiment.detectors:
+    def createLabels(self, detectors, coincidences):
+        for detector in detectors:
             name = detector.name
             label = AutoSizeLabel(name, "0")
-            label.setObjectName("current_label_%s"%detector)
-            self.parent.verticalLayout_2.addWidget(label)
+            self.layout.addWidget(label)
             self.labels.append(label)
-        for coin in self.parent.experiment.coin_channels:
+
+        for coin in coincidences:
             name = coin.name
             label = AutoSizeLabel(name, "0")
-            label.setObjectName("current_label_%s"%detector)
-            self.parent.verticalLayout_2.addWidget(label)
+            self.layout.addWidget(label)
             self.labels.append(label)
 
-    def set_color(self, label, color):
-        label.set_color(color)
+    def setColor(self, label, color):
+        label.setColor(color)
 
-    def set_colors(self, colors):
+    def setColors(self, colors):
         for (label, color) in zip(self.labels, colors):
-            self.set_color(label, color)
+            self.setColor(label, color)
 
-    def change_value(self, index, value):
-        self.labels[index].change_value(value)
+    def changeValue(self, index, value):
+        self.labels[index].changeValue(value)

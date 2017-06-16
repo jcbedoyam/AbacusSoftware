@@ -224,17 +224,16 @@ Window (ns):</string>
          <property name="currentIndex">
           <number>0</number>
          </property>
-         <widget class="QWidget" name="tab">
+         <widget class="QWidget" name="tab_data">
           <attribute name="title">
            <string>Data</string>
           </attribute>
           <layout class="QHBoxLayout" name="horizontalLayout_3"/>
          </widget>
-         <widget class="QWidget" name="tab_3">
+         <widget class="QWidget" name="tab_current">
           <attribute name="title">
            <string>Current</string>
           </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_2"/>
          </widget>
         </widget>
        </item>
