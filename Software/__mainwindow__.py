@@ -192,6 +192,13 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.save_line, self.save_button)
+        MainWindow.setTabOrder(self.save_button, self.port_box)
+        MainWindow.setTabOrder(self.port_box, self.samp_spinBox)
+        MainWindow.setTabOrder(self.samp_spinBox, self.coin_spinBox)
+        MainWindow.setTabOrder(self.coin_spinBox, self.channels_button)
+        MainWindow.setTabOrder(self.channels_button, self.stream_button)
+        MainWindow.setTabOrder(self.stream_button, self.tabWidget)
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate

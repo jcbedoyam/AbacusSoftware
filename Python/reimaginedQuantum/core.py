@@ -434,7 +434,7 @@ class RingBuffer():
     """
     Based on https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/
     """
-    global DELIMITER
+    global DELIMITER, CURRENT_OS
     def __init__(self, rows, columns, output_file, fmt, delimiter = DELIMITER):
         self.data = np.zeros((rows, columns))
         self.index = 0
@@ -444,6 +444,9 @@ class RingBuffer():
         self.format = fmt
         self.size = self.data.shape[0]
         self.total_movements = 0
+        self.new_line = '\n'
+        if CURRENT_OS == 'win32':
+            self.new_line = '\r\n'
 
     def extend(self, x):
         "adds array x to ring buffer"
@@ -468,7 +471,7 @@ class RingBuffer():
         self.last_saved = self.index
         data = self.get()[from_index%self.size:]
         with open(self.output_file, 'ab') as _file:
-            np.savetxt(_file, data, fmt = self.format)
+            np.savetxt(_file, data, fmt = self.format, newline = self.new_line)
 
     def __getitem__(self, item):
         if self.total_movements > self.size:

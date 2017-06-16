@@ -144,12 +144,17 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.output_name = name
         if USE_DATETIME:
             name, ext = self.split_extension(self.output_name)
-            self.save_line.setText("%s%s%s"%(name, strftime("%Y%m%d_%H%M"), ext))
-        else:
-            self.save_line.setText(self.output_name)
+            self.output_name = "%s%s%s"%(name, strftime("%Y%m%d_%H%M"), ext)
+        self.save_line.setText(self.output_name)
+        # else:
+        #     self.save_line.setText(self.output_name)
         self.extension = self.EXTENSION_DATA
         self.params_file = "%s_params%s"%(self.output_name[:-4], self.EXTENSION_PARAMS)
 
+        params_header = "Reimagined Quantum session began at %s"%asctime(localtime())
+
+        with open(self.params_file, "a") as file:
+            file.write("##### PARAMETERS USED #####\n%s\n"%params_header)
         self.samp_spinBox.setMinimum(self.MIN_SAMP)
         self.samp_spinBox.setMaximum(self.MAX_SAMP)
         self.coin_spinBox.setMinimum(self.MIN_COIN)
@@ -225,10 +230,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ports = {}
         self.last_row_saved = 0
         self.number_columns = 0
+        self.current_labels = None
         self.format = None
         self.file_exists_warning = False
         self.default_constants = False
-        # self.CommunicationPort()
 
         self.first_port = True
         """
@@ -305,10 +310,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ax_coins = Axes(self.fig, self.canvas, ax_coins, self.TABLE_YGROW,
                              "Coincidences", self.experiment.coin_channels)
 
-        for i in range(self.experiment.number_detectors):
-            self.current_labels[i].set_color(self.ax_counts.colors[self.experiment.detectors[i].name])
-        for j in range(self.experiment.number_coins):
-            self.current_labels[1+j+i].set_color(self.ax_coins.colors[self.experiment.coin_channels[j].name])
+        n_detectors = self.experiment.number_detectors
+        colors = [self.ax_counts.colors[detector.name] for detector in self.experiment.detectors] + \
+                [self.ax_coins.colors[coin.name] for coin in self.experiment.coin_channels]
+
+        self.current_labels.set_colors(colors)
 
         self.canvas.mpl_connect('draw_event', self._draw_event)
         self.canvas.draw_idle()
@@ -324,21 +330,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             message = "%s %s%s: %d %s\n"%(current_time, self.DELIMITER, label, value, units)
         with open(self.params_file, 'a') as file_:
             file_.write(message)
-
-    def create_current_labels(self):
-        self.current_labels = []
-        for detector in self.experiment.detectors:
-            name = detector.name
-            label = AutoSizeLabel(name, "0")
-            label.setObjectName("current_label_%s"%detector)
-            self.verticalLayout_2.addWidget(label)
-            self.current_labels.append(label)
-        for coin in self.experiment.coin_channels:
-            name = coin.name
-            label = AutoSizeLabel(name, "0")
-            label.setObjectName("current_label_%s"%detector)
-            self.verticalLayout_2.addWidget(label)
-            self.current_labels.append(label)
 
     def split_extension(self, text):
         try:
@@ -382,18 +373,30 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             if not self.data.empty:
                 if save:
                     self.data.save()
-                if end:
-                    temp = "%sTEMP"%params
-                    with open(temp, "w") as file:
-                        file.write("##### PARAMETERS USED #####\n%s\n"%self.params_header)
-                        with open(params, "r") as params_:
-                            for line in params_:
-                                file.write(line)
-                    os.remove(params)
-                    os.rename(temp, params)
+                # if end:
+                #     temp = "%sTEMP"%params
+                #     with open(temp, "w") as file:
+                #         file.write("##### PARAMETERS USED #####\n%s\n"%self.params_header)
+                #         with open(params, "r") as params_:
+                #             for line in params_:
+                #                 file.write(line)
+                #     os.remove(params)
+                #     os.rename(temp, params)
             elif end:
+                try:
+                    os.remove(self.params_file)
+                    os.remove(self.output_name)
+                except:
+                    pass
+        elif end:
+            file = open(self.params_file, 'r')
+            lines = file.readlines()
+            if 2 == len(lines):
+                file.close()
                 os.remove(self.params_file)
-                os.remove(self.output_name)
+            else:
+                file.close()
+
 
     def save_location(self):
         new = self.save_line.text()
@@ -480,7 +483,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.coin_spinBox.setDisabled(status)
         self.channels_button.setDisabled(status)
         self.actionChannels.setDisabled(status)
-        # if status:
         self.stream_activate(status)
 
     def start_experiment(self):
@@ -493,7 +495,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.format[0] = "%.3f"
             self.format = self.DELIMITER.join(self.format)
             self.data = RingBuffer(TABLE_YGROW, self.table.number_columns, self.output_name, self.format)
-            self.create_current_labels()
+            self.current_labels = CurrentLabels(self)
             self.create_fig()
 
         if self.serial != None:
@@ -540,9 +542,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         creates a property window to define number of channels
         """
         if not self.file_exists_warning:
-            ans1 = os.path.exists(r'%s'%self.output_name)
-            ans2 = os.path.exists(r'%s'%self.params_file)
-            if ans1 or ans2:
+            if os.path.exists(r'%s'%self.output_name):
                 QtWidgets.QMessageBox.warning(self, "File exists",
                     "The selected file already exists.\nData will be appended.")
             self.file_exists_warning = True
@@ -583,12 +583,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def update_current_labels(self):
         for i in range(self.experiment.number_detectors):
-            value = self.table.get_last_row(i+1)
-            self.current_labels[i].change_value(value)
+            self.current_labels.change_value(i, value = self.table.get_last_row(i+1))
         for j in range(self.experiment.number_coins):
-            value = self.table.get_last_row(j+i+2)
-            self.current_labels[j+i+1].change_value(value)
-
+            self.current_labels.change_value(j+i+1, value = self.table.get_last_row(j+i+2))
     def method_streamer(self):
         try:
             if self.timer.isActive() and self.sender() == self.stream_button:
@@ -610,8 +607,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             if type(detectors) is list:
                 if self.table.current_cell == 0:
                     self.init_time = time()
-                    current_time = asctime(localtime())
-                    self.params_header = "Reimagined Quantum experiment began at %s"%current_time
+
                 time_ = time_ - self.init_time
                 if time_ < 0:
                     time_ = 0

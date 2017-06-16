@@ -40,7 +40,7 @@ ADDRESS = {'delayA_ns': 0,
            'coincidencesAB_LSB': 28,
            'coincidencesAB_MSB': 29} #: Memory addresses
 
-DELIMITER = "\t"
+DELIMITER = ", "
 
 READ_VALUE = 0x0e #: Reading operation signal
 WRITE_VALUE = 0x0f #: Writing operation signal

@@ -347,3 +347,37 @@ class AutoSizeLabel(QtWidgets.QLabel):
             self.setFont(f)
             self.height = height
             self.width = width
+
+            print(self.text(), self.font_size)
+
+class CurrentLabels(object):
+    # self.verticalLayout_2 = QtWidgets.QVBoxLayout(self.tab_3)
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.labels = []
+        if self.parent != None:
+            self.create_labels()
+
+    def create_labels(self):
+        for detector in self.parent.experiment.detectors:
+            name = detector.name
+            label = AutoSizeLabel(name, "0")
+            label.setObjectName("current_label_%s"%detector)
+            self.parent.verticalLayout_2.addWidget(label)
+            self.labels.append(label)
+        for coin in self.parent.experiment.coin_channels:
+            name = coin.name
+            label = AutoSizeLabel(name, "0")
+            label.setObjectName("current_label_%s"%detector)
+            self.parent.verticalLayout_2.addWidget(label)
+            self.labels.append(label)
+
+    def set_color(self, label, color):
+        label.set_color(color)
+
+    def set_colors(self, colors):
+        for (label, color) in zip(self.labels, colors):
+            self.set_color(label, color)
+
+    def change_value(self, index, value):
+        self.labels[index].change_value(value)

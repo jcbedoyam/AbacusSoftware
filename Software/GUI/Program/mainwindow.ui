@@ -354,6 +354,16 @@ Window (ns):</string>
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>save_line</tabstop>
+  <tabstop>save_button</tabstop>
+  <tabstop>port_box</tabstop>
+  <tabstop>samp_spinBox</tabstop>
+  <tabstop>coin_spinBox</tabstop>
+  <tabstop>channels_button</tabstop>
+  <tabstop>stream_button</tabstop>
+  <tabstop>tabWidget</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

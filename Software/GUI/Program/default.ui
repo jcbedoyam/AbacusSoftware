@@ -280,6 +280,18 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>email_checkBox</tabstop>
+  <tabstop>email_lineEdit</tabstop>
+  <tabstop>ndetectors_spinBox</tabstop>
+  <tabstop>delay_spinBox</tabstop>
+  <tabstop>sleep_spinBox</tabstop>
+  <tabstop>file_lineEdit</tabstop>
+  <tabstop>browse_pushButton</tabstop>
+  <tabstop>time_checkBox</tabstop>
+  <tabstop>sampling_spinBox</tabstop>
+  <tabstop>coincidence_spinBox</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>

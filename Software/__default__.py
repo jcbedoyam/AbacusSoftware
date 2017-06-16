@@ -169,6 +169,15 @@ class Ui_Dialog(object):
         self.buttonBox.accepted.connect(Dialog.accept)
         self.buttonBox.rejected.connect(Dialog.reject)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
+        Dialog.setTabOrder(self.email_checkBox, self.email_lineEdit)
+        Dialog.setTabOrder(self.email_lineEdit, self.ndetectors_spinBox)
+        Dialog.setTabOrder(self.ndetectors_spinBox, self.delay_spinBox)
+        Dialog.setTabOrder(self.delay_spinBox, self.sleep_spinBox)
+        Dialog.setTabOrder(self.sleep_spinBox, self.file_lineEdit)
+        Dialog.setTabOrder(self.file_lineEdit, self.browse_pushButton)
+        Dialog.setTabOrder(self.browse_pushButton, self.time_checkBox)
+        Dialog.setTabOrder(self.time_checkBox, self.sampling_spinBox)
+        Dialog.setTabOrder(self.sampling_spinBox, self.coincidence_spinBox)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
