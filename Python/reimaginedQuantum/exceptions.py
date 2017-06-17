@@ -36,3 +36,14 @@ class ExperimentError(Exception):
         return self.message
     def __str__(self):
         return self.message
+
+
+class SavingError(Exception):
+    """ An error ocurred while saving. """
+
+    def __init__(self, message = "An error ocurred while saving."):
+        self.message = message
+    def __repr__(self):
+        return self.message
+    def __str__(self):
+        return self.message

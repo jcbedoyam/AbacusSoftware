@@ -177,8 +177,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.samp_spinBox.setValue(self.DEFAULT_SAMP)
 
         self.current_timer = QtCore.QTimer()
-        if self.DEFAULT_SAMP > self.DEFAULT_CURRENT:
-            timer = self.DEFAULT_SAMP
+        half = 0.5*self.DEFAULT_SAMP
+        if half > self.DEFAULT_CURRENT:
+            timer = half
         else:
             timer = self.DEFAULT_CURRENT
         self.current_timer.setInterval(timer)
@@ -326,8 +327,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 message = "%s %s%s\n"%(current_time, self.DELIMITER, label)
         else:
             message = "%s %s%s: %d %s\n"%(current_time, self.DELIMITER, label, value, units)
-        with open(self.params_file, 'a') as file_:
-            file_.write(message)
+        try:
+            with open(self.params_file, 'a') as file_:
+                file_.write(message)
+        except Exception as e:
+            raise SavingError(str(e))
+
 
     def splitExtension(self, text):
         try:
@@ -348,20 +353,23 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         params = "%s_params%s"%(name, self.EXTENSION_PARAMS)
         new = "%s%s"%(name, self.extension)
         if new != self.output_name and self.data != None:
-            with open(new, "a") as file_:
-                with open(self.output_name, "r") as old:
-                    for line in old:
-                        file_.write(line)
-            self.data.output_file = new
-            if remove_old:
-                os.remove(self.output_name)
-            if params != self.params_file:
-                with open(params, "a") as file_:
-                    with open(self.params_file, "r") as old:
+            try:
+                with open(new, "a") as file_:
+                    with open(self.output_name, "r") as old:
                         for line in old:
                             file_.write(line)
+                self.data.output_file = new
                 if remove_old:
-                    os.remove(self.params_file)
+                    os.remove(self.output_name)
+                if params != self.params_file:
+                    with open(params, "a") as file_:
+                        with open(self.params_file, "r") as old:
+                            for line in old:
+                                file_.write(line)
+                    if remove_old:
+                        os.remove(self.params_file)
+            except Exception as e:
+                raise SavingError(str(e))
 
         self.output_name = new
         self.params_file = params
@@ -575,6 +583,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.current_layout.changeValue(i, value = self.table.getLastRow(i+1))
         for j in range(self.experiment.number_coins):
             self.current_layout.changeValue(j+i+1, value = self.table.getLastRow(j+i+2))
+
     def methodStreamer(self):
         try:
             if self.timer.isActive() and self.sender() == self.stream_button:
@@ -617,8 +626,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         else:
             self.plot_timer.setInterval(self.DEFAULT_TPLOT)
 
-        if value > self.DEFAULT_CURRENT:
-            self.current_timer.setInterval(value)
+        half = 0.5*value
+        if half > self.DEFAULT_CURRENT:
+            self.current_timer.setInterval(half)
         else:
             self.current_timer.setInterval(self.DEFAULT_CURRENT)
         try:
@@ -704,7 +714,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.stream_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
 
-        self.saveParam(error_text, None, None)
+        if type(error) != SavingError:
+            self.saveParam(error_text, None, None)
         msg.setText('An Error has ocurred.\n%s'%error_text)
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)

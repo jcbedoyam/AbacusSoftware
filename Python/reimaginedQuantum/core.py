@@ -470,8 +470,11 @@ class RingBuffer():
         from_index = self.size - self.index + self.last_saved
         self.last_saved = self.index
         data = self.get()[from_index%self.size:]
-        with open(self.output_file, 'ab') as _file:
-            np.savetxt(_file, data, fmt = self.format, newline = self.new_line)
+        try:
+            with open(self.output_file, 'ab') as _file:
+                np.savetxt(_file, data, fmt = self.format, newline = self.new_line)
+        except Exception as e:
+            raise SavingError(str(e))
 
     def __getitem__(self, item):
         if self.total_movements > self.size:
