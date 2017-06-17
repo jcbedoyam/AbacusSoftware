@@ -655,9 +655,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.ax_coins.set_background()
             self.ax_counts.set_background()
 
+    def includeLines(self):
+        self.ax_coins.includeLines()
+        self.ax_counts.includeLines()
+
     def fullPlot(self):
-        # self.ax_coins.clean()
-        # self.ax_counts.clean()
+        self.ax_coins.clean()
+        self.ax_counts.clean()
         self.ax_coins.set_limits()
         self.ax_counts.set_limits()
         self.fig.canvas.draw()
