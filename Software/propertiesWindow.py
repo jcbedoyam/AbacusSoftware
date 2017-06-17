@@ -264,19 +264,17 @@ class AutoSizeLabel(QtWidgets.QLabel):
     def __init__(self, text, value):
         QtWidgets.QLabel.__init__(self)
         self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
-        self.installEventFilter(self)
-        self.initial = True
         self.font_name = "Monospace"
         if CURRENT_OS == "win32":
             self.font_name = "Courier New"
         self.setFont(QtGui.QFont(self.font_name))
-        self.initial = False
         self.initial_font_size = 10
         self.font_size = 10
         self.MAX_TRY = 40
         self.height = self.contentsRect().height()
         self.width = self.contentsRect().width()
         self.name = text
+        self.value = value
         self.setText(self.stylishText(text, value))
         self.setFontSize(self.font_size)
 
@@ -311,24 +309,12 @@ class AutoSizeLabel(QtWidgets.QLabel):
 
     def changeValue(self, value):
         """ Sets the text in label with its name and its value. """
-        self.setText(self.stylishText(self.name, value))
+        if self.value != value:
+            self.value = value
+            self.setText(self.stylishText(self.name, self.value))
 
-    def eventFilter(self, object, evt):
-        """ Checks if there is the window size has changed.
 
-        Returns:
-            boolean: True if it has not changed. False otherwise. """
-        if not self.initial:
-            ty = evt.type()
-            if ty == 97: # DONT KNOW WHY
-                self.resizeEvent(evt)
-                return False
-            elif ty == 12:
-                self.resizeEvent(evt)
-                return False
-        return True
-
-    def resizeEvent(self, evt):
+    def resize(self):
         """ Finds the best font size to use if the size of the window changes. """
         f = self.font()
         cr = self.contentsRect()
@@ -342,7 +328,12 @@ class AutoSizeLabel(QtWidgets.QLabel):
                 if br.height() <= cr.height() and br.width() <= cr.width():
                     self.font_size += 1
                 else:
-                    f.setPixelSize(max(self.font_size - 1, 1))
+                    if CURRENT_OS == 'win32':
+                        self.font_size += -1
+
+                    else:
+                        self.font_size += -2
+                    f.setPixelSize(max(self.font_size, 1))
                     break
             self.setFont(f)
             self.height = height
@@ -350,8 +341,11 @@ class AutoSizeLabel(QtWidgets.QLabel):
 
 class CurrentLabels(QtWidgets.QWidget):
     def __init__(self, parent=None):
-        self.parent = parent
-        self.layout = QtWidgets.QVBoxLayout(self.parent)
+        QtWidgets.QWidget.__init__(self, parent)
+        # self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+
+        self.layout = QtWidgets.QVBoxLayout(parent)
+        self.installEventFilter(self)
         self.labels = []
 
     def createLabels(self, detectors, coincidences):
@@ -376,3 +370,27 @@ class CurrentLabels(QtWidgets.QWidget):
 
     def changeValue(self, index, value):
         self.labels[index].changeValue(value)
+
+    def eventFilter(self, object, evt):
+        """ Checks if there is the window size has changed.
+
+        Returns:
+            boolean: True if it has not changed. False otherwise. """
+        ty = evt.type()
+        if ty == 97: # DONT KNOW WHY
+            self.resizeEvent(evt)
+            return False
+        elif ty == 12:
+            self.resizeEvent(evt)
+            return False
+        else:
+            return True
+
+    def resizeEvent(self, evt):
+        sizes = [None]*3
+        for (i, label) in enumerate(self.labels):
+            label.resize()
+            sizes[i] = label.font_size
+        size = max(sizes)
+        for label in self.labels:
+            label.setFontSize(size)

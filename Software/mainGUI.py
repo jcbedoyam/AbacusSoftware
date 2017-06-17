@@ -165,24 +165,26 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.timer = QtCore.QTimer()
         self.timer.setInterval(self.DEFAULT_SAMP)
         self.plot_timer = QtCore.QTimer()
-        if self.DEFAULT_SAMP > self.DEFAULT_TPLOT:
-            timer = self.DEFAULT_SAMP
-        else:
-            timer = self.DEFAULT_TPLOT
-
-        self.plot_timer.setInterval(timer)
+        self.plot_timer.setInterval(self.DEFAULT_TPLOT)
+        # if self.DEFAULT_SAMP > self.DEFAULT_TPLOT:
+        #     timer = self.DEFAULT_SAMP
+        # else:
+        #     timer = self.DEFAULT_TPLOT
+        #
+        # self.plot_timer.setInterval(timer)
 
         self.check_timer = QtCore.QTimer()
         self.check_timer.setInterval(self.DEFAULT_TCHECK)
         self.samp_spinBox.setValue(self.DEFAULT_SAMP)
 
         self.current_timer = QtCore.QTimer()
-        half = 0.5*self.DEFAULT_SAMP
-        if half > self.DEFAULT_CURRENT:
-            timer = half
-        else:
-            timer = self.DEFAULT_CURRENT
-        self.current_timer.setInterval(timer)
+        self.current_timer.setInterval(self.DEFAULT_CURRENT)
+        # half = 0.5*self.DEFAULT_SAMP
+        # if half > self.DEFAULT_CURRENT:
+        #     timer = half
+        # else:
+        #     timer = self.DEFAULT_CURRENT
+        # self.current_timer.setInterval(timer)
         """
         signals and events
         """
@@ -621,16 +623,16 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def methodSampling(self, value, error_capable = True):
         self.timer.setInterval(value)
-        if value > self.DEFAULT_TPLOT:
-            self.plot_timer.setInterval(value)
-        else:
-            self.plot_timer.setInterval(self.DEFAULT_TPLOT)
+        # if value > self.DEFAULT_TPLOT:
+        #     self.plot_timer.setInterval(value)
+        # else:
+        #     self.plot_timer.setInterval(self.DEFAULT_TPLOT)
 
-        half = 0.5*value
-        if half > self.DEFAULT_CURRENT:
-            self.current_timer.setInterval(half)
-        else:
-            self.current_timer.setInterval(self.DEFAULT_CURRENT)
+        # half = 0.5*value
+        # if half > self.DEFAULT_CURRENT:
+        #     self.current_timer.setInterval(half)
+        # else:
+        #     self.current_timer.setInterval(self.DEFAULT_CURRENT)
         try:
             self.experiment.set_sampling(value)
         except Exception as e:
@@ -687,16 +689,25 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.ax_counts.blit()
         self.ax_coins.blit()
 
+    def updateDataPlot(self, data, times):
+        ychanged1 = self.ax_counts.update_data(times, data)
+        ychanged2 = self.ax_coins.update_data(times, data[:, self.experiment.number_detectors:])
+        if (ychanged1 or ychanged2) and not self.currently_saving_fig:
+            self.fullPlot()
+        else:
+            self.restorePlot()
+
     def updatePlot(self):
         if self.table.current_cell > 1:
             data = self.data[:]
             times = np.arange(data.shape[0])
-            ychanged1 = self.ax_counts.update_data(times, data)
-            ychanged2 = self.ax_coins.update_data(times, data[:, self.experiment.number_detectors:])
-            if (ychanged1 or ychanged2) and not self.currently_saving_fig:
-                self.fullPlot()
+            if not self.ax_coins.isDataNone() and not self.ax_coins.isDataNone():
+                if not np.array_equal(data, self.ax_counts.data) \
+                            or not np.array_equal(data[:, self.experiment.number_detectors:], self.ax_coins.data):
+                    self.updateDataPlot(data, times)
+
             else:
-                self.restorePlot()
+                self.updateDataPlot(data, times)
 
     def errorWindow(self, error):
         error_text = str(error)

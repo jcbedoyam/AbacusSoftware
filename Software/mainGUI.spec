@@ -3,7 +3,7 @@
 block_cipher = None
 
 a = Analysis(['mainGUI.py'],
-             #pathex=['/home/juan/Documents/reimagined-quantum/Software'],
+             #pathex=['/home/juan/Documents/ReimaginedQuantum/Software'],
              pathex=['D:\\Tausand\\ReimaginedQuantum\\Software'],
              binaries=[],
              datas=[],

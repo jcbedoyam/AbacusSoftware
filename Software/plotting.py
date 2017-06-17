@@ -33,6 +33,13 @@ class Axes(object):
     def get_size(self):
         return self.axes.bbox.width, self.axes.bbox.height
 
+    def isDataNone(self):
+        if type(self.data) is type(None):
+            return True
+        else:
+            return False
+        return None
+
     def init_lines(self, detectors):
         for detector in detectors:
             self.labels.append(detector.name)
