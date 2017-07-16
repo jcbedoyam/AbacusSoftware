@@ -179,6 +179,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 
             with ZipFile(zipf) as extractfile:
                 extractfile.extract("Quantum.exe", self.path)
+                extractfile.extract("uninstaller.exe", self.path)
 
         except PermissionError:
             self.stop_thread = True

@@ -270,7 +270,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.move(x, y)
 
     def uninstall(self):
-        subprocess.Popen(["python", "uninstaller.py"])
+        subprocess.Popen(["uninstaller.exe", DEFAULT_PATH])
         self.close()
 
     def local_constants(self):

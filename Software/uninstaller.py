@@ -21,7 +21,7 @@ if CURRENT_OS == "win32":
     from win32com.shell import shell, shellcon
 
 class Main(QtWidgets.QDialog, Ui_Dialog):
-    # signal = QtCore.pyqtSignal(int)
+    signal = QtCore.pyqtSignal(int)
     # finish_signal = QtCore.pyqtSignal()
 
     global CURRENT_OS
@@ -43,13 +43,19 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.uninstall)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self.cancelUninstall)
 
+        self.signal.connect(self.progressBar.setValue)
+
         self.finished = False
 
     def cleanProgram(self):
+        maxadvance = 98
+        N = len(filelist)
+
         for (i, file) in enumerate(filelist):
             try:
                 os.remove(file)
                 self.progress_label.setText("Deleted %s"%file)
+                self.signal.emit(maxadvance*i/N)
 
             except Exception as e:
                 pass
@@ -62,11 +68,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
             except Exception as e:
                 pass
 
-        # self.deactivate(False)
-        # sleep(0.1)
-        # self.signal.emit(0)
-        # self.progress_label.setText("Canceled.")
-        # self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(False)
+        self.signal.emit(maxadvance)
 
     def cleanAppData(self):
         pass
@@ -75,9 +77,16 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         pass
 
     def uninstall(self):
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(True)
         self.cleanProgram()
         self.cleanAppData()
         self.cleanShortCuts()
+
+        self.signal.emit(100)
+        self.progress_label.setText("Done.")
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(False)
+        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.close)
+        self.finished = True
 
     def cancelUninstall(self):
         pass
@@ -93,15 +102,8 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
                 event.accept()
             else:
                 event.ignore()
-#
 
-#
-#         self.license_PlainText.setPlainText(LICENSE)
-
-#
 #         self.destination_Button.clicked.connect(self.browse_destination)
-
-#         self.signal.connect(self.progressBar.setValue)
 #         # self.extract_signal.connect(self.extra)
 #         self.finish_signal.connect(self.finishInstall)
 #

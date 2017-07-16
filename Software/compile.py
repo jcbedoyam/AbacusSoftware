@@ -18,6 +18,20 @@ def get_files():
             matches.append(os.path.join(root, filename))
     return matches
 
+def makeFileList():
+    oldwd = os.getcwd()
+    os.chdir('dist/Quantum')
+    files = get_files()
+    os.chdir(oldwd)
+
+    with open("fileList.py", "w") as filelist:
+        filelist.write("filelist = [")
+        for file_ in files:
+            if not file_ in IGNORE:
+                print("ADDING: %s"%file_)
+                filelist.write("r'%s',\n"%file_)
+        filelist.write("]")
+
 def zipfile_():
     oldwd = os.getcwd()
     os.chdir('dist/Quantum')
@@ -26,19 +40,14 @@ def zipfile_():
         for file_ in files:
             if not file_ in IGNORE:
                 zpf.write(file_)
-
                 print('Zipped: %s'%file_)
 
-    with open("fileList.py", "w") as filelist:
-        filelist.write("filelist = [")
-        for file_ in files:
-            if not file_ in IGNORE:
-                filelist.write("%s,\n"%file_)
-        filelist.write("]")
-        
     os.chdir(oldwd)
 
 os.system('pyinstaller mainGUI.spec')
+makeFileList()
+os.system('pyinstaller uninstaller.spec')
+os.rename('dist/uninstaller.exe', 'dist/Quantum/uninstaller.exe')
 zipfile_()
 os.rename(ZIPFILE, 'Quantum.zip')
 os.system('pyinstaller installer.spec')
