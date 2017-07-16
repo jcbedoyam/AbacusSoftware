@@ -26,7 +26,16 @@ def zipfile_():
         for file_ in files:
             if not file_ in IGNORE:
                 zpf.write(file_)
+
                 print('Zipped: %s'%file_)
+
+    with open("fileList.py", "w") as filelist:
+        filelist.write("filelist = [")
+        for file_ in files:
+            if not file_ in IGNORE:
+                filelist.write("%s,\n"%file_)
+        filelist.write("]")
+        
     os.chdir(oldwd)
 
 os.system('pyinstaller mainGUI.spec')

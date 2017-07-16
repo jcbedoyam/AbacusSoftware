@@ -391,6 +391,8 @@ class CurrentLabels(QtWidgets.QWidget):
         for (i, label) in enumerate(self.labels):
             label.resize()
             sizes[i] = label.font_size
-        size = max(sizes)
-        for label in self.labels:
-            label.setFontSize(size)
+
+        if len(self.labels) > 0:
+            size = max(sizes)
+            for label in self.labels:
+                label.setFontSize(size)

@@ -6,9 +6,10 @@ from zipfile import ZipFile
 from threading import Thread
 from __installer__ import Ui_Dialog
 from PyQt5 import QtCore, QtGui, QtWidgets
+from shutil import rmtree
 
 CURRENT_OS = sys.platform
-COMPILED = True #: if compilation is wanted
+COMPILED = False #: if compilation is wanted
 
 if CURRENT_OS == "win32":
     import ctypes
@@ -35,7 +36,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>."""
 
 class Main(QtWidgets.QDialog, Ui_Dialog):
     signal = QtCore.pyqtSignal(int)
-    # extract_signal = QtCore.pyqtSignal(str)
     finish_signal = QtCore.pyqtSignal()
 
     global CURRENT_OS, COMPILED, LICENSE
@@ -123,15 +123,29 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(status)
 
     def delete_unzipped(self):
+        to_remove = []
         for (i, file) in enumerate(self.extracted_files):
             try:
                 os.remove(file)
+                to_remove.append(file)
                 self.progress_label.setText("Deleted %s"%file)
-            except:
+
+            except Exception as e:
                 pass
+
+        dirs = list(set([os.path.dirname(x) for x in self.extracted_files]))
+
+        for dir in dirs:
+            try:
+                rmtree(dir)
+            except Exception as e:
+                pass
+
+        [self.extracted_files.remove(file) for file in to_remove]
+
         self.deactivate(False)
+        sleep(0.1)
         self.signal.emit(0)
-        self.extracted_files = []
         self.progress_label.setText("Canceled.")
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setDisabled(False)
 
@@ -163,6 +177,9 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
                     if self.stop_thread:
                         break
 
+            with ZipFile(zipf) as extractfile:
+                extractfile.extract("Quantum.exe", self.path)
+
         except PermissionError:
             self.stop_thread = True
             self.permissionWindow()
@@ -180,6 +197,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setDisabled(False)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(sys.exit)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText("Finish")
+
         sleep(0.1)
         self.progress_label.setText("Done")
         self.signal.emit(100)

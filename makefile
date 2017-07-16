@@ -7,7 +7,7 @@ BUILDDIR      = build
 
 TARGETS = Software/__mainwindow__.py Software/__channels__.py Software/mainGUI.py\
  		Software/__GUI_images__.py Software/__default__.py\
-		Software/__about__.py
+		Software/__about__.py Software/__uninstaller__.py
 
 run : install run_software
 
@@ -18,6 +18,9 @@ installer : Software/installer.py Software/__installer__.py $(TARGETS)
 	cd Software && python compile.py
 
 Software/__installer__.py : Software/GUI/Installer/dialog.ui
+	pyuic5 $< > $@
+
+Software/__uninstaller__.py : Software/GUI/Uninstaller/dialog.ui
 	pyuic5 $< > $@
 
 run_software : $(TARGETS)

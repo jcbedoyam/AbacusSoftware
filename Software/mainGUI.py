@@ -8,6 +8,8 @@ from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 from reimaginedQuantum import *
 
+import subprocess
+
 DEFAULT_EXIST = True
 
 if not os.path.exists(DEFAULT_PATH):
@@ -125,7 +127,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
     global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP, TABLE_YGROW
     global MIN_COIN, MAX_COIN, STEP_COIN, DEFAULT_CHANNELS, FILE_NAME, USER_EMAIL, SEND_EMAIL, USE_DATETIME
-    global DEFAULT_EXIST, CURRENT_OS
+    global DEFAULT_EXIST, CURRENT_OS, USE_DATETIME
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
 
@@ -216,6 +218,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.actionSave_as_2.triggered.connect(self.chooseFile)
         self.actionExit.triggered.connect(self.close)
 
+        if CURRENT_OS == "win32":
+            self.menuHelp.addSeparator()
+            self.actionUninstall = QtWidgets.QAction(self)
+            self.actionUninstall.setText("Uninstall")
+            self.menuHelp.addAction(self.actionUninstall)
+
+            self.actionUninstall.triggered.connect(self.uninstall)
+
         self.data = None
         self.params_header = None
         """
@@ -259,19 +269,28 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         y = 0.5*(screen.height() - widget.height())
         self.move(x, y)
 
+    def uninstall(self):
+        subprocess.Popen(["python", "uninstaller.py"])
+        self.close()
+
     def local_constants(self):
         self.LOCAL_NAMES = ['DELIMITER', 'DEFAULT_SAMP', 'DEFAULT_COIN', 'MIN_SAMP',
                 'MAX_SAMP', 'TABLE_YGROW', 'MIN_COIN', 'MAX_COIN', 'STEP_COIN',
-                'DEFAULT_CHANNELS', 'FILE_NAME', 'USER_EMAIL', 'SEND_EMAIL']
+                'DEFAULT_CHANNELS', 'FILE_NAME', 'USER_EMAIL', 'SEND_EMAIL', 'USE_DATETIME']
 
         for name in self.LOCAL_NAMES:
-            value = eval(name)
-            self.LOCAL_CONSTANTS[name] = value
-            if type(value) != str:
-                instruction = 'self.%s = %s'%(name, str(value))
-            else:
-                instruction = "self.%s = '%s'"%(name, value)
-            exec(instruction)
+            try:
+                value = eval(name)
+                self.LOCAL_CONSTANTS[name] = value
+                if type(value) != str:
+                    instruction = 'self.%s = %s'%(name, str(value))
+                else:
+                    instruction = "self.%s = '%s'"%(name, value)
+                exec(instruction)
+            except NameError as e:
+                save_default(None)
+                DEFAULT_EXIST = False
+                self.errorWindow(e)
 
     def updateConstants(self, constants):
         for name in self.LOCAL_NAMES:
