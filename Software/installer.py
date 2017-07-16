@@ -10,6 +10,7 @@ from shutil import rmtree
 
 CURRENT_OS = sys.platform
 COMPILED = False #: if compilation is wanted
+APP_PATH = None
 
 if CURRENT_OS == "win32":
     import ctypes
@@ -17,6 +18,8 @@ if CURRENT_OS == "win32":
     import pythoncom
     from specialfolders import *
     from win32com.shell import shell, shellcon
+    APP_PATH = get_path(FOLDERID.LocalAppData).replace("Default", getpass.getuser())
+    APP_PATH = os.path.join(APP_PATH, "ReimaginedQuantum")
 
 LICENSE = """Reimagined Quantum
 Copyright (C) 2017 Juan Barbosa
@@ -160,6 +163,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 
     def unzip(self):
         # when compiled
+        i = 0
         if COMPILED:
             zipf = resource_path('Quantum.zip')
         else:
@@ -173,7 +177,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
                     extractfile.extract(zipinfo, self.path)
 
                     self.progress_label.setText("Unziping %s"%zipinfo)
-                    self.signal.emit(100*(i+1)//total)
+                    self.signal.emit(98*(i+1)//total)
                     if self.stop_thread:
                         break
 
@@ -199,14 +203,13 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(sys.exit)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText("Finish")
 
-        sleep(0.1)
+        self.create_shortcut()
         self.progress_label.setText("Done")
         self.signal.emit(100)
-        self.create_shortcut()
 
     def create_shortcut(self):
         if CURRENT_OS == "win32":
-            executable = "%s\Quantum.exe"%self.path
+            executable = os.path.join(self.path, "Quantum.exe")
             shortcut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink,
               None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
             shortcut.SetPath(executable)
@@ -220,7 +223,28 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 
             if self.startmenu_checkBox.isChecked():
                 menu_path = get_path(FOLDERID.StartMenu).replace("Default", getpass.getuser())
-                persist_file.Save(os.path.join(menu_path, "Reimagined Quantum.lnk"), 0)
+                folder = os.path.join(menu_path, "Reimagined Quantum")
+                if not os.path.exists(folder):
+                    os.mkdir(folder)
+                persist_file.Save(os.path.join(folder, "Reimagined Quantum.lnk"), 0)
+
+                executable = os.path.join(self.path, "uninstaller.exe")
+                shortcut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink,
+                  None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
+                shortcut.SetPath(executable)
+                shortcut.SetDescription("Uninstall Reimagined Quantum")
+                shortcut.SetIconLocation(executable, 0)
+                persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
+                persist_file.Save(os.path.join(folder, "Uninstall.lnk"), 0)
+
+    def writePath(self):
+        if APP_PATH != None:
+            if not os.path.exists(APP_PATH):
+                os.mkdir(APP_PATH)
+                
+            path = os.path.join(APP_PATH, "install_location.dat")
+            with open(path, "w") as file_:
+                file_.write(self.path)
 
     def make_destination(self, path):
         if os.path.exists(path):
@@ -232,6 +256,8 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
                 self.path = path
             else:
                 raise(Exception('Path does not exist'))
+
+        self.writePath()
 
     def default_location(self):
         if CURRENT_OS == "win32":

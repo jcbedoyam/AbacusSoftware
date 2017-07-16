@@ -46,6 +46,7 @@ class Ui_Dialog(object):
         self.progressBar.setObjectName("progressBar")
         self.verticalLayout_2.addWidget(self.progressBar)
         self.progress_label = QtWidgets.QLabel(self.frame_2)
+        self.progress_label.setText("")
         self.progress_label.setObjectName("progress_label")
         self.verticalLayout_2.addWidget(self.progress_label)
         self.horizontalLayout.addWidget(self.frame_2)
@@ -64,5 +65,4 @@ class Ui_Dialog(object):
         self.logo_label.setText(_translate("Dialog", "TextLabel"))
         self.name_label.setText(_translate("Dialog", "TextLabel"))
         self.label.setText(_translate("Dialog", "TextLabel"))
-        self.progress_label.setText(_translate("Dialog", "TextLabel"))
 

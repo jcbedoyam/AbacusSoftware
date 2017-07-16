@@ -270,8 +270,22 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.move(x, y)
 
     def uninstall(self):
-        subprocess.Popen(["uninstaller.exe", DEFAULT_PATH])
-        self.close()
+        parent = os.path.dirname(DEFAULT_PATH)
+        install_location = os.path.join(parent, "install_location.dat")
+        
+        try:
+            with open(install_location) as file_:
+                path = file_.readline()
+            commands = [os.path.join(path, "uninstaller.exe")]
+            subprocess.Popen(commands)
+            self.close()
+        except WindowsError:
+            e = Exception("Please start program as administrator.")
+            self.errorWindow(e)
+
+        except Exception as e:
+            self.errorWindow(e)
+
 
     def local_constants(self):
         self.LOCAL_NAMES = ['DELIMITER', 'DEFAULT_SAMP', 'DEFAULT_COIN', 'MIN_SAMP',

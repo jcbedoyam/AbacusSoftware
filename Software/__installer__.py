@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
-        Dialog.resize(600, 400)
+        Dialog.resize(600, 700)
         self.verticalLayout_2 = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout_2.setContentsMargins(11, 11, 11, 11)
         self.verticalLayout_2.setSpacing(6)
@@ -49,7 +49,7 @@ class Ui_Dialog(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.license_PlainText.sizePolicy().hasHeightForWidth())
         self.license_PlainText.setSizePolicy(sizePolicy)
-        self.license_PlainText.setMinimumSize(QtCore.QSize(250, 0))
+        self.license_PlainText.setMinimumSize(QtCore.QSize(250, 300))
         self.license_PlainText.setObjectName("license_PlainText")
         self.verticalLayout.addWidget(self.license_PlainText)
         self.destination_Box = QtWidgets.QGroupBox(self.frame)

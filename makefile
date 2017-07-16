@@ -26,7 +26,7 @@ Software/__uninstaller__.py : Software/GUI/Uninstaller/dialog.ui
 run_software : $(TARGETS)
 	cd Software && python mainGUI.py && rm -r __pycache__ && clear
 
-Software/__GUI_images__.py : Software/GUI/Program/GUI_images.qrc Software/GUI/Program/icon.png Software/GUI/Program/splash.png
+Software/__GUI_images__.py : Software/GUI/Program/GUI_images.qrc Software/GUI/Program/icon.png Software/GUI/Program/splash.png Software/GUI/Program/uninstall.ico
 	pyrcc5 $< > $@
 
 Software/__channels__.py : Software/GUI/Program/channels.ui
