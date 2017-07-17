@@ -9,7 +9,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from shutil import rmtree
 
 CURRENT_OS = sys.platform
-COMPILED = False #: if compilation is wanted
+COMPILED = True #: if compilation is wanted
 APP_PATH = None
 
 if CURRENT_OS == "win32":
@@ -241,7 +241,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         if APP_PATH != None:
             if not os.path.exists(APP_PATH):
                 os.mkdir(APP_PATH)
-                
+
             path = os.path.join(APP_PATH, "install_location.dat")
             with open(path, "w") as file_:
                 file_.write(self.path)
@@ -249,15 +249,15 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
     def make_destination(self, path):
         if os.path.exists(path):
             self.path = path
+            self.writePath()
         else:
             path_parent = os.path.dirname(path)
             if os.path.exists(path_parent):
                 os.mkdir(path)
                 self.path = path
+                self.writePath()
             else:
                 raise(Exception('Path does not exist'))
-
-        self.writePath()
 
     def default_location(self):
         if CURRENT_OS == "win32":

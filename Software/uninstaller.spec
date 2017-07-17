@@ -26,4 +26,4 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          console=True, icon='GUI/Program/uninstall.ico' )
+          console=False, icon='GUI/Program/uninstall.ico' )

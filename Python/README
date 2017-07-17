@@ -1,0 +1,16 @@
+Reimagined Quantum is a suite of tools build to ensure your experience with Tausand’s light detectors becomes simplified.
+
+Written in Python3 Reimagined Quantum relies on the following modules:
+
+Matplotlib
+PySerial
+NumPy
+PyQt5
+threading
+itertools
+codecs
+queue
+time
+sys
+re
+os
