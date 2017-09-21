@@ -63,7 +63,7 @@ class Email():
 
 class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
     global FILE_NAME, USE_DATETIME, USER_EMAIL
-    global DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP, \
+    global DEFAULT_SAMP, DEFAULT_COIN, SAMP_VALUES, \
             MIN_COIN, MAX_COIN, STEP_COIN
     global DEFAULT_CHANNELS, MIN_CHANNELS, MAX_CHANNELS
     global MIN_DELAY, MAX_DELAY, STEP_DELAY, DEFAULT_DELAY
@@ -90,7 +90,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
 
     def local_constants(self):
         self.LOCAL_NAMES = ['FILE_NAME', 'USER_EMAIL', 'DEFAULT_SAMP',
-                'DEFAULT_COIN', 'MIN_SAMP', 'MAX_SAMP', 'MIN_COIN', 'MAX_COIN',
+                'DEFAULT_COIN', 'SAMP_VALUES', 'MIN_COIN', 'MAX_COIN',
                 'STEP_COIN', 'DEFAULT_CHANNELS', 'MIN_CHANNELS', 'MAX_CHANNELS',
                 'MIN_DELAY', 'MAX_DELAY', 'STEP_DELAY', 'DEFAULT_DELAY',
                 'MIN_SLEEP', 'MAX_SLEEP', 'STEP_SLEEP', 'DEFAULT_SLEEP', 'USE_DATETIME']
@@ -116,8 +116,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.sleep_spinBox.setMaximum(self.MAX_SLEEP)
         self.sleep_spinBox.setSingleStep(self.STEP_SLEEP)
 
-        self.sampling_spinBox.setMinimum(self.MIN_SAMP)
-        self.sampling_spinBox.setMaximum(self.MAX_SAMP)
+        self.sampling_box.addItems(self.SAMP_VALUES)
 
         self.coincidence_spinBox.setMinimum(self.MIN_COIN)
         self.coincidence_spinBox.setMaximum(self.MAX_COIN)
@@ -127,7 +126,8 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.ndetectors_spinBox.setValue(self.DEFAULT_CHANNELS)
         self.delay_spinBox.setValue(self.DEFAULT_DELAY)
         self.sleep_spinBox.setValue(self.DEFAULT_SLEEP)
-        self.sampling_spinBox.setValue(self.DEFAULT_SAMP)
+        index = self.sampling_box.findText(self.DEFAULT_SAMP)
+        self.sampling_box.setCurrentIndex(index)
         self.coincidence_spinBox.setValue(self.DEFAULT_COIN)
         self.email_lineEdit.setText(self.USER_EMAIL)
         self.file_lineEdit.setText(self.FILE_NAME)
@@ -143,7 +143,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.DEFAULT_CHANNELS = self.ndetectors_spinBox.value()
         self.DEFAULT_DELAY = self.delay_spinBox.value()
         self.DEFAULT_SLEEP = self.sleep_spinBox.value()
-        self.DEFAULT_SAMP = self.sampling_spinBox.value()
+        self.DEFAULT_SAMP = self.sampling_box.currentText()
         self.DEFAULT_COIN = self.coincidence_spinBox.value()
         self.USER_EMAIL = self.email_lineEdit.text()
         self.FILE_NAME = self.file_lineEdit.text()

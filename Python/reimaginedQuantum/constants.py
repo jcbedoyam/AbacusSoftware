@@ -66,9 +66,22 @@ MAX_CHANNELS = 8 #: Maximum number of channels
 """
 main
 """
-MIN_SAMP = 20
-MAX_SAMP = 1000000
-DEFAULT_SAMP = 50
+
+coeff = [2, 5, 10]
+SAMP_VALUES = []
+for i in range(1, 6):
+	for c in coeff:
+		j = i%3
+		value = c*10**j
+		unit = 's'
+		if i == 2 and c == 10:
+			value *= 1/1000
+		elif i < 3:
+			unit = 'ms'
+
+		SAMP_VALUES.append("%d %s"%(value, unit))
+
+DEFAULT_SAMP = '50 ms'
 
 MIN_COIN = 5
 MAX_COIN = 1000000

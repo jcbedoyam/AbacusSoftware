@@ -125,7 +125,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     EXTENSION_PARAMS = '.txt'
     SUPPORTED_EXTENSIONS = {EXTENSION_DATA : 'Plain text data file (*.dat)', '.csv' : 'CSV data files (*.csv)'}
 
-    global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, MIN_SAMP, MAX_SAMP, TABLE_YGROW
+    global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, SAMP_VALUES, TABLE_YGROW
     global MIN_COIN, MAX_COIN, STEP_COIN, DEFAULT_CHANNELS, FILE_NAME, USER_EMAIL, SEND_EMAIL, USE_DATETIME
     global DEFAULT_EXIST, CURRENT_OS, USE_DATETIME
     def __init__(self):
@@ -155,17 +155,18 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         with open(self.params_file, "a") as file:
             file.write("##### PARAMETERS USED #####\n%s\n"%params_header)
-        self.samp_spinBox.setMinimum(self.MIN_SAMP)
-        self.samp_spinBox.setMaximum(self.MAX_SAMP)
+
+        self.samp_box.addItems(self.SAMP_VALUES)
         self.coin_spinBox.setMinimum(self.MIN_COIN)
         self.coin_spinBox.setMaximum(self.MAX_COIN)
         self.coin_spinBox.setSingleStep(self.STEP_COIN)
 
-        self.samp_spinBox.setValue(self.DEFAULT_SAMP)
+        index = self.samp_box.findText(self.DEFAULT_SAMP)
+        self.samp_box.setCurrentIndex(index)
         self.coin_spinBox.setValue(self.DEFAULT_COIN)
 
         self.timer = QtCore.QTimer()
-        self.timer.setInterval(self.DEFAULT_SAMP)
+        self.timer.setInterval(self.timeInUnitsToMs(self.DEFAULT_SAMP))
         self.plot_timer = QtCore.QTimer()
         self.plot_timer.setInterval(self.DEFAULT_TPLOT)
         # if self.DEFAULT_SAMP > self.DEFAULT_TPLOT:
@@ -177,7 +178,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.check_timer = QtCore.QTimer()
         self.check_timer.setInterval(self.DEFAULT_TCHECK)
-        self.samp_spinBox.setValue(self.DEFAULT_SAMP)
+        index = self.samp_box.findText(self.DEFAULT_SAMP)
+        self.samp_box.setCurrentIndex(index)
 
         self.current_timer = QtCore.QTimer()
         self.current_timer.setInterval(self.DEFAULT_CURRENT)
@@ -198,7 +200,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.save_button.clicked.connect(self.chooseFile)
         self.stream_button.clicked.connect(self.methodStreamer)
         self.channels_button.clicked.connect(self.detectorsWindowCaller)
-        self.samp_spinBox.valueChanged.connect(self.methodSampling)
+        self.samp_box.currentIndexChanged.connect(self.methodSampling)
         self.coin_spinBox.valueChanged.connect(self.methodCoinWin)
         self.port_box.currentIndexChanged.connect(self.selectSerial)
         self.save_line.setDisabled(True)
@@ -262,6 +264,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if not DEFAULT_EXIST:
             self.defaultWindowCaller()
 
+    def timeInUnitsToMs(self, time):
+        if 'ms' in time:
+            return int(time.replace('ms', ''))
+        elif 's' in time:
+            return int(time.replace('s', ''))*1000
+
     def center(self):
         screen = QtWidgets.QDesktopWidget().screenGeometry()
         widget = self.geometry()
@@ -272,7 +280,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def uninstall(self):
         parent = os.path.dirname(DEFAULT_PATH)
         install_location = os.path.join(parent, "install_location.dat")
-        
+
         try:
             with open(install_location) as file_:
                 path = file_.readline()
@@ -286,10 +294,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception as e:
             self.errorWindow(e)
 
-
     def local_constants(self):
-        self.LOCAL_NAMES = ['DELIMITER', 'DEFAULT_SAMP', 'DEFAULT_COIN', 'MIN_SAMP',
-                'MAX_SAMP', 'TABLE_YGROW', 'MIN_COIN', 'MAX_COIN', 'STEP_COIN',
+        self.LOCAL_NAMES = ['DELIMITER', 'DEFAULT_SAMP', 'DEFAULT_COIN', 'SAMP_VALUES',
+                'TABLE_YGROW', 'MIN_COIN', 'MAX_COIN', 'STEP_COIN',
                 'DEFAULT_CHANNELS', 'FILE_NAME', 'USER_EMAIL', 'SEND_EMAIL', 'USE_DATETIME']
 
         for name in self.LOCAL_NAMES:
@@ -324,7 +331,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.save_line.setText(self.FILE_NAME)
         self.saveLocation()
 
-        self.samp_spinBox.setValue(self.DEFAULT_SAMP)
+        index = self.samp_box.findText(self.DEFAULT_SAMP)
+        self.samp_box.setCurrentIndex(index)
         self.coin_spinBox.setValue(self.DEFAULT_COIN)
         save = True
         if not DEFAULT_EXIST and not self.default_constants:
@@ -511,7 +519,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         most of the tools will be disabled if there is no UART detected
         """
-        self.samp_spinBox.setDisabled(status)
+        #self.samp_box.setEnabled(not status)
         self.coin_spinBox.setDisabled(status)
         self.channels_button.setDisabled(status)
         self.actionChannels.setDisabled(status)
@@ -593,8 +601,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.errorWindow(e)
         samp = self.experiment.get_sampling_value()
         coin = self.experiment.get_coinwin_value()
-        if self.samp_spinBox.value() != samp:
-            self.samp_spinBox.setValue(samp)
+        if self.timeInUnitsToMs(self.samp_box.currentText()) != samp:
+            if samp > 1000:
+                index = self.samp_box.findText('%d s'%(samp/1000))
+            else:
+                index = self.samp_box.findText('%d ms'%samp)
+            self.samp_box.setCurrentIndex(index)
         if self.coin_spinBox.value() != coin:
             self.coin_spinBox.setValue(coin)
 
@@ -630,7 +642,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             elif not self.timer.isActive():
                 self.stream_button.setStyleSheet("background-color: green")
                 self.detectors_window.sendData()
-                self.methodSampling(self.samp_spinBox.value(), error_capable = False)
+                self.methodSampling(self.samp_box.currentIndex(), error_capable = False)
                 self.methodCoinWin(self.coin_spinBox.value(), error_capable = False)
                 self.saveParam("Streaming started.", None, None)
                 self.startClocks()
@@ -655,6 +667,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.errorWindow(e)
 
     def methodSampling(self, value, error_capable = True):
+        textvalue = self.samp_box.itemText(value)
+        value = self.timeInUnitsToMs(textvalue)
         self.timer.setInterval(value)
         # if value > self.DEFAULT_TPLOT:
         #     self.plot_timer.setInterval(value)

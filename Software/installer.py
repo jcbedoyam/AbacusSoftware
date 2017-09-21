@@ -262,7 +262,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
     def default_location(self):
         if CURRENT_OS == "win32":
             location = get_path(FOLDERID.ProgramFiles)
-            self.destination_lineEdit.setText("%s\ReimaginedQuantum"%location)
+            self.destination_lineEdit.setText("%s\Tausand"%location)
 
     def browse_destination(self):
         name = QtWidgets.QFileDialog.getExistingDirectory()
