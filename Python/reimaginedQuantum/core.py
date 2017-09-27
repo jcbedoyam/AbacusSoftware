@@ -352,6 +352,8 @@ class Experiment(object):
 
     def set_sampling(self, value):
         self.sampling_channel.set_write_value(value)
+        # print(value)
+        # print(self.sampling_channel.values, self.sampling_channel.value)
 
     def set_coinWindow(self, value):
         self.coinWindow_channel.set_write_value(value)

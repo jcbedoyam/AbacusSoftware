@@ -161,6 +161,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.coin_spinBox.setMaximum(self.MAX_COIN)
         self.coin_spinBox.setSingleStep(self.STEP_COIN)
 
+        # try:
+        #     self.DEFAULT_CURRENT = str(self.DEFAULT_CURRENT)
         index = self.samp_box.findText(self.DEFAULT_SAMP)
         self.samp_box.setCurrentIndex(index)
         self.coin_spinBox.setValue(self.DEFAULT_COIN)
@@ -265,10 +267,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.defaultWindowCaller()
 
     def timeInUnitsToMs(self, time):
+        value = 0
         if 'ms' in time:
-            return int(time.replace('ms', ''))
+            value = int(time.replace('ms', ''))
         elif 's' in time:
-            return int(time.replace('s', ''))*1000
+            value = int(time.replace('s', ''))*1000
+        return value
 
     def center(self):
         screen = QtWidgets.QDesktopWidget().screenGeometry()
@@ -375,7 +379,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 file_.write(message)
         except Exception as e:
             raise SavingError(str(e))
-
 
     def splitExtension(self, text):
         try:
@@ -669,6 +672,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def methodSampling(self, value, error_capable = True):
         textvalue = self.samp_box.itemText(value)
         value = self.timeInUnitsToMs(textvalue)
+        # print(textvalue, value)
         self.timer.setInterval(value)
         # if value > self.DEFAULT_TPLOT:
         #     self.plot_timer.setInterval(value)
@@ -680,8 +684,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         #     self.current_timer.setInterval(half)
         # else:
         #     self.current_timer.setInterval(self.DEFAULT_CURRENT)
-        try:
+        try:            
             self.experiment.set_sampling(value)
+            print(value, textvalue, self.experiment.get_sampling_value())
         except Exception as e:
             if 'None' in str(e):
                 pass

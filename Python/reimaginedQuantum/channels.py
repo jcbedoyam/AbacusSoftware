@@ -196,6 +196,7 @@ class TimerChannel(object):
         try:
             for i in range(MAXIMUM_WRITING_TRIES):
                 self.set_value(value)
+
                 self.update_values(False)
                 if self.check_values():
                     break
