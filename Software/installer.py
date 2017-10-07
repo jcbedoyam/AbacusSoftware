@@ -19,9 +19,9 @@ if CURRENT_OS == "win32":
     from specialfolders import *
     from win32com.shell import shell, shellcon
     APP_PATH = get_path(FOLDERID.LocalAppData).replace("Default", getpass.getuser())
-    APP_PATH = os.path.join(APP_PATH, "ReimaginedQuantum")
+    APP_PATH = os.path.join(APP_PATH, "AbacusSoftware")
 
-LICENSE = """Reimagined Quantum
+LICENSE = """Abacus Software
 Copyright (C) 2017 Juan Barbosa
 
 This program is free software: you can redistribute it and/or modify
@@ -49,12 +49,14 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         font = QtGui.QFont()
         font.setPointSize(16)
         self.name_label.setFont(font)
-        self.name_label.setText('Reimagined Quantum')
+        self.name_label.setText('Abacus Software')
 
         self.license_PlainText.setPlainText(LICENSE)
         image = QtGui.QPixmap(':/splash.png')
         image = image.scaled(100, 220, QtCore.Qt.KeepAspectRatio)
         self.logo_label.setPixmap(image)
+
+        self.setWindowTitle("Install Abacus Software")
 
         self.destination_Button.clicked.connect(self.browse_destination)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.begin_install)
@@ -165,9 +167,9 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         # when compiled
         i = 0
         if COMPILED:
-            zipf = resource_path('Quantum.zip')
+            zipf = resource_path('AbacusSoftware.zip')
         else:
-            zipf = 'Quantum.zip'
+            zipf = 'AbacusSoftware.zip'
         try:
             with ZipFile(zipf) as extractfile:
                 members = extractfile.namelist()
@@ -182,7 +184,7 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
                         break
 
             with ZipFile(zipf) as extractfile:
-                extractfile.extract("Quantum.exe", self.path)
+                extractfile.extract("AbacusSoftware.exe", self.path)
                 extractfile.extract("uninstaller.exe", self.path)
 
         except PermissionError:
@@ -209,30 +211,30 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 
     def create_shortcut(self):
         if CURRENT_OS == "win32":
-            executable = os.path.join(self.path, "Quantum.exe")
+            executable = os.path.join(self.path, "AbacusSoftware.exe")
             shortcut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink,
               None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
             shortcut.SetPath(executable)
-            shortcut.SetDescription("Reimagined Quantum")
+            shortcut.SetDescription("Abacus Software")
             shortcut.SetIconLocation(executable, 0)
 
             persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
             if self.desktop_checkBox.isChecked():
                 desktop_path = shell.SHGetFolderPath(0, shellcon.CSIDL_DESKTOP, 0, 0)
-                persist_file.Save(os.path.join(desktop_path, "Reimagined Quantum.lnk"), 0)
+                persist_file.Save(os.path.join(desktop_path, "Abacus Software.lnk"), 0)
 
             if self.startmenu_checkBox.isChecked():
                 menu_path = get_path(FOLDERID.StartMenu).replace("Default", getpass.getuser())
-                folder = os.path.join(menu_path, "Reimagined Quantum")
+                folder = os.path.join(menu_path, "Abacus Software")
                 if not os.path.exists(folder):
                     os.mkdir(folder)
-                persist_file.Save(os.path.join(folder, "Reimagined Quantum.lnk"), 0)
+                persist_file.Save(os.path.join(folder, "Abacus Software.lnk"), 0)
 
                 executable = os.path.join(self.path, "uninstaller.exe")
                 shortcut = pythoncom.CoCreateInstance(shell.CLSID_ShellLink,
                   None, pythoncom.CLSCTX_INPROC_SERVER, shell.IID_IShellLink)
                 shortcut.SetPath(executable)
-                shortcut.SetDescription("Uninstall Reimagined Quantum")
+                shortcut.SetDescription("Uninstall Abacus Software")
                 shortcut.SetIconLocation(executable, 0)
                 persist_file = shortcut.QueryInterface(pythoncom.IID_IPersistFile)
                 persist_file.Save(os.path.join(folder, "Uninstall.lnk"), 0)
@@ -310,7 +312,7 @@ if CURRENT_OS == 'win32':
         app = QtWidgets.QApplication(sys.argv)
         app.processEvents()
         app.setWindowIcon(QtGui.QIcon(':/icon.png'))
-        myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+        myappid = 'abacus.abacus.01' # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
         main = Main()

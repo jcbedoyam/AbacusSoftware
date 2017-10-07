@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'GUI\channels.ui'
+# Form implementation generated from reading ui file 'GUI\Program\channels.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -31,7 +31,7 @@ class Ui_Dialog(object):
         self.label.setObjectName("label")
         self.horizontalLayout.addWidget(self.label)
         self.channel_spinBox = QtWidgets.QSpinBox(self.frame)
-        self.channel_spinBox.setEnabled(True)
+        self.channel_spinBox.setEnabled(False)
         self.channel_spinBox.setMinimum(2)
         self.channel_spinBox.setMaximum(8)
         self.channel_spinBox.setSingleStep(2)

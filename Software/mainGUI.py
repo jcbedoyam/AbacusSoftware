@@ -6,7 +6,7 @@ import sys
 import __GUI_images__
 from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
-from reimaginedQuantum import *
+from abacusSoftware import *
 
 import subprocess
 
@@ -31,7 +31,7 @@ def heavy_import():
 
 if CURRENT_OS == 'win32':
     import ctypes
-    myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+    myappid = 'abacus.abacus.01' # arbitrary string
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 class Table(QtWidgets.QTableWidget):
@@ -684,9 +684,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         #     self.current_timer.setInterval(half)
         # else:
         #     self.current_timer.setInterval(self.DEFAULT_CURRENT)
-        try:            
+        try:
             self.experiment.set_sampling(value)
-            print(value, textvalue, self.experiment.get_sampling_value())
+            # print(value, textvalue, self.experiment.get_sampling_value())
         except Exception as e:
             if 'None' in str(e):
                 pass
@@ -799,14 +799,14 @@ if __name__ == "__main__":
    splash_pix = QtGui.QPixmap(':/splash.png')
    splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
    progressBar = QtWidgets.QProgressBar(splash)
-   progressBar.setGeometry(250, 320, 100, 20)
+   progressBar.setGeometry(250, 350, 600, 20)
    splash.show()
    app.processEvents()
    app.setWindowIcon(QtGui.QIcon(':/icon.png'))
 
    if CURRENT_OS == 'win32':
        import ctypes
-       myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+       myappid = 'abacus.abacus.01' # arbitrary string
        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
    progressBar.setValue(15)

@@ -20,7 +20,7 @@ if CURRENT_OS == "win32":
     from win32com.shell import shell, shellcon
 
     APP_PATH = get_path(FOLDERID.LocalAppData).replace("Default", getpass.getuser())
-    APP_PATH = os.path.join(APP_PATH, "ReimaginedQuantum")
+    APP_PATH = os.path.join(APP_PATH, "AbacusSoftware")
 
     DEFAULT_PATH = os.path.join(APP_PATH, "default.py")
     install_location = os.path.join(APP_PATH, "install_location.dat")
@@ -43,9 +43,9 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
         font = QtGui.QFont()
         font.setPointSize(16)
         self.name_label.setFont(font)
-        self.name_label.setText('Reimagined Quantum')
+        self.name_label.setText('Abacus Software')
 
-        self.label.setText("Are you sure you want to uninstall Reimagined Quantum?")
+        self.label.setText("Are you sure you want to uninstall Abacus Software?")
 
         image = QtGui.QPixmap(':/splash.png')
         image = image.scaled(100, 220, QtCore.Qt.KeepAspectRatio)
@@ -97,10 +97,10 @@ class Main(QtWidgets.QDialog, Ui_Dialog):
 
     def cleanShortCuts(self):
         desktop_path = shell.SHGetFolderPath(0, shellcon.CSIDL_DESKTOP, 0, 0)
-        desktop_path = os.path.join(desktop_path, "Reimagined Quantum.lnk")
+        desktop_path = os.path.join(desktop_path, "Abacus Software.lnk")
 
         menu_path = get_path(FOLDERID.StartMenu).replace("Default", getpass.getuser())
-        menu_path = os.path.join(menu_path, "Reimagined Quantum")
+        menu_path = os.path.join(menu_path, "Abacus Software")
 
         paths = [desktop_path, menu_path]
         for path in paths:
@@ -153,7 +153,7 @@ if CURRENT_OS == 'win32':
         app = QtWidgets.QApplication(sys.argv)
         app.processEvents()
         app.setWindowIcon(QtGui.QIcon(':/uninstall.ico'))
-        myappid = 'quantum.quantum.JuanBarbosa.01' # arbitrary string
+        myappid = 'abacus.abacus.01' # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
         main = Main()

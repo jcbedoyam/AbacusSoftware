@@ -106,6 +106,6 @@ DEFAULT_TO_SAVE = ['DEFAULT_CHANNELS', 'DEFAULT_DELAY', 'DEFAULT_SLEEP', 'DEFAUL
 
 if CURRENT_OS == "win32":
     _path = get_path(FOLDERID.LocalAppData).replace("Default", getpass.getuser())
-    DEFAULT_PATH = "%s\ReimaginedQuantum\default.py"%_path
+    DEFAULT_PATH = "%s\AbacusSoftware\default.py"%_path
 else:
     DEFAULT_PATH = "default.py"

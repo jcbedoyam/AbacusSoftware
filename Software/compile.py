@@ -5,7 +5,7 @@ from glob import glob
 from zipfile import ZipFile, ZIP_DEFLATED
 
 
-ZIPFILE = 'dist/Quantum/Quantum.zip'
+ZIPFILE = 'dist/AbacusSoftware/AbacusSoftware.zip'
 IGNORE = ['_cffi_backend.pyd']
 
 def get_files():
@@ -20,7 +20,7 @@ def get_files():
 
 def makeFileList():
     oldwd = os.getcwd()
-    os.chdir('dist/Quantum')
+    os.chdir('dist/AbacusSoftware')
     files = get_files()
     os.chdir(oldwd)
 
@@ -34,9 +34,9 @@ def makeFileList():
 
 def zipfile_():
     oldwd = os.getcwd()
-    os.chdir('dist/Quantum')
+    os.chdir('dist/AbacusSoftware')
     files = get_files()
-    with ZipFile('Quantum.zip', 'w', compression=ZIP_DEFLATED) as zpf:
+    with ZipFile('AbacusSoftware.zip', 'w', compression=ZIP_DEFLATED) as zpf:
         for file_ in files:
             if not file_ in IGNORE:
                 zpf.write(file_)
@@ -47,13 +47,13 @@ def zipfile_():
 os.system('pyinstaller mainGUI.spec')
 makeFileList()
 os.system('pyinstaller uninstaller.spec')
-os.rename('dist/uninstaller.exe', 'dist/Quantum/uninstaller.exe')
+os.rename('dist/uninstaller.exe', 'dist/AbacusSoftware/uninstaller.exe')
 zipfile_()
-os.rename(ZIPFILE, 'Quantum.zip')
+os.rename(ZIPFILE, 'AbacusSoftware.zip')
 os.system('pyinstaller installer.spec')
-os.rename('dist/QuantumInstaller.exe', 'QuantumInstaller.exe')
+os.rename('dist/AbacusInstaller.exe', 'AbacusInstaller.exe')
 shutil.rmtree('build')
 shutil.rmtree('dist')
 shutil.rmtree('__pycache__')
 
-os.rename('Quantum.zip', 'Quantum-win32-x86-1.0.zip')
+os.rename('AbacusSoftware.zip', 'AbacusSoftware-win32-x86-1.0.01.zip')

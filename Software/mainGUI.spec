@@ -4,7 +4,7 @@ block_cipher = None
 
 a = Analysis(['mainGUI.py'],
              #pathex=['/home/juan/Documents/ReimaginedQuantum/Software'],
-             pathex=['D:\\Tausand\\ReimaginedQuantum\\Software'],
+             pathex=['D:\\Tausand\\AbacusSoftware\\Software'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -19,15 +19,15 @@ pyz = PYZ(a.pure, a.zipped_data,
 exe = EXE(pyz,
           a.scripts,
           exclude_binaries=True,
-          name='Quantum',
+          name='AbacusSoftware',
           debug=False,
           strip=False,
           upx=True,
-          console=True, icon='GUI/Program/icon.ico')
+          console=False, icon='GUI/Program/icon.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
                a.datas,
                strip=False,
                upx=True,
-               name='Quantum')
+               name='AbacusSoftware')

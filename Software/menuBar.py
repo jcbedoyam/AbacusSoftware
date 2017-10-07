@@ -4,12 +4,12 @@ import smtplib
 # from config import get_password
 import __GUI_images__
 from email.mime.text import MIMEText
-from reimaginedQuantum.constants import *
+from abacusSoftware.constants import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 from email.mime.multipart import MIMEMultipart
 from __about__ import Ui_Dialog as Ui_Dialog_about
 from __default__ import Ui_Dialog as Ui_Dialog_default
-from reimaginedQuantum.core import save_default, reload_default
+from abacusSoftware.core import save_default, reload_default
 
 from importlib.machinery import SourceFileLoader
 SourceFileLoader("default", DEFAULT_PATH).load_module()
@@ -62,7 +62,7 @@ class Email():
         #     pass
 
 class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
-    global FILE_NAME, USE_DATETIME, USER_EMAIL
+    global FILE_NAME, USE_DATETIME#, USER_EMAIL
     global DEFAULT_SAMP, DEFAULT_COIN, SAMP_VALUES, \
             MIN_COIN, MAX_COIN, STEP_COIN
     global DEFAULT_CHANNELS, MIN_CHANNELS, MAX_CHANNELS
@@ -78,10 +78,10 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self.update)
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Reset).clicked.connect(self.reset)
         self.browse_pushButton.clicked.connect(self.choose_file)
-        self.email_checkBox.stateChanged.connect(self.enable_email)
-
-        if not SEND_EMAIL:
-            self.email_checkBox.setChecked(False)
+        # self.email_checkBox.stateChanged.connect(self.enable_email)
+        #
+        # if not SEND_EMAIL:
+        #     self.email_checkBox.setChecked(False)
 
         self.local_constants()
         self.set_ranges()
@@ -89,7 +89,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
 
 
     def local_constants(self):
-        self.LOCAL_NAMES = ['FILE_NAME', 'USER_EMAIL', 'DEFAULT_SAMP',
+        self.LOCAL_NAMES = ['FILE_NAME','DEFAULT_SAMP',
                 'DEFAULT_COIN', 'SAMP_VALUES', 'MIN_COIN', 'MAX_COIN',
                 'STEP_COIN', 'DEFAULT_CHANNELS', 'MIN_CHANNELS', 'MAX_CHANNELS',
                 'MIN_DELAY', 'MAX_DELAY', 'STEP_DELAY', 'DEFAULT_DELAY',
@@ -129,7 +129,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         index = self.sampling_box.findText(self.DEFAULT_SAMP)
         self.sampling_box.setCurrentIndex(index)
         self.coincidence_spinBox.setValue(self.DEFAULT_COIN)
-        self.email_lineEdit.setText(self.USER_EMAIL)
+        # self.email_lineEdit.setText(self.USER_EMAIL)
         self.file_lineEdit.setText(self.FILE_NAME)
         self.time_checkBox.setChecked(self.USE_DATETIME)
 
@@ -145,12 +145,12 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.DEFAULT_SLEEP = self.sleep_spinBox.value()
         self.DEFAULT_SAMP = self.sampling_box.currentText()
         self.DEFAULT_COIN = self.coincidence_spinBox.value()
-        self.USER_EMAIL = self.email_lineEdit.text()
+        # self.USER_EMAIL = self.email_lineEdit.text()
         self.FILE_NAME = self.file_lineEdit.text()
         self.USE_DATETIME = self.time_checkBox.isChecked()
-        self.SEND_EMAIL = True
-        if self.email_checkBox.checkState() == 0:
-            self.SEND_EMAIL = False
+        # self.SEND_EMAIL = True
+        # if self.email_checkBox.checkState() == 0:
+        #     self.SEND_EMAIL = False
 
         for name in self.LOCAL_NAMES:
             self.LOCAL_CONSTANTS[name] = eval('self.%s'%name)
@@ -165,7 +165,7 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         name = self.parent.fileDialog()
         if name != None:
             try:
-                extension = self.parent.split_extension(name)[1]
+                extension = self.parent.splitExtension(name)[1]
                 if extension == "":
                     name += self.parent.extension
                 self.file_lineEdit.setText(name)
@@ -189,15 +189,15 @@ class AboutWindow(QtWidgets.QDialog, Ui_Dialog_about):
         self.image_label.setPixmap(image)
 
         tausand = '<a href="https://www.tausand.com/"> https://www.tausand.com </a>'
-        pages =  '<a href="https://tausand-dev.github.io/ReimaginedQuantum"> https://tausand-dev.github.io/ReimaginedQuantum </a>'
-        message = "Reimagined Quantum is a suite of tools build to ensure your experience with Tausand's light detectors becomes simplified."
+        pages =  '<a href="https://tausand-dev.github.io/AbacusSoftware"> https://tausand-dev.github.io/AbacusSoftware </a>'
+        message = "Abacus Software is a suite of tools build to ensure your experience with Tausand's light detectors becomes simplified. \n\nVersion: 1.0.01"
         self.message_label.setText(message)
         self.visit_label = QtWidgets.QLabel()
         self.github_label = QtWidgets.QLabel()
         self.pages_label = QtWidgets.QLabel()
 
         self.visit_label.setText("Visit us at: %s "%tausand)
-        self.github_label.setText("More information on Reimagined Quantum implementation can be found at: %s"%pages)
+        self.github_label.setText("More information on Abacus Software implementation can be found at: %s"%pages)
         self.verticalLayout.addWidget(self.visit_label)
         self.verticalLayout.addWidget(self.github_label)
 

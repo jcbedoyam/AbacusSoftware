@@ -190,7 +190,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Quantum"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Abacus Software"))
         self.label.setText(_translate("MainWindow", "Save as: "))
         self.save_button.setText(_translate("MainWindow", "Browse"))
         self.channels_button.setText(_translate("MainWindow", "Channels"))

@@ -1,6 +1,6 @@
-Reimagined Quantum is a suite of tools build to ensure your experience with Tausand’s light detectors becomes simplified.
+﻿Abacus Software is a suite of tools build to ensure your experience with Tausand’s light detectors becomes simplified.
 
-Written in Python3 Reimagined Quantum relies on the following modules:
+Written in Python3, Abacus Software relies on the following modules:
 
 Matplotlib
 PySerial

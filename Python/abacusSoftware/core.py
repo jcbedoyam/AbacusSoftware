@@ -536,4 +536,4 @@ def save_default(values):
 def reload_default():
     global DEFAULT_CHANNELS, DEFAULT_DELAY, DEFAULT_SLEEP, DEFAULT_SLEEP, DEFAULT_COIN
     global USER_EMAIL, FILE_NAME, SEND_EMAIL
-    import_module('reimaginedQuantum.constants')
+    import_module('abacusSoftware.constants')

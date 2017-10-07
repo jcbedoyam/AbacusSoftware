@@ -5,15 +5,15 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name = "reimaginedQuantum",
-    version = "1.0.0",
+    name = "AbacusSoftware",
+    version = "1.0.01",
     author = "Juan Barbosa",
     author_email = "js.barbosa10@uniandes.edu.co",
     description = ('Build to simplify usage of Tausands tools.'),
     license = "GPL",
     keywords = "example documentation tutorial",
     url = "https://github.com/Tausand-dev/ReimaginedQuantum",
-    packages=['reimaginedQuantum'],
+    packages=['abacusSoftware'],
     install_requires=['numpy', 'matplotlib', 'pyserial', 'importlib'],
     long_description=read('README'),
     classifiers=[

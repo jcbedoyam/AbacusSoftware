@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['uninstaller.py'],
-             pathex=['D:\\Tausand\\ReimaginedQuantum\\Software'],
+             pathex=['D:\\Tausand\\AbacusSoftware\\Software'],
              binaries=[],
              datas=[],
              hiddenimports=[],

@@ -1,6 +1,6 @@
 from __channels__ import Ui_Dialog
-from reimaginedQuantum.core import *
-from reimaginedQuantum.constants import *
+from abacusSoftware.core import *
+from abacusSoftware.constants import *
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from importlib.machinery import SourceFileLoader
