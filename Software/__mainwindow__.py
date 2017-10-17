@@ -198,7 +198,7 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "Port:"))
         self.label_5.setText(_translate("MainWindow", "Coincidence\n"
 "Window (ns):"))
-        self.label_3.setText(_translate("MainWindow", "Sampling (ms):"))
+        self.label_3.setText(_translate("MainWindow", "Sampling time:"))
         self.stream_button.setText(_translate("MainWindow", "Stream"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_data), _translate("MainWindow", "Data"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_current), _translate("MainWindow", "Current"))

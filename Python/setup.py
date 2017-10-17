@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = "AbacusSoftware",
-    version = "1.0.01",
+    version = "1.0.2",
     author = "Juan Barbosa",
     author_email = "js.barbosa10@uniandes.edu.co",
     description = ('Build to simplify usage of Tausands tools.'),

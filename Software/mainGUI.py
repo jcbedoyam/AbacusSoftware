@@ -128,6 +128,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     global DELIMITER, DEFAULT_SAMP, DEFAULT_COIN, SAMP_VALUES, TABLE_YGROW
     global MIN_COIN, MAX_COIN, STEP_COIN, DEFAULT_CHANNELS, FILE_NAME, USER_EMAIL, SEND_EMAIL, USE_DATETIME
     global DEFAULT_EXIST, CURRENT_OS, USE_DATETIME
+    global SAMP_CUTOFF
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
 
@@ -156,7 +157,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         with open(self.params_file, "a") as file:
             file.write("##### PARAMETERS USED #####\n%s\n"%params_header)
 
-        self.samp_box.addItems(self.SAMP_VALUES)
+        self.sampAddItems(self.samp_box)
         self.coin_spinBox.setMinimum(self.MIN_COIN)
         self.coin_spinBox.setMaximum(self.MAX_COIN)
         self.coin_spinBox.setSingleStep(self.STEP_COIN)
@@ -252,6 +253,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.currently_saving_fig = False
         self.first_port = True
+        self.VERIFY_SAMP = True
         """
         fig
         """
@@ -273,6 +275,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         elif 's' in time:
             value = int(time.replace('s', ''))*1000
         return value
+
+    def sampAddItems(self, combobox):
+        model = combobox.model()
+        for row in self.SAMP_VALUES:
+            item = QtGui.QStandardItem(row)
+            if self.timeInUnitsToMs(row) < SAMP_CUTOFF:
+                item.setBackground(QtGui.QColor('red'))
+                item.setForeground(QtGui.QColor('white'))
+            model.appendRow(item)
 
     def center(self):
         screen = QtWidgets.QDesktopWidget().screenGeometry()
@@ -669,24 +680,32 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         except Exception as e:
             self.errorWindow(e)
 
-    def methodSampling(self, value, error_capable = True):
-        textvalue = self.samp_box.itemText(value)
-        value = self.timeInUnitsToMs(textvalue)
-        # print(textvalue, value)
-        self.timer.setInterval(value)
-        # if value > self.DEFAULT_TPLOT:
-        #     self.plot_timer.setInterval(value)
-        # else:
-        #     self.plot_timer.setInterval(self.DEFAULT_TPLOT)
+    def sampWarning(self, index, combobox):
+        error_text = "Although setting sampling rates shorter than %d ms produces reliable data, some data samples will be lost due to slow data transfer rates. Do you want to continue?"%SAMP_CUTOFF
 
-        # half = 0.5*value
-        # if half > self.DEFAULT_CURRENT:
-        #     self.current_timer.setInterval(half)
-        # else:
-        #     self.current_timer.setInterval(self.DEFAULT_CURRENT)
+        textvalue = combobox.itemText(index)
+        value = self.timeInUnitsToMs(textvalue)
+
+        if value < SAMP_CUTOFF:
+            reply = QtWidgets.QMessageBox.warning(self, 'Warning',
+                             error_text, QtWidgets.QMessageBox.Ok, QtWidgets.QMessageBox.Cancel)
+            if reply == QtWidgets.QMessageBox.Cancel:
+                index = combobox.findText("%d ms"%SAMP_CUTOFF)
+                combobox.setCurrentIndex(index)
+                value = SAMP_CUTOFF
+
+        return value
+
+    def methodSampling(self, index, error_capable = True):
+        if self.VERIFY_SAMP:
+            value = self.sampWarning(index, self.samp_box)
+        else:
+            textvalue = self.samp_box.itemText(index)
+            value = self.timeInUnitsToMs(textvalue)
+        self.timer.setInterval(value)
+
         try:
             self.experiment.set_sampling(value)
-            # print(value, textvalue, self.experiment.get_sampling_value())
         except Exception as e:
             if 'None' in str(e):
                 pass
@@ -802,7 +821,8 @@ if __name__ == "__main__":
    progressBar.setGeometry(250, 350, 600, 20)
    splash.show()
    app.processEvents()
-   app.setWindowIcon(QtGui.QIcon(':/icon.png'))
+   icon = QtGui.QIcon(':/icon.png')
+   app.setWindowIcon(icon)
 
    if CURRENT_OS == 'win32':
        import ctypes

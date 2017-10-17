@@ -69,7 +69,7 @@ main
 
 coeff = [2, 5, 10]
 SAMP_VALUES = []
-for i in range(1, 6):
+for i in range(0, 6):
 	for c in coeff:
 		j = i%3
 		value = c*10**j
@@ -81,7 +81,9 @@ for i in range(1, 6):
 
 		SAMP_VALUES.append("%d %s"%(value, unit))
 
-DEFAULT_SAMP = '50 ms'
+SAMP_VALUES.insert(0, "1 ms")
+DEFAULT_SAMP = '100 ms'
+SAMP_CUTOFF = 100
 
 MIN_COIN = 5
 MAX_COIN = 1000000

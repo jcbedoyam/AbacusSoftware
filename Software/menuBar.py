@@ -87,6 +87,12 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.set_ranges()
         self.set_values()
 
+        self.sampling_box.currentIndexChanged.connect(self.sampling)
+
+        self.ndetectors_spinBox.setDisabled(True)
+
+    def sampling(self, value):
+        self.parent.sampWarning(value, self.sampling_box)
 
     def local_constants(self):
         self.LOCAL_NAMES = ['FILE_NAME','DEFAULT_SAMP',
@@ -116,7 +122,8 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.sleep_spinBox.setMaximum(self.MAX_SLEEP)
         self.sleep_spinBox.setSingleStep(self.STEP_SLEEP)
 
-        self.sampling_box.addItems(self.SAMP_VALUES)
+        # self.sampling_box.addItems(self.SAMP_VALUES)
+        self.parent.sampAddItems(self.sampling_box)
 
         self.coincidence_spinBox.setMinimum(self.MIN_COIN)
         self.coincidence_spinBox.setMaximum(self.MAX_COIN)
@@ -133,11 +140,11 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
         self.file_lineEdit.setText(self.FILE_NAME)
         self.time_checkBox.setChecked(self.USE_DATETIME)
 
-    def enable_email(self, state):
-        if state == 0:
-            self.email_lineEdit.setDisabled(True)
-        else:
-            self.email_lineEdit.setDisabled(False)
+    # def enable_email(self, state):
+    #     if state == 0:
+    #         self.email_lineEdit.setDisabled(True)
+    #     else:
+    #         self.email_lineEdit.setDisabled(False)
 
     def update(self):
         self.DEFAULT_CHANNELS = self.ndetectors_spinBox.value()
@@ -156,7 +163,9 @@ class DefaultWindow(QtWidgets.QDialog, Ui_Dialog_default):
             self.LOCAL_CONSTANTS[name] = eval('self.%s'%name)
 
         save_default(self.LOCAL_CONSTANTS)
+        self.parent.VERIFY_SAMP = False
         self.parent.updateConstants(self.LOCAL_CONSTANTS)
+        self.parent.VERIFY_SAMP = True
 
     def choose_file(self):
         """
@@ -190,7 +199,7 @@ class AboutWindow(QtWidgets.QDialog, Ui_Dialog_about):
 
         tausand = '<a href="https://www.tausand.com/"> https://www.tausand.com </a>'
         pages =  '<a href="https://tausand-dev.github.io/AbacusSoftware"> https://tausand-dev.github.io/AbacusSoftware </a>'
-        message = "Abacus Software is a suite of tools build to ensure your experience with Tausand's light detectors becomes simplified. \n\nVersion: 1.0.01"
+        message = "Abacus Software is a suite of tools build to ensure your experience with Tausand's coincidence counters becomes simplified. \n\nVersion: 1.0.2"
         self.message_label.setText(message)
         self.visit_label = QtWidgets.QLabel()
         self.github_label = QtWidgets.QLabel()
