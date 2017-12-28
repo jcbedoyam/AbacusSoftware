@@ -3,8 +3,8 @@
 block_cipher = None
 
 
-a = Analysis(['__mainwindow__.py'],
-             pathex=['E:\\Tausand\\AbacusSoftware\\Software\\GUI\\MainWindow'],
+a = Analysis(['main.py'],
+             pathex=['E:\\Tausand\\AbacusSoftware\\Software'],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -19,15 +19,15 @@ pyz = PYZ(a.pure, a.zipped_data,
 exe = EXE(pyz,
           a.scripts,
           exclude_binaries=True,
-          name='mainwindow',
-          debug=True,
+          name='main',
+          debug=False,
           strip=False,
-          upx=False,
-          console=True )
+          upx=True,
+          console=True , icon='GUI\\images\\abacus_small.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
                a.datas,
                strip=False,
                upx=True,
-               name='test')
+               name='main')

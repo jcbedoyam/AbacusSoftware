@@ -1,73 +1,180 @@
+import numpy as np
+from PyQt5 import QtWidgets, QtGui
+from PyQt5.QtGui import QTableWidgetItem
+from PyAbacus.constants import CURRENT_OS
+
 class Table(QtWidgets.QTableWidget):
-    def __init__(self, parent = None):
+    def __init__(self, cols):
         QtWidgets.QTableWidget.__init__(self)
-        self.parent = parent
-        self.setEnabled(True)
-        self.setDragEnabled(True)
-        self.setRowCount(0)
-        self.setColumnCount(0)
+        self.setColumnCount(cols)
         self.horizontalHeader().setSortIndicatorShown(False)
-        self.verticalHeader().setDefaultSectionSize(16)
-        self.verticalHeader().setMinimumSectionSize(16)
+        self.verticalHeader().setDefaultSectionSize(18)
+        self.verticalHeader().setMinimumSectionSize(18)
         self.verticalHeader().setSortIndicatorShown(False)
 
-        self.number_columns = 0
-        self.current_cell = 0
-        self.detectors = 0
-        self.coincidences = 0
-        self.header = [None]
-        self.ylength = self.rowCount()
-        self.xlength = self.columnCount()
+        self.last_time = None
 
-    def createTable(self):
-        experiment = self.parent.experiment
-
-        self.setRowCount(TABLE_YGROW)
-        self.detectors = experiment.number_detectors
-        self.coincidences = experiment.number_coins
-        self.number_columns = self.detectors + self.coincidences + 1
-
-        self.setColumnCount(self.number_columns)
-        self.headers = [None]*self.number_columns
-        self.headers[0] = 'Time (s)'
-        for i in range(self.detectors):
-            self.headers[i+1] = experiment.detectors[i].name
-        for j in range(self.coincidences):
-            self.headers[i+j+2] = experiment.coin_channels[j].name
-
+        self.headers = ['Time (s)', 'Detect. A', 'Detect. B', 'Coins. AB']
         self.setHorizontalHeaderLabels(self.headers)
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
 
-    def getLastRow(self, column):
-        return self.item((self.current_cell-1)%self.TABLE_SIZE, column).text()
+    def insertData(self, data):
+        rows, cols = data.shape
 
-    def clean(self):
-        self.clearContents()
+        if self.last_time == None:
+            self.last_time = data[0, 0]
+            index = 0
+        else:
+            index = np.where(data[:, 0] == self.last_time)[0][0]
+            self.last_time = data[-1, 0]
+            data = data[index + 1:]
 
-    def include(self, time_, detectors, coins):
-        actual = self.rowCount()
-        if (actual - self.current_cell) <= TABLE_YGROW and actual < self.TABLE_SIZE:
-            self.setRowCount(TABLE_YGROW + actual)
-            self.resizeRowsToContents()
+        for i in range(data.shape[0]):
+            self.insertRow(0)
+            for j in range(cols):
+                if j == 0:
+                    fmt = "%.3f"
+                else:
+                    fmt = "%d"
+                self.setItem(0, j, QTableWidgetItem(fmt%data[i, j]))
 
-        if self.current_cell%self.TABLE_SIZE == 0 and self.current_cell//self.TABLE_SIZE != 0:
-            self.clean()
+class AutoSizeLabel(QtWidgets.QLabel):
+    """ From reclosedev at http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour
+    and Jean-Sébastien http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt
+    """
+    MAX_CHARS = 25 #: Maximum number of letters in a label.
+    MAX_DIGITS = 7 #: Maximum number of digits of a number in label.
+    global CURRENT_OS
+    def __init__(self, text, value):
+        QtWidgets.QLabel.__init__(self)
+        self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+        self.font_name = "Monospace"
+        if CURRENT_OS == "win32":
+            self.font_name = "Courier New"
+        self.setFont(QtGui.QFont(self.font_name))
+        self.initial_font_size = 10
+        self.font_size = 10
+        self.MAX_TRY = 40
+        self.height = self.contentsRect().height()
+        self.width = self.contentsRect().width()
+        self.name = text
+        self.value = value
+        self.setText(self.stylishText(text, value))
+        self.setFontSize(self.font_size)
 
-        if type(detectors) is list:
-            for i in range(self.detectors):
-                value = "%d"%detectors[i]
-                cell = QtWidgets.QTableWidgetItem(value)
-                self.setItem(self.current_cell%self.TABLE_SIZE, i+1, cell)
-                cell.setFlags(QtCore.Qt.ItemIsEnabled)
+    def setFontSize(self, size):
+        """ Changes the size of the font to `size` """
+        f = self.font()
+        f.setPixelSize(size)
+        self.setFont(f)
 
-            for j in range(self.coincidences):
-                value = "%d"%coins[j]
-                cell = QtWidgets.QTableWidgetItem(value)
-                self.setItem(self.current_cell%self.TABLE_SIZE, i+j+2, cell)
-                cell.setFlags(QtCore.Qt.ItemIsEnabled)
+    def setColor(self, color):
+        """ Sets the font color.
+        Args:
+            color (string): six digit hexadecimal color representation.
+        """
+        self.setStyleSheet('color: %s'%color)
 
-            cell = QtWidgets.QTableWidgetItem("%.3f"%time_)
-            self.setItem(self.current_cell%self.TABLE_SIZE, 0, cell)
-            self.scrollToItem(cell)
-            self.current_cell += 1
+    def stylishText(self, text, value):
+        """ Uses and incomning `text` and `value` to create and text of length
+        `MAX_CHARS`, filled with spaces.
+        Returns:
+            string: text of length `MAX_CHARS`.
+        """
+        n_text = len(text)
+        n_value = len(value)
+        N = n_text + n_value
+        spaces = [" " for i in range(self.MAX_CHARS - N-1)]
+        spaces = "".join(spaces)
+        text = "%s: %s%s"%(text, spaces, value)
+        return text
+
+    def changeValue(self, value):
+        """ Sets the text in label with its name and its value. """
+        if type(value) is not str:
+            value = "%d"%value
+        if self.value != value:
+            self.value = value
+            self.setText(self.stylishText(self.name, self.value))
+
+    def resize(self):
+        """ Finds the best font size to use if the size of the window changes. """
+        f = self.font()
+        cr = self.contentsRect()
+        height = cr.height()
+        width = cr.width()
+        if abs(height*width - self.height*self.width) > 1:
+            self.font_size = self.initial_font_size
+            for i in range(self.MAX_TRY):
+                f.setPixelSize(self.font_size)
+                br =  QtGui.QFontMetrics(f).boundingRect(self.text())
+                if br.height() <= cr.height() and br.width() <= cr.width():
+                    self.font_size += 1
+                else:
+                    if CURRENT_OS == 'win32':
+                        self.font_size += -1
+
+                    else:
+                        self.font_size += -2
+                    f.setPixelSize(max(self.font_size, 1))
+                    break
+            self.setFont(f)
+            self.height = height
+            self.width = width
+
+class CurrentLabels(QtWidgets.QWidget):
+    def __init__(self, parent=None):
+        QtWidgets.QWidget.__init__(self, parent)
+        # self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
+        self.layout = QtWidgets.QVBoxLayout(parent)
+        self.installEventFilter(self)
+        self.labels = []
+
+    def createLabels(self, detectors, coincidences):
+        for detector in detectors:
+            name = detector.name
+            label = AutoSizeLabel(name, "0")
+            self.layout.addWidget(label)
+            self.labels.append(label)
+
+        for coin in coincidences:
+            name = coin.name
+            label = AutoSizeLabel(name, "0")
+            self.layout.addWidget(label)
+            self.labels.append(label)
+
+    def setColor(self, label, color):
+        label.setColor(color)
+
+    def setColors(self, colors):
+        for (label, color) in zip(self.labels, colors):
+            self.setColor(label, color)
+
+    def changeValue(self, index, value):
+        self.labels[index].changeValue(value)
+
+    def eventFilter(self, object, evt):
+        """ Checks if there is the window size has changed.
+        Returns:
+            boolean: True if it has not changed. False otherwise. """
+        ty = evt.type()
+        if ty == 97: # DONT KNOW WHY
+            self.resizeEvent(evt)
+            return False
+        elif ty == 12:
+            self.resizeEvent(evt)
+            return False
+        else:
+            return True
+
+    def resizeEvent(self, evt):
+        sizes = [None]*3
+        for (i, label) in enumerate(self.labels):
+            label.resize()
+            sizes[i] = label.font_size
+
+        if len(self.labels) > 0:
+            size = max(sizes)
+            for label in self.labels:
+                label.setFontSize(size)
