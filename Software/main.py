@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
+import os
 import re
 import sys
 import numpy as np
@@ -32,7 +32,7 @@ class ConnectDialog(QtWidgets.QDialog):
         self.comboBox = QtWidgets.QComboBox()
         self.verticalLayout.addWidget(self.comboBox)
 
-        self.label.setText("label")
+        self.label.setText("Please select one of the available ports: ")
 
         self.setWindowTitle("Choose port")
         self.setMinimumSize(QtCore.QSize(450, 40))
@@ -122,7 +122,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.data_ring = RingBuffer(BUFFER_ROWS, 4)
 
         self.save_as_button.clicked.connect(self.chooseFile)
-        self.save_as_lineEdit.editingFinished.connect(self.setSaveAs)
+        self.save_as_lineEdit.returnPressed.connect(self.setSaveAs)
 
         """
         MenuBar
@@ -233,29 +233,29 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         if self.experiment != None:
             try:
                 self.experiment.periodicCheck()
+                samp = self.experiment.getSamplingValue()
+                coin = self.experiment.getCoinwinValue()
+                values = self.experiment.getDetectorsTimersValues()
+                (dA, sA), (dB, sB) = values
+
+                if self.timeInUnitsToMs(self.sampling_comboBox.currentText()) != samp:
+                    if samp > 1000:
+                        index = self.sampling_comboBox.findText('%d s'%(samp/1000))
+                    else:
+                        index = self.sampling_comboBox.findText('%d ms'%samp)
+                    self.sampling_comboBox.setCurrentIndex(index)
+                if self.coincidence_spinBox.value() != coin:
+                    self.coincidence_spinBox.setValue(coin)
+                if self.delay_A_spinBox.value() != dA:
+                    self.delay_A_spinBox.setValue(dA)
+                if self.delay_B_spinBox.value() != dB:
+                    self.delay_B_spinBox.setValue(dB)
+                if self.sleep_A_spinBox.value() != sA:
+                    self.sleep_A_spinBox.setValue(sA)
+                if self.sleep_B_spinBox.value() != sB:
+                    self.sleep_B_spinBox.setValue(sB)
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
-            samp = self.experiment.getSamplingValue()
-            coin = self.experiment.getCoinwinValue()
-            values = self.experiment.getDetectorsTimersValues()
-            (dA, sA), (dB, sB) = values
-
-            if self.timeInUnitsToMs(self.sampling_comboBox.currentText()) != samp:
-                if samp > 1000:
-                    index = self.sampling_comboBox.findText('%d s'%(samp/1000))
-                else:
-                    index = self.sampling_comboBox.findText('%d ms'%samp)
-                self.sampling_comboBox.setCurrentIndex(index)
-            if self.coincidence_spinBox.value() != coin:
-                self.coincidence_spinBox.setValue(coin)
-            if self.delay_A_spinBox.value() != dA:
-                self.delay_A_spinBox.setValue(dA)
-            if self.delay_B_spinBox.value() != dB:
-                self.delay_B_spinBox.setValue(dB)
-            if self.sleep_A_spinBox.value() != sA:
-                self.sleep_A_spinBox.setValue(sA)
-            if self.sleep_B_spinBox.value() != sB:
-                self.sleep_B_spinBox.setValue(sB)
 
     def lockSettings(self):
         self.sampling_comboBox.setEnabled(self.settings_locked)
@@ -352,10 +352,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             if self.streaming:
                 self.acquisition_button.setStyleSheet("background-color: none")
                 self.acquisition_button.setText("Start acquisition")
+                self.results_files.writeParams("STOPED")
                 self.stopClocks()
             else:
                 self.acquisition_button.setStyleSheet("background-color: green")
                 self.acquisition_button.setText("Stop acquisition")
+                self.results_files.writeParams("STARTED")
                 self.sendSettings()
                 self.startClocks()
 
@@ -425,18 +427,22 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def setSaveAs(self):
         new_file_name = self.save_as_lineEdit.text()
         if new_file_name != "":
-            name, ext = self.checkFileName(new_file_name)
-            if self.results_files == None:
-                self.results_files = ResultsFiles(name, ext)
-            else:
-                self.results_files.changeName(name, ext)
-            names = self.results_files.getNames()
-            self.data_ring.setFile(self.results_files.data_file)
-            self.statusBar.showMessage('Files: %s, %s.'%(names))
             try:
-                self.results_files.checkFilesExists()
-            except FileExistsError:
-                print("FileExistsError")
+                name, ext = self.checkFileName(new_file_name)
+                if self.results_files == None:
+                    self.results_files = ResultsFiles(name, ext)
+                else:
+                    self.results_files.changeName(name, ext)
+                names = self.results_files.getNames()
+                self.data_ring.setFile(self.results_files.data_file)
+                self.statusBar.showMessage('Files: %s, %s.'%(names))
+                try:
+                    self.results_files.checkFilesExists()
+                except FileExistsError:
+                    print("FileExistsError")
+            except ExtentionError as e:
+                self.save_as_lineEdit.setText("")
+                self.errorWindow(e)
         else:
             print("EmptyName")
 
@@ -456,7 +462,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         user interaction with saving file
         """
-        dlg = QtWidgets.QFileDialog()
+        dlg = QtWidgets.QFileDialog(directory = os.path.expanduser("~"))
         dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
         nameFilters = [SUPPORTED_EXTENSIONS[extension] for extension in SUPPORTED_EXTENSIONS]
@@ -466,7 +472,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             name = dlg.selectedFiles()[0]
             self.save_as_lineEdit.setText(name)
             self.setSaveAs()
-
 
     def errorWindow(self, exception):
         error_text = str(exception)

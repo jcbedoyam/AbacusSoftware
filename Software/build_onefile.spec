@@ -18,16 +18,12 @@ pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
-          exclude_binaries=True,
-          name='main',
+          a.binaries,
+          a.zipfiles,
+          a.datas,
+          name='AbacusSoftware',
           debug=False,
           strip=False,
           upx=True,
-          console=True , icon='GUI\\images\\abacus_small.ico')
-coll = COLLECT(exe,
-               a.binaries,
-               a.zipfiles,
-               a.datas,
-               strip=False,
-               upx=True,
-               name='main')
+          runtime_tmpdir=None,
+          console=False, icon='GUI\\images\\abacus_small.ico')

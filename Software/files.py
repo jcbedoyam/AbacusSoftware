@@ -8,7 +8,6 @@ class File(object):
     def __init__(self, name, header = None):
         self.name = name
         self.header = header
-
         self.lines_written = 0
 
     def checkFileExists(self, name = None):
@@ -59,7 +58,7 @@ class ResultsFiles(object):
         self.data_name = self.prefix + self.data_extention
         self.params_name = self.prefix + EXTENSION_PARAMS
 
-        self.data_file = File(name = self.data_name)
+        self.data_file = File(name = self.data_name, header = "Time (s), Detect. A, Detect. B, Coins. AB")
 
         self.params_file = File(name = self.params_name, header = PARAMS_HEADER%asctime(localtime()))
 
@@ -114,10 +113,10 @@ class RingBuffer():
 
     def setFile(self, file):
         self.file = file
-        if self.data.shape[1] == 4:
-            self.file.header = "Time (s), Counts A, Counts B, Coincidences AB"
-        else:
-            print("setFile other than 4 columns not implemented.")
+        # if self.data.shape[1] == 4:
+        #     self.file.header = "Time (s), Counts A, Counts B, Coincidences AB"
+        # else:
+        #     print("setFile other than 4 columns not implemented.")
 
     def save(self):
         "Saves the buffer"

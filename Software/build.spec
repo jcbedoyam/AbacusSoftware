@@ -20,10 +20,10 @@ exe = EXE(pyz,
           a.scripts,
           exclude_binaries=True,
           name='AbacusSoftware',
-          debug=True,
+          debug=False,
           strip=False,
           upx=True,
-          console=True, icon='GUI\\images\\abacus_small.ico')
+          console=False, icon='GUI\\images\\abacus_small.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
