@@ -5,6 +5,8 @@ SPHINXPROJ    = ReimaginedQuantum
 SOURCEDIR     = source
 BUILDDIR      = build
 
+# python -m PyQt5.uic.pyuic youruifile -o yourpyfile -x
+
 TARGETS = Software/__mainwindow__.py Software/__channels__.py Software/mainGUI.py\
  		Software/__GUI_images__.py Software/__default__.py\
 		Software/__about__.py Software/__uninstaller__.py

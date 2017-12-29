@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'GUI\about.ui'
+# Form implementation generated from reading ui file 'GUI\MainWindow\about.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -35,4 +35,14 @@ class Ui_Dialog(object):
         Dialog.setWindowTitle(_translate("Dialog", "About"))
         self.message_label.setText(_translate("Dialog", "TextLabel"))
         self.image_label.setText(_translate("Dialog", "TextLabel"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Dialog = QtWidgets.QDialog()
+    ui = Ui_Dialog()
+    ui.setupUi(Dialog)
+    Dialog.show()
+    sys.exit(app.exec_())
 
