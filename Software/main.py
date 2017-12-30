@@ -22,26 +22,57 @@ from PyAbacus.communication import findPorts, CommunicationPort
 class ConnectDialog(QtWidgets.QDialog):
     def __init__(self):
         QtWidgets.QDialog.__init__(self)
-
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.verticalLayout.setContentsMargins(11, 11, 11, 11)
         self.verticalLayout.setSpacing(6)
 
+        self.frame = QtWidgets.QFrame()
+
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame)
+        self.horizontalLayout.setContentsMargins(11, 11, 11, 11)
+        self.horizontalLayout.setSpacing(6)
+
         self.label = QtWidgets.QLabel()
+
         self.verticalLayout.addWidget(self.label)
+        self.verticalLayout.addWidget(self.frame)
+
         self.comboBox = QtWidgets.QComboBox()
-        self.verticalLayout.addWidget(self.comboBox)
+        self.comboBox.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
-        self.label.setText("Please select one of the available ports: ")
+        self.refresh_button = QtWidgets.QPushButton()
+        self.refresh_button.setText("Refresh")
+        self.refresh_button.clicked.connect(self.refresh)
 
-        self.setWindowTitle("Choose port")
-        self.setMinimumSize(QtCore.QSize(450, 40))
+        self.horizontalLayout.addWidget(self.comboBox)
+        self.horizontalLayout.addWidget(self.refresh_button)
+
+        self.label.setText(CONNECT_LABEL)
+        self.label.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        self.setWindowTitle("Tausand Abacus device selection")
+        self.setMinimumSize(QtCore.QSize(450, 100))
 
         self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
             QtCore.Qt.Horizontal, self)
+
         self.verticalLayout.addWidget(self.buttons)
         self.buttons.accepted.connect(self.accept)
         self.buttons.rejected.connect(self.reject2)
+
+        self.ports = None
+
+    def refresh(self):
+        self.clear()
+        self.ports = findPorts()
+        ports_names = list(self.ports.keys())
+        if len(ports_names) == 0:
+            self.label.setText(CONNECT_EMPTY_LABEL)
+        else:
+            self.label.setText(CONNECT_LABEL)
+        self.comboBox.addItems(ports_names)
+        self.adjustSize()
 
     def clear(self):
         self.comboBox.clear()
@@ -135,6 +166,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.acquisition_button.setDisabled(True)
         self.about_window = AboutWindow()
+
+        self.setWindowTitle(WINDOW_NAME)
 
         self.connect()
 
@@ -314,23 +347,24 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def connect(self):
         self.cleanPort()
         self.connect_dialog = ConnectDialog()
-        ports = findPorts()
-        ports_names = list(ports.keys())
-        self.connect_dialog.comboBox.addItems(ports_names)
+        self.connect_dialog.refresh()
         self.connect_dialog.exec_()
 
         port = self.connect_dialog.comboBox.currentText()
 
         if port != "":
             self.port_name = port
-            self.port = CommunicationPort(ports[self.port_name])
+            self.port = CommunicationPort(self.connect_dialog.ports[self.port_name])
             self.experiment = abacus.Experiment(self.port)
 
-            self.current_labels.createLabels(self.experiment.detectors, self.experiment.coin_channels)
-            self.current_labels.setColors(["red", "blue", "black"])
+            # self.current_labels.createLabels(self.experiment.detectors, self.experiment.coin_channels)
             self.acquisition_button.setDisabled(False)
             self.acquisition_button.setStyleSheet("background-color: none")
             self.acquisition_button.setText("Start acquisition")
+
+            if len(self.current_labels.labels) == 0:
+                self.current_labels.createLabels()
+                self.current_labels.setColors(["red", "blue", "black"])
         else:
             self.acquisition_button.setDisabled(True)
 
@@ -486,9 +520,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.acquisition_button.setDisabled(True)
             self.acquisition_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
-        #
-        # if type(error) != SavingError:
-        #     self.saveParam(error_text, None, None)
+
+        try:
+            self.results_files.writeParams("Error: %s"%error_text)
+        except Exception:
+            pass
+
         msg.setText('An Error has ocurred.\n%s'%error_text)
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)

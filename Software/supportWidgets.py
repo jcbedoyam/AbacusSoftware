@@ -14,7 +14,7 @@ class Table(QtWidgets.QTableWidget):
 
         self.last_time = None
 
-        self.headers = ['Time (s)', 'Detect. A', 'Detect. B', 'Coins. AB']
+        self.headers = ['time (s)', 'A', 'B', 'AB']
         self.setHorizontalHeaderLabels(self.headers)
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
@@ -131,18 +131,24 @@ class CurrentLabels(QtWidgets.QWidget):
         self.installEventFilter(self)
         self.labels = []
 
-    def createLabels(self, detectors, coincidences):
-        for detector in detectors:
-            name = detector.name
+    def createLabels(self, labels=["counts A", "counts B", "coinc AB"]):
+        for name in labels:
             label = AutoSizeLabel(name, "0")
             self.layout.addWidget(label)
             self.labels.append(label)
 
-        for coin in coincidences:
-            name = coin.name
-            label = AutoSizeLabel(name, "0")
-            self.layout.addWidget(label)
-            self.labels.append(label)
+    # def createLabels(self, detectors, coincidences):
+    #     for detector in detectors:
+    #         name = detector.name
+    #         label = AutoSizeLabel(name, "0")
+    #         self.layout.addWidget(label)
+    #         self.labels.append(label)
+    #
+    #     for coin in coincidences:
+    #         name = coin.name
+    #         label = AutoSizeLabel(name, "0")
+    #         self.layout.addWidget(label)
+    #         self.labels.append(label)
 
     def setColor(self, label, color):
         label.setColor(color)
@@ -170,11 +176,14 @@ class CurrentLabels(QtWidgets.QWidget):
 
     def resizeEvent(self, evt):
         sizes = [None]*3
-        for (i, label) in enumerate(self.labels):
-            label.resize()
-            sizes[i] = label.font_size
+        try:
+            for (i, label) in enumerate(self.labels):
+                label.resize()
+                sizes[i] = label.font_size
 
-        if len(self.labels) > 0:
-            size = max(sizes)
-            for label in self.labels:
-                label.setFontSize(size)
+            if len(self.labels) > 0:
+                size = max(sizes)
+                for label in self.labels:
+                    label.setFontSize(size)
+        except Exception as e:
+            print(e)
