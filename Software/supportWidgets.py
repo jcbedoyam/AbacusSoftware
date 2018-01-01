@@ -1,7 +1,10 @@
 import numpy as np
-from PyQt5 import QtWidgets, QtGui
+from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtGui import QTableWidgetItem
 from PyAbacus.constants import CURRENT_OS
+
+from constants import *
+from PyAbacus.communication import findPorts
 
 class Table(QtWidgets.QTableWidget):
     def __init__(self, cols):
@@ -38,6 +41,7 @@ class Table(QtWidgets.QTableWidget):
                 else:
                     fmt = "%d"
                 self.setItem(0, j, QTableWidgetItem(fmt%data[i, j]))
+                self.item(0, j).setTextAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
 
 class AutoSizeLabel(QtWidgets.QLabel):
     """ From reclosedev at http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour
@@ -187,3 +191,183 @@ class CurrentLabels(QtWidgets.QWidget):
                     label.setFontSize(size)
         except Exception as e:
             print(e)
+
+class ConnectDialog(QtWidgets.QDialog):
+    def __init__(self):
+        QtWidgets.QDialog.__init__(self)
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setContentsMargins(11, 11, 11, 11)
+        self.verticalLayout.setSpacing(6)
+
+        self.frame = QtWidgets.QFrame()
+
+        self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame)
+        self.horizontalLayout.setContentsMargins(11, 11, 11, 11)
+        self.horizontalLayout.setSpacing(6)
+
+        self.label = QtWidgets.QLabel()
+
+        self.verticalLayout.addWidget(self.label)
+        self.verticalLayout.addWidget(self.frame)
+
+        self.comboBox = QtWidgets.QComboBox()
+        self.comboBox.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        self.refresh_button = QtWidgets.QPushButton()
+        self.refresh_button.setText("Refresh")
+        self.refresh_button.clicked.connect(self.refresh)
+
+        self.horizontalLayout.addWidget(self.comboBox)
+        self.horizontalLayout.addWidget(self.refresh_button)
+
+        self.label.setText(CONNECT_LABEL)
+        self.label.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
+
+        self.setWindowTitle("Tausand Abacus device selection")
+        self.setMinimumSize(QtCore.QSize(450, 100))
+
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+            QtCore.Qt.Horizontal, self)
+
+        self.verticalLayout.addWidget(self.buttons)
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject2)
+
+        self.ports = None
+
+    def refresh(self):
+        self.clear()
+        self.ports = findPorts()
+        ports_names = list(self.ports.keys())
+        if len(ports_names) == 0:
+            self.label.setText(CONNECT_EMPTY_LABEL)
+        else:
+            self.label.setText(CONNECT_LABEL)
+        self.comboBox.addItems(ports_names)
+        self.adjustSize()
+
+    def clear(self):
+        self.comboBox.clear()
+
+    def reject2(self):
+        self.clear()
+        self.reject()
+
+class SettingsDialog(QtWidgets.QDialog):
+    def __init__(self):
+        QtWidgets.QDialog.__init__(self)
+        self.setWindowTitle("Default settings")
+
+        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout.setContentsMargins(11, 11, 11, 11)
+        self.verticalLayout.setSpacing(6)
+
+        self.tabWidget = QtWidgets.QTabWidget(self)
+
+        self.file_tab = QtWidgets.QWidget()
+        self.settings_tab = QtWidgets.QWidget()
+
+        self.tabWidget.addTab(self.file_tab, "File")
+        self.tabWidget.addTab(self.settings_tab, "Settings")
+
+        self.verticalLayout.addWidget(self.tabWidget)
+
+        """
+        file tab
+        """
+        self.file_tab_verticalLayout = QtWidgets.QVBoxLayout(self.file_tab)
+
+        # frame1
+        self.file_tab_frame1 = QtWidgets.QFrame()
+        self.file_tab_frame1_layout = QtWidgets.QHBoxLayout(self.file_tab_frame1)
+
+        self.file_tab_frame1_directory_label = QtWidgets.QLabel("Directory:")
+        self.file_tab_frame1_directory_lineEdit = QtWidgets.QLineEdit()
+        self.file_tab_frame1_directory_pushButton = QtWidgets.QPushButton("Open")
+
+        self.file_tab_frame1_layout.addWidget(self.file_tab_frame1_directory_label)
+        self.file_tab_frame1_layout.addWidget(self.file_tab_frame1_directory_lineEdit)
+        self.file_tab_frame1_layout.addWidget(self.file_tab_frame1_directory_pushButton)
+
+        self.file_tab_verticalLayout.addWidget(self.file_tab_frame1)
+
+        # frame2
+        self.file_tab_frame2 = QtWidgets.QFrame()
+        self.file_tab_frame2_layout = QtWidgets.QFormLayout(self.file_tab_frame2)
+
+        self.file_tab_frame2_extension_label = QtWidgets.QLabel("Extension:")
+        self.file_tab_frame2_extension_comboBox = QtWidgets.QComboBox()
+        self.file_tab_frame2_delimiter_label = QtWidgets.QLabel("Delimiter:")
+        self.file_tab_frame2_delimiter_comboBox = QtWidgets.QComboBox()
+        self.file_tab_frame2_parameters_label = QtWidgets.QLabel("Parameters suffix:")
+        self.file_tab_frame2_parameters_lineEdit = QtWidgets.QLineEdit()
+        self.file_tab_frame2_datetime_label = QtWidgets.QLabel("Use datetime:")
+        self.file_tab_frame2_datetime_checkBox = QtWidgets.QCheckBox()
+        self.file_tab_frame2_autogenerate_label = QtWidgets.QLabel("Autogenerate file name:")
+        self.file_tab_frame2_autogenerate_checkBox = QtWidgets.QCheckBox()
+
+        self.file_tab_frame2_layout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_extension_label)
+        self.file_tab_frame2_layout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_extension_comboBox)
+        self.file_tab_frame2_layout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_delimiter_label)
+        self.file_tab_frame2_layout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_delimiter_comboBox)
+        self.file_tab_frame2_layout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_parameters_label)
+        self.file_tab_frame2_layout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_parameters_lineEdit)
+        self.file_tab_frame2_layout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_datetime_label)
+        self.file_tab_frame2_layout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_datetime_checkBox)
+        self.file_tab_frame2_layout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_autogenerate_label)
+        self.file_tab_frame2_layout.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_autogenerate_checkBox)
+
+        self.file_tab_verticalLayout.addWidget(self.file_tab_frame2)
+
+        """
+        settings tab
+        """
+        self.settings_tab_verticalLayout = QtWidgets.QVBoxLayout(self.settings_tab)
+
+        self.settings_tab_frame = QtWidgets.QFrame()
+        self.settings_tab_frame_layout = QtWidgets.QFormLayout(self.settings_tab_frame)
+
+        self.settings_tab_frame_sampling_label = QtWidgets.QLabel("Sampling time:")
+        self.settings_tab_frame_sampling_comboBox = QtWidgets.QComboBox()
+        self.settings_tab_frame_coincidence_label = QtWidgets.QLabel("Coincidence window (ns):")
+        self.settings_tab_frame_coincidence_spinBox = QtWidgets.QSpinBox()
+        self.settings_tab_frame_delayA_label = QtWidgets.QLabel("Delay A (ns):")
+        self.settings_tab_frame_delayA_spinBox = QtWidgets.QSpinBox()
+        self.settings_tab_frame_delayB_label = QtWidgets.QLabel("Delay B (ns):")
+        self.settings_tab_frame_delayB_spinBox = QtWidgets.QSpinBox()
+        self.settings_tab_frame_sleepA_label = QtWidgets.QLabel("Sleep time A (ns):")
+        self.settings_tab_frame_sleepA_spinBox = QtWidgets.QSpinBox()
+        self.settings_tab_frame_sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
+        self.settings_tab_frame_sleepB_spinBox = QtWidgets.QSpinBox()
+
+        self.settings_tab_frame_from_device_label = QtWidgets.QLabel("Get settings from device:")
+        self.settings_tab_frame_from_device_checkBox = QtWidgets.QCheckBox()
+
+        self.settings_tab_frame_layout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_sampling_label)
+        self.settings_tab_frame_layout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_sampling_comboBox)
+        self.settings_tab_frame_layout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_coincidence_label)
+        self.settings_tab_frame_layout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_coincidence_spinBox)
+        self.settings_tab_frame_layout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_delayA_label)
+        self.settings_tab_frame_layout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_delayA_spinBox)
+        self.settings_tab_frame_layout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_delayB_label)
+        self.settings_tab_frame_layout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_delayB_spinBox)
+        self.settings_tab_frame_layout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_sleepA_label)
+        self.settings_tab_frame_layout.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_sleepA_spinBox)
+        self.settings_tab_frame_layout.setWidget(5, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_sleepB_label)
+        self.settings_tab_frame_layout.setWidget(5, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_sleepB_spinBox)
+        self.settings_tab_frame_layout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_from_device_label)
+        self.settings_tab_frame_layout.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_from_device_checkBox)
+
+        self.settings_tab_verticalLayout.addWidget(self.settings_tab_frame)
+
+        """
+        buttons
+        """
+        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
+            QtCore.Qt.Horizontal, self)
+
+        self.buttons.accepted.connect(self.accept)
+        self.buttons.rejected.connect(self.reject)
+
+        self.verticalLayout.addWidget(self.buttons)

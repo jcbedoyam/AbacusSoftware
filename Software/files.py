@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from time import asctime, localtime, strftime
+from time import localtime, strftime
 
-from constants import PARAMS_HEADER, EXTENSION_PARAMS
+from constants import PARAMS_HEADER, EXTENSION_PARAMS, BREAKLINE
 
 class File(object):
     def __init__(self, name, header = None):
@@ -24,19 +24,19 @@ class File(object):
     def write(self, data):
         with open(self.name, "a") as file:
             if self.header != None:
-                file.write(self.header + "\n")
+                file.write(self.header + BREAKLINE)
                 self.header = None
 
-            file.write(data + "\n")
+            file.write(data + BREAKLINE)
             self.lines_written += 1
 
     def npwrite(self, data, fmt):
         if self.header != None:
             with open(self.name, "a") as file:
-                file.write(self.header + "\n")
+                file.write(self.header + BREAKLINE)
                 self.header = None
         with open(self.name, 'ab') as f:
-            np.savetxt(f, data, fmt = fmt)
+            np.savetxt(f, data, fmt=fmt, newline=BREAKLINE)
         self.lines_written += data.shape[0]
 
     def changeName(self, name):
@@ -52,15 +52,14 @@ class File(object):
             print(e)
 
 class ResultsFiles(object):
-    def __init__(self, prefix, data_extention):
+    def __init__(self, prefix, data_extention, time):
         self.prefix = prefix
         self.data_extention = data_extention
         self.data_name = self.prefix + self.data_extention
         self.params_name = self.prefix + EXTENSION_PARAMS
 
-        self.data_file = File(name = self.data_name, header = "Time (s), Detect. A, Detect. B, Coins. AB")
-
-        self.params_file = File(name = self.params_name, header = PARAMS_HEADER%asctime(localtime()))
+        self.data_file = File(name = self.data_name, header = "Time (s), Counts A, Counts B, Coincidences AB")
+        self.params_file = File(name = self.params_name, header = PARAMS_HEADER%time)
 
     def changeName(self, prefix, data_extention):
         self.data_file.changeName(prefix + data_extention)
@@ -77,7 +76,7 @@ class ResultsFiles(object):
 
     def writeParams(self, text):
         current_time = strftime("%H:%M:%S", localtime())
-        text = "%s\t%s"%(current_time, text)
+        text = "%s, %s"%(current_time, text)
         self.params_file.write(text)
 
     def checkFilesExists(self):
@@ -113,10 +112,6 @@ class RingBuffer():
 
     def setFile(self, file):
         self.file = file
-        # if self.data.shape[1] == 4:
-        #     self.file.header = "Time (s), Counts A, Counts B, Coincidences AB"
-        # else:
-        #     print("setFile other than 4 columns not implemented.")
 
     def save(self):
         "Saves the buffer"
@@ -127,7 +122,6 @@ class RingBuffer():
             self.file.npwrite(data, self.fmt)
         else:
             print("No file has been specified.")
-
 
     def __getitem__(self, item):
         if self.total_movements > self.size:

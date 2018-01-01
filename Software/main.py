@@ -4,82 +4,21 @@ import os
 import re
 import sys
 import numpy as np
-from time import time
 import __GUI_images__
 import pyqtgraph as pg
+from datetime import datetime
+from time import time, localtime, strftime
 from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from constants import *
-from supportWidgets import Table, CurrentLabels
-from files import ResultsFiles, RingBuffer
 from MenuBar import AboutWindow
 from exceptions import ExtentionError
+from files import ResultsFiles, RingBuffer
+from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog
 
 import PyAbacus as abacus
 from PyAbacus.communication import findPorts, CommunicationPort
-
-class ConnectDialog(QtWidgets.QDialog):
-    def __init__(self):
-        QtWidgets.QDialog.__init__(self)
-        self.verticalLayout = QtWidgets.QVBoxLayout(self)
-        self.verticalLayout.setContentsMargins(11, 11, 11, 11)
-        self.verticalLayout.setSpacing(6)
-
-        self.frame = QtWidgets.QFrame()
-
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame)
-        self.horizontalLayout.setContentsMargins(11, 11, 11, 11)
-        self.horizontalLayout.setSpacing(6)
-
-        self.label = QtWidgets.QLabel()
-
-        self.verticalLayout.addWidget(self.label)
-        self.verticalLayout.addWidget(self.frame)
-
-        self.comboBox = QtWidgets.QComboBox()
-        self.comboBox.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-
-        self.refresh_button = QtWidgets.QPushButton()
-        self.refresh_button.setText("Refresh")
-        self.refresh_button.clicked.connect(self.refresh)
-
-        self.horizontalLayout.addWidget(self.comboBox)
-        self.horizontalLayout.addWidget(self.refresh_button)
-
-        self.label.setText(CONNECT_LABEL)
-        self.label.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-        self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
-
-        self.setWindowTitle("Tausand Abacus device selection")
-        self.setMinimumSize(QtCore.QSize(450, 100))
-
-        self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
-            QtCore.Qt.Horizontal, self)
-
-        self.verticalLayout.addWidget(self.buttons)
-        self.buttons.accepted.connect(self.accept)
-        self.buttons.rejected.connect(self.reject2)
-
-        self.ports = None
-
-    def refresh(self):
-        self.clear()
-        self.ports = findPorts()
-        ports_names = list(self.ports.keys())
-        if len(ports_names) == 0:
-            self.label.setText(CONNECT_EMPTY_LABEL)
-        else:
-            self.label.setText(CONNECT_LABEL)
-        self.comboBox.addItems(ports_names)
-        self.adjustSize()
-
-    def clear(self):
-        self.comboBox.clear()
-
-    def reject2(self):
-        self.clear()
-        self.reject()
 
 class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     """
@@ -91,12 +30,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
 
-        self.resize(650, 750)
+        self.resize(550, 500)
 
         self.setSettings()
 
-        self.settings_locked = False
-        self.lock_settings_button.clicked.connect(self.lockSettings)
+        self.unlock_settings_button = None
 
         self.port = None
         self.port_name = None
@@ -109,7 +47,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.connect_dialog = None
         self.connect_button.clicked.connect(self.connect)
-
 
         """
         settigns connections
@@ -148,7 +85,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.check_timer.timeout.connect(self.checkParams)
 
         self.results_files = None
+        self.params_buffer = ""
         self.init_time = 0
+        self.init_date = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
         self.data_ring = RingBuffer(BUFFER_ROWS, 4)
 
@@ -160,12 +99,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.actionSave_as.triggered.connect(self.chooseFile)
         self.actionSave_as.setShortcut("Ctrl+S")
+        self.actionDefault_settings.triggered.connect(self.settingsDialogCaller)
+
         self.actionAbout.triggered.connect(self.aboutWindowCaller)
         self.actionExit.triggered.connect(self.close)
         self.actionExit.setShortcut("Ctrl+Q")
 
         self.acquisition_button.setDisabled(True)
         self.about_window = AboutWindow()
+        self.settings_dialog = SettingsDialog()
 
         self.setWindowTitle(WINDOW_NAME)
 
@@ -173,6 +115,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def aboutWindowCaller(self):
         self.about_window.show()
+
+    def settingsDialogCaller(self):
+        self.settings_dialog.show()
 
     def timeInUnitsToMs(self, time):
         value = 0
@@ -193,7 +138,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def samplingMethod(self, index):
         text_value = self.sampling_comboBox.currentText()
         value = self.timeInUnitsToMs(text_value)
-        if value > 0:
+        if value > 0 and self.experiment != None:
             if value > DATA_REFRESH_RATE:
                 self.refresh_timer.setInterval(value)
             else:
@@ -201,18 +146,20 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
             self.data_timer.setInterval(value)
             if self.results_files != None:
-                self.results_files.writeParams("Sampling time: %s"%text_value)
+                self.results_files.writeParams("Sampling time (ms): %s"%value)
             try:
                 self.experiment.setSampling(value)
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
+        else:
+            print("Sampling Value: %d"%value)
 
     def coincidenceWindowMethod(self, val):
         if self.experiment != None:
             try:
                 self.experiment.setCoinWindow(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Coincidence Window: %s"%str(val))
+                    self.results_files.writeParams("Coincidence Window (ns): %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -223,7 +170,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[0].setDelay(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Delay A: %s"%str(val))
+                    self.results_files.writeParams("Delay A (ns): %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -234,7 +181,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[1].setDelay(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Delay B: %s"%str(val))
+                    self.results_files.writeParams("Delay B (ns): %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -245,7 +192,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[0].setSleep(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Sleep A: %s"%str(val))
+                    self.results_files.writeParams("Sleep A (ns): %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -256,7 +203,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[1].setSleep(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Sleep B: %s"%str(val))
+                    self.results_files.writeParams("Sleep B (ns): %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -290,15 +237,20 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
 
-    def lockSettings(self):
-        self.sampling_comboBox.setEnabled(self.settings_locked)
-        self.coincidence_spinBox.setEnabled(self.settings_locked)
-        self.delay_A_spinBox.setEnabled(self.settings_locked)
-        self.delay_B_spinBox.setEnabled(self.settings_locked)
-        self.sleep_A_spinBox.setEnabled(self.settings_locked)
-        self.sleep_B_spinBox.setEnabled(self.settings_locked)
+    def delete_settings_button(self):
+        self.formLayout.removeWidget(self.unlock_settings_button)
+        self.unlock_settings_button.deleteLater()
+        self.unlock_settings_button = None
 
-        self.settings_locked = not self.settings_locked
+    def unlockSettings(self, unlock = True):
+        self.sampling_comboBox.setEnabled(unlock)
+        self.coincidence_spinBox.setEnabled(unlock)
+        self.delay_A_spinBox.setEnabled(unlock)
+        self.delay_B_spinBox.setEnabled(unlock)
+        self.sleep_A_spinBox.setEnabled(unlock)
+        self.sleep_B_spinBox.setEnabled(unlock)
+        if unlock and self.unlock_settings_button != None:
+            self.delete_settings_button()
 
     def setSettings(self):
         self.sampling_comboBox.clear()
@@ -339,43 +291,66 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.sleep_B_spinBox.setValue(abacus.DEFAULT_SLEEP)
 
     def cleanPort(self):
+        if self.streaming:
+            self.startAcquisition()
+
         if self.port != None:
             self.port.close()
             self.port_name = None
             self.port = None
 
+        if self.experiment != None:
+            self.check_timer.stop()
+            self.experiment = None
+
     def connect(self):
-        self.cleanPort()
-        self.connect_dialog = ConnectDialog()
-        self.connect_dialog.refresh()
-        self.connect_dialog.exec_()
-
-        port = self.connect_dialog.comboBox.currentText()
-
-        if port != "":
-            self.port_name = port
-            self.port = CommunicationPort(self.connect_dialog.ports[self.port_name])
-            self.experiment = abacus.Experiment(self.port)
-
-            # self.current_labels.createLabels(self.experiment.detectors, self.experiment.coin_channels)
-            self.acquisition_button.setDisabled(False)
-            self.acquisition_button.setStyleSheet("background-color: none")
-            self.acquisition_button.setText("Start acquisition")
-
-            if len(self.current_labels.labels) == 0:
-                self.current_labels.createLabels()
-                self.current_labels.setColors(["red", "blue", "black"])
-        else:
+        if self.port != None:
+            self.connect_button.setText("Connect")
             self.acquisition_button.setDisabled(True)
+            if self.results_files != None:
+                self.results_files.writeParams("Disconnected from device in port: %s"%self.port_name)
+            self.cleanPort()
+        else:
+            self.connect_dialog = ConnectDialog()
+            self.connect_dialog.refresh()
+            self.connect_dialog.exec_()
+
+            port = self.connect_dialog.comboBox.currentText()
+
+            if port != "":
+                self.port_name = port
+                self.port = CommunicationPort(self.connect_dialog.ports[self.port_name])
+                self.experiment = abacus.Experiment(self.port)
+
+                # self.current_labels.createLabels(self.experiment.detectors, self.experiment.coin_channels)
+                self.acquisition_button.setDisabled(False)
+                self.acquisition_button.setStyleSheet("background-color: none")
+                self.acquisition_button.setText("Start acquisition")
+                self.connect_button.setText("Disconnect")
+
+                if len(self.current_labels.labels) == 0:
+                    self.current_labels.createLabels()
+                    self.current_labels.setColors(["red", "blue", "black"])
+                # self.checkParams()
+                self.check_timer.start()
+
+                msg = "Connected to device in port: %s"%self.port_name
+                if self.results_files != None:
+                    self.results_files.writeParams(msg)
+                else:
+                    self.params_buffer += BREAKLINE + strftime("%H:%M:%S", localtime()) + ", " + msg
+
+            else:
+                self.connect_button.setText("Connect")
+                self.acquisition_button.setDisabled(True)
 
     def startClocks(self):
         self.refresh_timer.start()
-        self.check_timer.start()
         self.data_timer.start()
 
     def stopClocks(self):
         self.refresh_timer.stop()
-        self.check_timer.stop()
+        # self.check_timer.stop()
         self.data_timer.stop()
         self.data_ring.save()
 
@@ -386,13 +361,20 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             if self.streaming:
                 self.acquisition_button.setStyleSheet("background-color: none")
                 self.acquisition_button.setText("Start acquisition")
-                self.results_files.writeParams("STOPED")
+                self.results_files.writeParams("Acquisition stopped")
+                if self.unlock_settings_button != None:
+                    self.delete_settings_button()
+                self.unlockSettings()
                 self.stopClocks()
             else:
+                self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
+                self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
+                self.formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
                 self.acquisition_button.setStyleSheet("background-color: green")
                 self.acquisition_button.setText("Stop acquisition")
-                self.results_files.writeParams("STARTED")
+                self.results_files.writeParams("Acquisition started")
                 self.sendSettings()
+                self.unlockSettings(False)
                 self.startClocks()
 
             self.streaming = not self.streaming
@@ -464,7 +446,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 name, ext = self.checkFileName(new_file_name)
                 if self.results_files == None:
-                    self.results_files = ResultsFiles(name, ext)
+                    self.results_files = ResultsFiles(name, ext, self.init_date)
+                    self.results_files.params_file.header += self.params_buffer
+                    self.params_buffer = ""
                 else:
                     self.results_files.changeName(name, ext)
                 names = self.results_files.getNames()
@@ -520,6 +504,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.acquisition_button.setDisabled(True)
             self.acquisition_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
+            self.connect_button.setText("Connect")
+            if self.unlock_settings_button != None:
+                self.delete_settings_button()
 
         try:
             self.results_files.writeParams("Error: %s"%error_text)

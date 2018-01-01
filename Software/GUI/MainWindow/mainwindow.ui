@@ -87,27 +87,15 @@
              <item row="0" column="1">
               <widget class="QComboBox" name="sampling_comboBox"/>
              </item>
-             <item row="1" column="1">
-              <widget class="QSpinBox" name="coincidence_spinBox"/>
-             </item>
-             <item row="2" column="1">
-              <widget class="QSpinBox" name="delay_A_spinBox"/>
-             </item>
-             <item row="3" column="1">
-              <widget class="QSpinBox" name="delay_B_spinBox"/>
-             </item>
-             <item row="4" column="1">
-              <widget class="QSpinBox" name="sleep_A_spinBox"/>
-             </item>
-             <item row="5" column="1">
-              <widget class="QSpinBox" name="sleep_B_spinBox"/>
-             </item>
              <item row="1" column="0">
               <widget class="QLabel" name="coincidence_label">
                <property name="text">
                 <string>Coincidence window (ns):</string>
                </property>
               </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="coincidence_spinBox"/>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="delay_A_label">
@@ -116,12 +104,18 @@
                </property>
               </widget>
              </item>
+             <item row="2" column="1">
+              <widget class="QSpinBox" name="delay_A_spinBox"/>
+             </item>
              <item row="3" column="0">
               <widget class="QLabel" name="delay_B_label">
                <property name="text">
                 <string>Delay B (ns):</string>
                </property>
               </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QSpinBox" name="delay_B_spinBox"/>
              </item>
              <item row="4" column="0">
               <widget class="QLabel" name="sleep_A_label">
@@ -130,6 +124,9 @@
                </property>
               </widget>
              </item>
+             <item row="4" column="1">
+              <widget class="QSpinBox" name="sleep_A_spinBox"/>
+             </item>
              <item row="5" column="0">
               <widget class="QLabel" name="sleep_B_label">
                <property name="text">
@@ -137,12 +134,8 @@
                </property>
               </widget>
              </item>
-             <item row="6" column="0">
-              <widget class="QPushButton" name="lock_settings_button">
-               <property name="text">
-                <string>Lock settings</string>
-               </property>
-              </widget>
+             <item row="5" column="1">
+              <widget class="QSpinBox" name="sleep_B_spinBox"/>
              </item>
             </layout>
            </widget>
@@ -216,16 +209,23 @@
      <string>File</string>
     </property>
     <addaction name="actionSave_as"/>
+    <addaction name="separator"/>
+    <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
     <property name="title">
      <string>Help</string>
     </property>
     <addaction name="actionAbout"/>
-    <addaction name="separator"/>
-    <addaction name="actionExit"/>
+   </widget>
+   <widget class="QMenu" name="menuProperties">
+    <property name="title">
+     <string>Edit</string>
+    </property>
+    <addaction name="actionDefault_settings"/>
    </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuProperties"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -242,14 +242,19 @@
     <string>About</string>
    </property>
   </action>
-  <action name="actionExit">
-   <property name="text">
-    <string>Exit</string>
-   </property>
-  </action>
   <action name="actionSave_as">
    <property name="text">
     <string>Save as</string>
+   </property>
+  </action>
+  <action name="actionDefault_settings">
+   <property name="text">
+    <string>Default settings</string>
+   </property>
+  </action>
+  <action name="actionExit">
+   <property name="text">
+    <string>Exit</string>
    </property>
   </action>
  </widget>
