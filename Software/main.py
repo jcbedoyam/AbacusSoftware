@@ -11,7 +11,8 @@ from time import time, localtime, strftime
 from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from constants import *
+import constants
+import common
 from MenuBar import AboutWindow
 from exceptions import ExtentionError
 from files import ResultsFiles, RingBuffer
@@ -19,6 +20,11 @@ from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog
 
 import PyAbacus as abacus
 from PyAbacus.communication import findPorts, CommunicationPort
+
+import win_unicode_console
+win_unicode_console.enable()
+
+common.readConstantsFile()
 
 class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     """
@@ -31,9 +37,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
 
         self.resize(550, 500)
-
+        self.move(0, 0)
         self.setSettings()
-
+        self.updateConstants()
         self.unlock_settings_button = None
 
         self.port = None
@@ -53,10 +59,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         self.sampling_comboBox.currentIndexChanged.connect(self.samplingMethod)
         self.coincidence_spinBox.valueChanged.connect(self.coincidenceWindowMethod)
-        self.delay_A_spinBox.valueChanged.connect(self.delayAMethod)
-        self.delay_B_spinBox.valueChanged.connect(self.delayBMethod)
-        self.sleep_A_spinBox.valueChanged.connect(self.sleepAMethod)
-        self.sleep_B_spinBox.valueChanged.connect(self.sleepBMethod)
+        self.delayA_spinBox.valueChanged.connect(self.delayAMethod)
+        self.delayB_spinBox.valueChanged.connect(self.delayBMethod)
+        self.sleepA_spinBox.valueChanged.connect(self.sleepAMethod)
+        self.sleepB_spinBox.valueChanged.connect(self.sleepBMethod)
 
         """
         table
@@ -73,15 +79,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.initPlots()
         self.refresh_timer = QtCore.QTimer()
-        self.refresh_timer.setInterval(DATA_REFRESH_RATE)
+        self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
         self.refresh_timer.timeout.connect(self.updateWidgets)
 
         self.data_timer = QtCore.QTimer()
-        self.data_timer.setInterval(DATA_REFRESH_RATE)
+        self.data_timer.setInterval(constants.DATA_REFRESH_RATE)
         self.data_timer.timeout.connect(self.updateData)
 
         self.check_timer = QtCore.QTimer()
-        self.check_timer.setInterval(CHECK_RATE)
+        self.check_timer.setInterval(constants.CHECK_RATE)
         self.check_timer.timeout.connect(self.checkParams)
 
         self.results_files = None
@@ -89,10 +95,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.init_time = 0
         self.init_date = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
-        self.data_ring = RingBuffer(BUFFER_ROWS, 4)
+        self.data_ring = RingBuffer(constants.BUFFER_ROWS, 4)
 
         self.save_as_button.clicked.connect(self.chooseFile)
         self.save_as_lineEdit.returnPressed.connect(self.setSaveAs)
+
+        self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
+        self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
+        self.formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
+        self.unlockSettings(True)
 
         """
         MenuBar
@@ -107,9 +118,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.acquisition_button.setDisabled(True)
         self.about_window = AboutWindow()
-        self.settings_dialog = SettingsDialog()
+        self.settings_dialog = SettingsDialog(self)
 
-        self.setWindowTitle(WINDOW_NAME)
+        self.setWindowTitle(constants.WINDOW_NAME)
 
         self.connect()
 
@@ -130,36 +141,36 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def sendSettings(self):
         self.samplingMethod(self.sampling_comboBox.currentIndex())
         self.coincidenceWindowMethod(self.coincidence_spinBox.value())
-        self.delayAMethod(self.delay_A_spinBox.value())
-        self.delayBMethod(self.delay_B_spinBox.value())
-        self.sleepAMethod(self.sleep_A_spinBox.value())
-        self.sleepBMethod(self.sleep_B_spinBox.value())
+        self.delayAMethod(self.delayA_spinBox.value())
+        self.delayBMethod(self.delayB_spinBox.value())
+        self.sleepAMethod(self.sleepA_spinBox.value())
+        self.sleepBMethod(self.sleepB_spinBox.value())
 
     def samplingMethod(self, index):
         text_value = self.sampling_comboBox.currentText()
-        value = self.timeInUnitsToMs(text_value)
+        value = common.timeInUnitsToMs(text_value)
         if value > 0 and self.experiment != None:
-            if value > DATA_REFRESH_RATE:
+            if value > constants.DATA_REFRESH_RATE:
                 self.refresh_timer.setInterval(value)
             else:
-                self.refresh_timer.setInterval(DATA_REFRESH_RATE)
+                self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
 
             self.data_timer.setInterval(value)
             if self.results_files != None:
-                self.results_files.writeParams("Sampling time (ms): %s"%value)
+                self.results_files.writeParams("Sampling time (ms),%s"%value)
             try:
                 self.experiment.setSampling(value)
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
-            print("Sampling Value: %d"%value)
+            print("Sampling Value, %d"%value)
 
     def coincidenceWindowMethod(self, val):
         if self.experiment != None:
             try:
                 self.experiment.setCoinWindow(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Coincidence Window (ns): %s"%str(val))
+                    self.results_files.writeParams("Coincidence Window (ns), %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -170,7 +181,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[0].setDelay(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Delay A (ns): %s"%str(val))
+                    self.results_files.writeParams("Delay A (ns), %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -181,7 +192,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[1].setDelay(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Delay B (ns): %s"%str(val))
+                    self.results_files.writeParams("Delay B (ns), %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -192,7 +203,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[0].setSleep(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Sleep A (ns): %s"%str(val))
+                    self.results_files.writeParams("Sleep A (ns), %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -203,7 +214,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             try:
                 self.experiment.detectors[1].setSleep(val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Sleep B (ns): %s"%str(val))
+                    self.results_files.writeParams("Sleep B (ns), %s"%str(val))
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
         else:
@@ -218,7 +229,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 values = self.experiment.getDetectorsTimersValues()
                 (dA, sA), (dB, sB) = values
 
-                if self.timeInUnitsToMs(self.sampling_comboBox.currentText()) != samp:
+                if common.timeInUnitsToMs(self.sampling_comboBox.currentText()) != samp:
                     if samp > 1000:
                         index = self.sampling_comboBox.findText('%d s'%(samp/1000))
                     else:
@@ -226,14 +237,14 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                     self.sampling_comboBox.setCurrentIndex(index)
                 if self.coincidence_spinBox.value() != coin:
                     self.coincidence_spinBox.setValue(coin)
-                if self.delay_A_spinBox.value() != dA:
-                    self.delay_A_spinBox.setValue(dA)
-                if self.delay_B_spinBox.value() != dB:
-                    self.delay_B_spinBox.setValue(dB)
-                if self.sleep_A_spinBox.value() != sA:
-                    self.sleep_A_spinBox.setValue(sA)
-                if self.sleep_B_spinBox.value() != sB:
-                    self.sleep_B_spinBox.setValue(sB)
+                if self.delayA_spinBox.value() != dA:
+                    self.delayA_spinBox.setValue(dA)
+                if self.delayB_spinBox.value() != dB:
+                    self.delayB_spinBox.setValue(dB)
+                if self.sleepA_spinBox.value() != sA:
+                    self.sleepA_spinBox.setValue(sA)
+                if self.sleepB_spinBox.value() != sB:
+                    self.sleepB_spinBox.setValue(sB)
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
 
@@ -245,50 +256,24 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def unlockSettings(self, unlock = True):
         self.sampling_comboBox.setEnabled(unlock)
         self.coincidence_spinBox.setEnabled(unlock)
-        self.delay_A_spinBox.setEnabled(unlock)
-        self.delay_B_spinBox.setEnabled(unlock)
-        self.sleep_A_spinBox.setEnabled(unlock)
-        self.sleep_B_spinBox.setEnabled(unlock)
-        if unlock and self.unlock_settings_button != None:
-            self.delete_settings_button()
+        self.delayA_spinBox.setEnabled(unlock)
+        self.delayB_spinBox.setEnabled(unlock)
+        self.sleepA_spinBox.setEnabled(unlock)
+        self.sleepB_spinBox.setEnabled(unlock)
+        if unlock:
+            self.unlock_settings_button.setEnabled(False)
+            self.unlock_settings_button.setStyleSheet("color: rgba(255, 255, 255, 0); background-color: rgba(255, 255, 255, 0);")
+        else:
+            self.unlock_settings_button.setEnabled(True)
+            self.unlock_settings_button.setStyleSheet("color: none; background-color: none;")
 
     def setSettings(self):
-        self.sampling_comboBox.clear()
-
-        model = self.sampling_comboBox.model()
-        for row in abacus.SAMP_VALUES:
-            item = QtGui.QStandardItem(row)
-            if self.timeInUnitsToMs(row) < abacus.SAMP_CUTOFF:
-                item.setBackground(QtGui.QColor('red'))
-                item.setForeground(QtGui.QColor('white'))
-            model.appendRow(item)
-
-        index = self.sampling_comboBox.findText(abacus.DEFAULT_SAMP)
-        self.sampling_comboBox.setCurrentIndex(index)
-        self.coincidence_spinBox.setMinimum(abacus.MIN_COIN)
-        self.coincidence_spinBox.setMaximum(abacus.MAX_COIN)
-        self.coincidence_spinBox.setSingleStep(abacus.STEP_COIN)
-        self.coincidence_spinBox.setValue(abacus.DEFAULT_COIN)
-
-        self.delay_A_spinBox.setMinimum(abacus.MIN_DELAY)
-        self.delay_A_spinBox.setMaximum(abacus.MAX_DELAY)
-        self.delay_A_spinBox.setSingleStep(abacus.STEP_DELAY)
-        self.delay_A_spinBox.setValue(abacus.DEFAULT_DELAY)
-
-        self.delay_B_spinBox.setMinimum(abacus.MIN_DELAY)
-        self.delay_B_spinBox.setMaximum(abacus.MAX_DELAY)
-        self.delay_B_spinBox.setSingleStep(abacus.STEP_DELAY)
-        self.delay_B_spinBox.setValue(abacus.DEFAULT_DELAY)
-
-        self.sleep_A_spinBox.setMinimum(abacus.MIN_SLEEP)
-        self.sleep_A_spinBox.setMaximum(abacus.MAX_SLEEP)
-        self.sleep_A_spinBox.setSingleStep(abacus.STEP_SLEEP)
-        self.sleep_A_spinBox.setValue(abacus.DEFAULT_SLEEP)
-
-        self.sleep_B_spinBox.setMinimum(abacus.MIN_SLEEP)
-        self.sleep_B_spinBox.setMaximum(abacus.MAX_SLEEP)
-        self.sleep_B_spinBox.setSingleStep(abacus.STEP_SLEEP)
-        self.sleep_B_spinBox.setValue(abacus.DEFAULT_SLEEP)
+        common.setSamplingComboBox(self.sampling_comboBox)
+        common.setCoincidenceSpinBox(self.coincidence_spinBox)
+        common.setDelaySpinBox(self.delayA_spinBox)
+        common.setDelaySpinBox(self.delayB_spinBox)
+        common.setSleepSpinBox(self.sleepA_spinBox)
+        common.setSleepSpinBox(self.sleepB_spinBox)
 
     def cleanPort(self):
         if self.streaming:
@@ -308,7 +293,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.connect_button.setText("Connect")
             self.acquisition_button.setDisabled(True)
             if self.results_files != None:
-                self.results_files.writeParams("Disconnected from device in port: %s"%self.port_name)
+                self.results_files.writeParams("Disconnected from device in port,%s"%self.port_name)
             self.cleanPort()
         else:
             self.connect_dialog = ConnectDialog()
@@ -322,7 +307,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.port = CommunicationPort(self.connect_dialog.ports[self.port_name])
                 self.experiment = abacus.Experiment(self.port)
 
-                # self.current_labels.createLabels(self.experiment.detectors, self.experiment.coin_channels)
                 self.acquisition_button.setDisabled(False)
                 self.acquisition_button.setStyleSheet("background-color: none")
                 self.acquisition_button.setText("Start acquisition")
@@ -334,11 +318,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 # self.checkParams()
                 self.check_timer.start()
 
-                msg = "Connected to device in port: %s"%self.port_name
+                msg = "Connected to device in port,%s"%self.port_name
                 if self.results_files != None:
                     self.results_files.writeParams(msg)
                 else:
-                    self.params_buffer += BREAKLINE + strftime("%H:%M:%S", localtime()) + ", " + msg
+                    self.params_buffer += constants.BREAKLINE + strftime("%H:%M:%S", localtime()) + "," + msg
 
             else:
                 self.connect_button.setText("Connect")
@@ -362,14 +346,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.acquisition_button.setStyleSheet("background-color: none")
                 self.acquisition_button.setText("Start acquisition")
                 self.results_files.writeParams("Acquisition stopped")
-                if self.unlock_settings_button != None:
-                    self.delete_settings_button()
                 self.unlockSettings()
                 self.stopClocks()
             else:
-                self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
-                self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
-                self.formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
                 self.acquisition_button.setStyleSheet("background-color: green")
                 self.acquisition_button.setText("Stop acquisition")
                 self.results_files.writeParams("Acquisition started")
@@ -442,36 +421,44 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def setSaveAs(self):
         new_file_name = self.save_as_lineEdit.text()
-        if new_file_name != "":
-            try:
-                name, ext = self.checkFileName(new_file_name)
-                if self.results_files == None:
-                    self.results_files = ResultsFiles(name, ext, self.init_date)
-                    self.results_files.params_file.header += self.params_buffer
-                    self.params_buffer = ""
-                else:
-                    self.results_files.changeName(name, ext)
-                names = self.results_files.getNames()
-                self.data_ring.setFile(self.results_files.data_file)
-                self.statusBar.showMessage('Files: %s, %s.'%(names))
+        try:
+            if new_file_name != "":
                 try:
-                    self.results_files.checkFilesExists()
-                except FileExistsError:
-                    print("FileExistsError")
-            except ExtentionError as e:
-                self.save_as_lineEdit.setText("")
-                self.errorWindow(e)
-        else:
-            print("EmptyName")
+                    name, ext = self.checkFileName(new_file_name)
+                    if self.results_files == None:
+                        self.results_files = ResultsFiles(name, ext, self.init_date)
+                        self.results_files.params_file.header += self.params_buffer
+                        self.params_buffer = ""
+                    else:
+                        self.results_files.changeName(name, ext)
+                    names = self.results_files.getNames()
+                    self.data_ring.setFile(self.results_files.data_file)
+                    self.statusBar.showMessage('Files: %s, %s.'%(names))
+                    try:
+                        self.results_files.checkFilesExists()
+                    except FileExistsError:
+                        print("FileExistsError")
+                except ExtentionError as e:
+                    self.save_as_lineEdit.setText("")
+                    self.errorWindow(e)
+            else:
+                print("EmptyName")
+        except FileNotFoundError as e:
+            self.errorWindow(e)
 
     def checkFileName(self, name):
         if "." in name:
             name, ext = name.split(".")
             ext = ".%s"%ext
         else:
-            ext = EXTENSION_DATA
+            try:
+                ext = constants.extension_comboBox
+                print(ext)
+            except AttributeError:
+                ext = constants.EXTENSION_DATA
+            name = common.unicodePath(name)
             self.save_as_lineEdit.setText(name + ext)
-        if ext in SUPPORTED_EXTENSIONS.keys():
+        if ext in constants.SUPPORTED_EXTENSIONS.keys():
             return name, ext
         else:
             raise ExtentionError()
@@ -483,13 +470,30 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         dlg = QtWidgets.QFileDialog(directory = os.path.expanduser("~"))
         dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        nameFilters = [SUPPORTED_EXTENSIONS[extension] for extension in SUPPORTED_EXTENSIONS]
+        nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
         dlg.setNameFilters(nameFilters)
-        dlg.selectNameFilter(SUPPORTED_EXTENSIONS[EXTENSION_DATA])
+        dlg.selectNameFilter(constants.SUPPORTED_EXTENSIONS[constants.EXTENSION_DATA])
         if dlg.exec_():
             name = dlg.selectedFiles()[0]
-            self.save_as_lineEdit.setText(name)
+            self.save_as_lineEdit.setText(unicodePath(name))
             self.setSaveAs()
+
+    def updateConstants(self):
+        try:
+            common.updateConstants(self)
+
+            if constants.autogenerate_checkBox:
+                file_name = constants.file_prefix_lineEdit
+                if constants.datetime_checkBox: file_name += strftime("_%Y%m%d_%H%M")
+                file_name += constants.extension_comboBox
+                path = os.path.join(constants.directory_lineEdit, file_name)
+                self.save_as_lineEdit.setText(common.unicodePath(path))
+                self.setSaveAs()
+
+            self.data_ring.updateFormat(delimiter = constants.DELIMITER)
+
+        except AttributeError:
+            pass
 
     def errorWindow(self, exception):
         error_text = str(exception)
@@ -509,7 +513,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 self.delete_settings_button()
 
         try:
-            self.results_files.writeParams("Error: %s"%error_text)
+            self.results_files.writeParams("Error,%s"%error_text)
         except Exception:
             pass
 

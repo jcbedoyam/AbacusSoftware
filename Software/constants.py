@@ -1,14 +1,26 @@
 import sys
+import os
+
+__version__ = "1.1.2"
 
 CURRENT_OS = sys.platform
+DIRECTORY = os.path.dirname(sys.executable)
+SETTINGS_PATH = os.path.join(DIRECTORY, "settings.py")
+
+SETTING_FILE_EXISTS = False
 
 BREAKLINE = "\n"
 if CURRENT_OS == "win32":
     BREAKLINE = "\r\n"
 
 EXTENSION_DATA = '.dat'
-EXTENSION_PARAMS = '_settings.txt'
-SUPPORTED_EXTENSIONS = {EXTENSION_DATA : 'Plain text data file (*.dat)', '.csv' : 'CSV data files (*.csv)'}
+PARAMS_SUFFIX = "_settings"
+FILE_PREFIX = "abacusdata"
+EXTENSION_PARAMS = PARAMS_SUFFIX + '.txt'
+SUPPORTED_EXTENSIONS = {'.dat': 'Plain text data file (*.dat)', '.csv' : 'CSV data files (*.csv)'}
+
+DELIMITER = ","
+DELIMITERS = [",", ";", "Tab", "Space"]
 
 PARAMS_HEADER = "##### SETTINGS FILE #####" + BREAKLINE + "Tausand Abacus session began at %s"
 
@@ -22,4 +34,8 @@ CHECK_RATE = 250
 
 BUFFER_ROWS = 100
 
-__version__ = "1.1.1"
+WIDGETS_NAMES = ["checkBox", "lineEdit", "comboBox", "spinBox"]
+WIDGETS_GET_ACTIONS = ["self.%s.isChecked()", "self.%s.text()", "self.%s.currentText()", "self.%s.value()"]
+WIDGETS_SET_ACTIONS = ["class_.%s.setChecked(%s)", "class_.%s.setText('%s')", "class_.%s.setCurrentIndex(class_.%s.findText('%s'))", "class_.%s.setValue(%d)"]
+
+# WIDGETS_SET_ACTIONS = ["self.%s.setCheckState(%s)", "self.%s.setText(%s)", "self.%s.setCurrentIndex(self.%s.findText('%s'))", "self.%s.setValue(%d)"]

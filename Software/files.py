@@ -2,7 +2,7 @@ import os
 import numpy as np
 from time import localtime, strftime
 
-from constants import PARAMS_HEADER, EXTENSION_PARAMS, BREAKLINE
+import constants
 
 class File(object):
     def __init__(self, name, header = None):
@@ -24,19 +24,19 @@ class File(object):
     def write(self, data):
         with open(self.name, "a") as file:
             if self.header != None:
-                file.write(self.header + BREAKLINE)
+                file.write(self.header + constants.BREAKLINE)
                 self.header = None
 
-            file.write(data + BREAKLINE)
+            file.write(data + constants.BREAKLINE)
             self.lines_written += 1
 
     def npwrite(self, data, fmt):
         if self.header != None:
             with open(self.name, "a") as file:
-                file.write(self.header + BREAKLINE)
+                file.write(self.header + constants.BREAKLINE)
                 self.header = None
         with open(self.name, 'ab') as f:
-            np.savetxt(f, data, fmt=fmt, newline=BREAKLINE)
+            np.savetxt(f, data, fmt=fmt, newline=constants.BREAKLINE)
         self.lines_written += data.shape[0]
 
     def changeName(self, name):
@@ -44,6 +44,10 @@ class File(object):
         if not self.isEmpty():
             os.rename(self.name, name)
         self.name = name
+
+    def updateHeader(self, header = constants.DELIMITER.join(["Time (s)", "Counts A", "Counts B", "Coincidences AB"])):
+        if self.header != None:
+            self.header = header
 
     def delete(self):
         try:
@@ -56,14 +60,14 @@ class ResultsFiles(object):
         self.prefix = prefix
         self.data_extention = data_extention
         self.data_name = self.prefix + self.data_extention
-        self.params_name = self.prefix + EXTENSION_PARAMS
+        self.params_name = self.prefix + constants.EXTENSION_PARAMS
 
-        self.data_file = File(name = self.data_name, header = "Time (s), Counts A, Counts B, Coincidences AB")
-        self.params_file = File(name = self.params_name, header = PARAMS_HEADER%time)
+        self.data_file = File(name = self.data_name, header = constants.DELIMITER.join(["Time (s)", "Counts A", "Counts B", "Coincidences AB"]))
+        self.params_file = File(name = self.params_name, header = constants.PARAMS_HEADER%time)
 
     def changeName(self, prefix, data_extention):
         self.data_file.changeName(prefix + data_extention)
-        self.params_file.changeName(prefix + EXTENSION_PARAMS)
+        self.params_file.changeName(prefix + constants.EXTENSION_PARAMS)
 
     def getNames(self):
         return self.data_file.name, self.params_file.name
@@ -76,7 +80,7 @@ class ResultsFiles(object):
 
     def writeParams(self, text):
         current_time = strftime("%H:%M:%S", localtime())
-        text = "%s, %s"%(current_time, text)
+        text = "%s,%s"%(current_time, text)
         self.params_file.write(text)
 
     def checkFilesExists(self):
@@ -87,7 +91,7 @@ class RingBuffer():
     """
     Based on https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/
     """
-    def __init__(self, rows, columns, file = None, fmt = "%.3f, %d, %d, %d"):
+    def __init__(self, rows, columns, file = None, fmt = constants.DELIMITER.join(["%.3f", "%d", "%d", "%d"])):
         self.data = np.zeros((rows, columns))
         self.index = 0
         self.file = file
@@ -95,6 +99,14 @@ class RingBuffer():
         self.size = self.data.shape[0]
         self.total_movements = 0
         self.last_saved = 0
+
+    def updateFormat(self, fmt = constants.DELIMITER.join(["%.3f", "%d", "%d", "%d"]), delimiter = None):
+        if delimiter == None:
+            self.fmt = fmt
+        else:
+            self.fmt = constants.DELIMITER.join(["%.3f", "%d", "%d", "%d"])
+        if self.file != None:
+            self.file.updateHeader(header = constants.DELIMITER.join(["Time (s)", "Counts A", "Counts B", "Coincidences AB"]))
 
     def extend(self, x):
         "adds array x to ring buffer"

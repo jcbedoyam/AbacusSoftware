@@ -105,7 +105,7 @@
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QSpinBox" name="delay_A_spinBox"/>
+              <widget class="QSpinBox" name="delayA_spinBox"/>
              </item>
              <item row="3" column="0">
               <widget class="QLabel" name="delay_B_label">
@@ -115,7 +115,7 @@
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QSpinBox" name="delay_B_spinBox"/>
+              <widget class="QSpinBox" name="delayB_spinBox"/>
              </item>
              <item row="4" column="0">
               <widget class="QLabel" name="sleep_A_label">
@@ -125,7 +125,7 @@
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QSpinBox" name="sleep_A_spinBox"/>
+              <widget class="QSpinBox" name="sleepA_spinBox"/>
              </item>
              <item row="5" column="0">
               <widget class="QLabel" name="sleep_B_label">
@@ -135,7 +135,7 @@
               </widget>
              </item>
              <item row="5" column="1">
-              <widget class="QSpinBox" name="sleep_B_spinBox"/>
+              <widget class="QSpinBox" name="sleepB_spinBox"/>
              </item>
             </layout>
            </widget>

@@ -1,9 +1,11 @@
+import os
 import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtGui import QTableWidgetItem
 from PyAbacus.constants import CURRENT_OS
 
-from constants import *
+import common
+import constants
 from PyAbacus.communication import findPorts
 
 class Table(QtWidgets.QTableWidget):
@@ -220,7 +222,7 @@ class ConnectDialog(QtWidgets.QDialog):
         self.horizontalLayout.addWidget(self.comboBox)
         self.horizontalLayout.addWidget(self.refresh_button)
 
-        self.label.setText(CONNECT_LABEL)
+        self.label.setText(constants.CONNECT_LABEL)
         self.label.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         self.setSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
 
@@ -241,9 +243,9 @@ class ConnectDialog(QtWidgets.QDialog):
         self.ports = findPorts()
         ports_names = list(self.ports.keys())
         if len(ports_names) == 0:
-            self.label.setText(CONNECT_EMPTY_LABEL)
+            self.label.setText(constants.CONNECT_EMPTY_LABEL)
         else:
-            self.label.setText(CONNECT_LABEL)
+            self.label.setText(constants.CONNECT_LABEL)
         self.comboBox.addItems(ports_names)
         self.adjustSize()
 
@@ -255,8 +257,10 @@ class ConnectDialog(QtWidgets.QDialog):
         self.reject()
 
 class SettingsDialog(QtWidgets.QDialog):
-    def __init__(self):
+    def __init__(self, parent):
         QtWidgets.QDialog.__init__(self)
+
+        self.parent = parent
         self.setWindowTitle("Default settings")
 
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
@@ -282,43 +286,57 @@ class SettingsDialog(QtWidgets.QDialog):
         self.file_tab_frame1 = QtWidgets.QFrame()
         self.file_tab_frame1_layout = QtWidgets.QHBoxLayout(self.file_tab_frame1)
 
-        self.file_tab_frame1_directory_label = QtWidgets.QLabel("Directory:")
-        self.file_tab_frame1_directory_lineEdit = QtWidgets.QLineEdit()
-        self.file_tab_frame1_directory_pushButton = QtWidgets.QPushButton("Open")
+        self.directory_label = QtWidgets.QLabel("Directory:")
+        self.directory_lineEdit = QtWidgets.QLineEdit()
+        self.directory_pushButton = QtWidgets.QPushButton("Open")
 
-        self.file_tab_frame1_layout.addWidget(self.file_tab_frame1_directory_label)
-        self.file_tab_frame1_layout.addWidget(self.file_tab_frame1_directory_lineEdit)
-        self.file_tab_frame1_layout.addWidget(self.file_tab_frame1_directory_pushButton)
+        self.file_tab_frame1_layout.addWidget(self.directory_label)
+        self.file_tab_frame1_layout.addWidget(self.directory_lineEdit)
+        self.file_tab_frame1_layout.addWidget(self.directory_pushButton)
 
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame1)
+
+        self.directory_pushButton.clicked.connect(self.chooseFolder)
 
         # frame2
         self.file_tab_frame2 = QtWidgets.QFrame()
         self.file_tab_frame2_layout = QtWidgets.QFormLayout(self.file_tab_frame2)
 
-        self.file_tab_frame2_extension_label = QtWidgets.QLabel("Extension:")
-        self.file_tab_frame2_extension_comboBox = QtWidgets.QComboBox()
-        self.file_tab_frame2_delimiter_label = QtWidgets.QLabel("Delimiter:")
-        self.file_tab_frame2_delimiter_comboBox = QtWidgets.QComboBox()
-        self.file_tab_frame2_parameters_label = QtWidgets.QLabel("Parameters suffix:")
-        self.file_tab_frame2_parameters_lineEdit = QtWidgets.QLineEdit()
-        self.file_tab_frame2_datetime_label = QtWidgets.QLabel("Use datetime:")
-        self.file_tab_frame2_datetime_checkBox = QtWidgets.QCheckBox()
-        self.file_tab_frame2_autogenerate_label = QtWidgets.QLabel("Autogenerate file name:")
-        self.file_tab_frame2_autogenerate_checkBox = QtWidgets.QCheckBox()
-
-        self.file_tab_frame2_layout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_extension_label)
-        self.file_tab_frame2_layout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_extension_comboBox)
-        self.file_tab_frame2_layout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_delimiter_label)
-        self.file_tab_frame2_layout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_delimiter_comboBox)
-        self.file_tab_frame2_layout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_parameters_label)
-        self.file_tab_frame2_layout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_parameters_lineEdit)
-        self.file_tab_frame2_layout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_datetime_label)
-        self.file_tab_frame2_layout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_datetime_checkBox)
-        self.file_tab_frame2_layout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.file_tab_frame2_autogenerate_label)
-        self.file_tab_frame2_layout.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.file_tab_frame2_autogenerate_checkBox)
+        self.file_prefix_label = QtWidgets.QLabel("File prefix:")
+        self.file_prefix_lineEdit = QtWidgets.QLineEdit()
+        self.extension_label = QtWidgets.QLabel("Extension:")
+        self.extension_comboBox = QtWidgets.QComboBox()
+        self.delimiter_label = QtWidgets.QLabel("Delimiter:")
+        self.delimiter_comboBox = QtWidgets.QComboBox()
+        self.parameters_label = QtWidgets.QLabel("Parameters suffix:")
+        self.parameters_lineEdit = QtWidgets.QLineEdit()
+        self.autogenerate_label = QtWidgets.QLabel("Autogenerate file name:")
+        self.autogenerate_checkBox = QtWidgets.QCheckBox()
+        self.datetime_label = QtWidgets.QLabel("Use datetime:")
+        self.datetime_checkBox = QtWidgets.QCheckBox()
 
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame2)
+
+        widgets = [(self.autogenerate_label, self.autogenerate_checkBox),
+                    (self.datetime_label, self.datetime_checkBox),
+                    (self.file_prefix_label, self.file_prefix_lineEdit),
+                    (self.parameters_label, self.parameters_lineEdit),
+                    (self.extension_label, self.extension_comboBox),
+                    (self.delimiter_label, self.delimiter_comboBox),
+                    ]
+
+        self.fillFormLayout(self.file_tab_frame2_layout, widgets)
+
+        self.file_tab_verticalLayout.addWidget(self.file_tab_frame2)
+
+        self.autogenerate_checkBox.setCheckState(2)
+        self.autogenerate_checkBox.stateChanged.connect(self.actogenerateMethod)
+        self.datetime_checkBox.setCheckState(2)
+        self.parameters_lineEdit.setText(constants.PARAMS_SUFFIX)
+        self.file_prefix_lineEdit.setText(constants.FILE_PREFIX)
+        self.directory_lineEdit.setText(os.path.expanduser("~"))
+        self.delimiter_comboBox.insertItems(0, constants.DELIMITERS)
+        self.extension_comboBox.insertItems(0, sorted(constants.SUPPORTED_EXTENSIONS.keys())[::-1])
 
         """
         settings tab
@@ -328,38 +346,40 @@ class SettingsDialog(QtWidgets.QDialog):
         self.settings_tab_frame = QtWidgets.QFrame()
         self.settings_tab_frame_layout = QtWidgets.QFormLayout(self.settings_tab_frame)
 
-        self.settings_tab_frame_sampling_label = QtWidgets.QLabel("Sampling time:")
-        self.settings_tab_frame_sampling_comboBox = QtWidgets.QComboBox()
-        self.settings_tab_frame_coincidence_label = QtWidgets.QLabel("Coincidence window (ns):")
-        self.settings_tab_frame_coincidence_spinBox = QtWidgets.QSpinBox()
-        self.settings_tab_frame_delayA_label = QtWidgets.QLabel("Delay A (ns):")
-        self.settings_tab_frame_delayA_spinBox = QtWidgets.QSpinBox()
-        self.settings_tab_frame_delayB_label = QtWidgets.QLabel("Delay B (ns):")
-        self.settings_tab_frame_delayB_spinBox = QtWidgets.QSpinBox()
-        self.settings_tab_frame_sleepA_label = QtWidgets.QLabel("Sleep time A (ns):")
-        self.settings_tab_frame_sleepA_spinBox = QtWidgets.QSpinBox()
-        self.settings_tab_frame_sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
-        self.settings_tab_frame_sleepB_spinBox = QtWidgets.QSpinBox()
+        self.sampling_label = QtWidgets.QLabel("Sampling time:")
+        self.sampling_comboBox = QtWidgets.QComboBox()
+        self.coincidence_label = QtWidgets.QLabel("Coincidence window (ns):")
+        self.coincidence_spinBox = QtWidgets.QSpinBox()
+        self.delayA_label = QtWidgets.QLabel("Delay A (ns):")
+        self.delayA_spinBox = QtWidgets.QSpinBox()
+        self.delayB_label = QtWidgets.QLabel("Delay B (ns):")
+        self.delayB_spinBox = QtWidgets.QSpinBox()
+        self.sleepA_label = QtWidgets.QLabel("Sleep time A (ns):")
+        self.sleepA_spinBox = QtWidgets.QSpinBox()
+        self.sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
+        self.sleepB_spinBox = QtWidgets.QSpinBox()
 
-        self.settings_tab_frame_from_device_label = QtWidgets.QLabel("Get settings from device:")
-        self.settings_tab_frame_from_device_checkBox = QtWidgets.QCheckBox()
+        self.from_device_label = QtWidgets.QLabel("Get settings from device:")
+        self.from_device_checkBox = QtWidgets.QCheckBox()
 
-        self.settings_tab_frame_layout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_sampling_label)
-        self.settings_tab_frame_layout.setWidget(0, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_sampling_comboBox)
-        self.settings_tab_frame_layout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_coincidence_label)
-        self.settings_tab_frame_layout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_coincidence_spinBox)
-        self.settings_tab_frame_layout.setWidget(2, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_delayA_label)
-        self.settings_tab_frame_layout.setWidget(2, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_delayA_spinBox)
-        self.settings_tab_frame_layout.setWidget(3, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_delayB_label)
-        self.settings_tab_frame_layout.setWidget(3, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_delayB_spinBox)
-        self.settings_tab_frame_layout.setWidget(4, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_sleepA_label)
-        self.settings_tab_frame_layout.setWidget(4, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_sleepA_spinBox)
-        self.settings_tab_frame_layout.setWidget(5, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_sleepB_label)
-        self.settings_tab_frame_layout.setWidget(5, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_sleepB_spinBox)
-        self.settings_tab_frame_layout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.settings_tab_frame_from_device_label)
-        self.settings_tab_frame_layout.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.settings_tab_frame_from_device_checkBox)
+        widgets = [(self.sampling_label, self.sampling_comboBox),
+                    (self.coincidence_label, self.coincidence_spinBox),
+                    (self.delayA_label, self.delayA_spinBox),
+                    (self.delayB_label, self.delayB_spinBox),
+                    (self.sleepA_label, self.sleepA_spinBox),
+                    (self.sleepB_label, self.sleepB_spinBox),]
+                    # (self.from_device_label, self.from_device_checkBox)]
+
+        self.fillFormLayout(self.settings_tab_frame_layout, widgets)
 
         self.settings_tab_verticalLayout.addWidget(self.settings_tab_frame)
+
+        common.setSamplingComboBox(self.sampling_comboBox)
+        common.setCoincidenceSpinBox(self.coincidence_spinBox)
+        common.setDelaySpinBox(self.delayA_spinBox)
+        common.setDelaySpinBox(self.delayB_spinBox)
+        common.setSleepSpinBox(self.sleepA_spinBox)
+        common.setSleepSpinBox(self.sleepB_spinBox)
 
         """
         buttons
@@ -367,7 +387,69 @@ class SettingsDialog(QtWidgets.QDialog):
         self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
             QtCore.Qt.Horizontal, self)
 
-        self.buttons.accepted.connect(self.accept)
+        self.buttons.accepted.connect(self.accept_replace)
         self.buttons.rejected.connect(self.reject)
 
         self.verticalLayout.addWidget(self.buttons)
+
+        self.setConstants()
+        self.constantsWriter()
+
+    def actogenerateMethod(self, val):
+        self.datetime_checkBox.setEnabled(val)
+        self.file_prefix_lineEdit.setEnabled(val)
+
+    def fillFormLayout(self, layout, values):
+        for (i, line) in enumerate(values):
+            layout.setWidget(i, QtWidgets.QFormLayout.LabelRole, line[0])
+            layout.setWidget(i, QtWidgets.QFormLayout.FieldRole, line[1])
+
+    def constantsWriter(self):
+        lines = []
+        for (widget, eval_) in zip(constants.WIDGETS_NAMES, constants.WIDGETS_GET_ACTIONS):
+            complete = common.findWidgets(self, widget)
+            for item in complete:
+                val = eval(eval_%item)
+                if type(val) is str:
+                    if item == "directory_lineEdit":
+                        val = common.unicodePath(val)
+                    string = "%s = '%s'"%(item, val)
+                else:
+                    string = "%s = %s"%(item, val)
+                lines.append(string)
+        self.writeDefault(lines)
+        lines += ["EXTENSION_DATA = '%s'"%self.extension_comboBox.currentText(),
+                    "EXTENSION_PARAMS = '%s.txt'"%self.parameters_lineEdit.text()]
+        delimiter = self.delimiter_comboBox.currentText()
+        if delimiter == "Tab":
+            delimiter = "\t"
+        elif delimiter == "Space":
+            delimiter = " "
+        lines += ["DELIMITER = '%s'"%delimiter]
+        self.updateConstants(lines)
+        self.parent.updateConstants()
+
+    def accept_replace(self):
+        self.constantsWriter()
+        self.accept()
+
+    def writeDefault(self, lines):
+        try:
+            with open(constants.SETTINGS_PATH, "w") as file:
+                [file.write(line + constants.BREAKLINE) for line in lines]
+        except FileNotFoundError as e:
+            print(e)
+
+    def updateConstants(self, lines):
+        [exec("constants.%s"%line) for line in lines]
+
+    def setConstants(self):
+        try:
+            common.updateConstants(self)
+        except AttributeError:
+            pass
+
+    def chooseFolder(self):
+        folder = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory"))
+        if folder != "":
+            self.directory_lineEdit.setText(folder)

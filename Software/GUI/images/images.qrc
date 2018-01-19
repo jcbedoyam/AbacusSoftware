@@ -1,7 +1,7 @@
-<RCC> 
-   <qresource prefix="/"> 
+<RCC>
+   <qresource prefix="/">
      <file>Abacus_small.png</file>
      <file>abacus_small.ico</file>
      <file>splash.png</file>
-   </qresource> 
-</RCC> 
+   </qresource>
+</RCC>
