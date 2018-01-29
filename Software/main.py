@@ -468,7 +468,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         user interaction with saving file
         """
-        dlg = QtWidgets.QFileDialog(directory = os.path.expanduser("~"))
+        dlg = QtWidgets.QFileDialog(directory = common.findDocuments())
         dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
         nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
