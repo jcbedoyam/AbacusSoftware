@@ -22,8 +22,8 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           name='AbacusSoftware',
-          debug=False,
+          debug=True,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=False, icon='GUI\\images\\abacus_small.ico')
+          console=True, icon='GUI\\images\\abacus_small.ico')

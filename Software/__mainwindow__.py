@@ -115,7 +115,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.tabWidget)
         self.verticalLayout.addWidget(self.frame_2)
         self.plots_frame = QtWidgets.QFrame(self.centralWidget)
-        self.plots_frame.setMinimumSize(QtCore.QSize(0, 260))
+        # self.plots_frame.setMinimumSize(QtCore.QSize(0, 200))
         self.plots_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.plots_frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.plots_frame.setObjectName("plots_frame")
@@ -191,4 +191,3 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-

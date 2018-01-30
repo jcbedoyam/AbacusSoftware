@@ -179,12 +179,6 @@
     </item>
     <item>
      <widget class="QFrame" name="plots_frame">
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>260</height>
-       </size>
-      </property>
       <property name="frameShape">
        <enum>QFrame::StyledPanel</enum>
       </property>

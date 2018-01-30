@@ -70,3 +70,13 @@ def updateConstants(class_):
                     exec(action%(att, val))
                 else:
                     exec(action%(att, att, val))
+
+def findDocuments():
+    if constants.CURRENT_OS == "win32":
+        import ctypes.wintypes
+        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(None, 5, None, 0, buf)
+        buf = buf.value
+    else:
+        buf = os.path.expanduser("~")
+    return buf

@@ -49,7 +49,7 @@ class AutoSizeLabel(QtWidgets.QLabel):
     """ From reclosedev at http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour
     and Jean-Sébastien http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt
     """
-    MAX_CHARS = 25 #: Maximum number of letters in a label.
+    MAX_CHARS = 8 #: Maximum number of letters in a label.
     MAX_DIGITS = 7 #: Maximum number of digits of a number in label.
     global CURRENT_OS
     def __init__(self, text, value):
@@ -130,7 +130,7 @@ class AutoSizeLabel(QtWidgets.QLabel):
             self.width = width
 
 class CurrentLabels(QtWidgets.QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent = None):
         QtWidgets.QWidget.__init__(self, parent)
         # self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.layout = QtWidgets.QVBoxLayout(parent)
@@ -334,7 +334,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.datetime_checkBox.setCheckState(2)
         self.parameters_lineEdit.setText(constants.PARAMS_SUFFIX)
         self.file_prefix_lineEdit.setText(constants.FILE_PREFIX)
-        self.directory_lineEdit.setText(os.path.expanduser("~"))
+        self.directory_lineEdit.setText(common.findDocuments())
         self.delimiter_comboBox.insertItems(0, constants.DELIMITERS)
         self.extension_comboBox.insertItems(0, sorted(constants.SUPPORTED_EXTENSIONS.keys())[::-1])
 

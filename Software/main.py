@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+DEBUG = True
+
 import os
 import re
 import sys
@@ -35,8 +37,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
     def __init__(self):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
-
-        self.resize(550, 500)
         self.move(0, 0)
         self.setSettings()
         self.updateConstants()
@@ -122,6 +122,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.setWindowTitle(constants.WINDOW_NAME)
 
+        self.resize(550, 600)
         self.connect()
 
     def aboutWindowCaller(self):
@@ -539,7 +540,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             else:
                 event.ignore()
 
-if __name__ == "__main__":
+def run():
     from time import sleep
 
     app = QtWidgets.QApplication(sys.argv)
@@ -562,4 +563,23 @@ if __name__ == "__main__":
     main = Main()
     main.setWindowIcon(icon)
     main.show()
-    sys.exit(app.exec_())
+    app.exec_()
+    # sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    if DEBUG:
+        import traceback
+        try:
+            run()
+        except Exception as e:
+            print(e)
+            print(traceback.format_exc())
+            while True:
+                try:
+                    pass
+                except KeyboardInterrupt:
+                    break
+        sys.exit()
+    else:
+        run()
+        sys.exit()

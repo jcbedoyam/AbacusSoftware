@@ -37,5 +37,3 @@ BUFFER_ROWS = 100
 WIDGETS_NAMES = ["checkBox", "lineEdit", "comboBox", "spinBox"]
 WIDGETS_GET_ACTIONS = ["self.%s.isChecked()", "self.%s.text()", "self.%s.currentText()", "self.%s.value()"]
 WIDGETS_SET_ACTIONS = ["class_.%s.setChecked(%s)", "class_.%s.setText('%s')", "class_.%s.setCurrentIndex(class_.%s.findText('%s'))", "class_.%s.setValue(%d)"]
-
-# WIDGETS_SET_ACTIONS = ["self.%s.setCheckState(%s)", "self.%s.setText(%s)", "self.%s.setCurrentIndex(self.%s.findText('%s'))", "self.%s.setValue(%d)"]
