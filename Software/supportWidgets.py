@@ -49,8 +49,8 @@ class AutoSizeLabel(QtWidgets.QLabel):
     """ From reclosedev at http://stackoverflow.com/questions/8796380/automatically-resizing-label-text-in-qt-strange-behaviour
     and Jean-Sébastien http://stackoverflow.com/questions/29852498/syncing-label-fontsize-with-layout-in-pyqt
     """
-    MAX_CHARS = 8 #: Maximum number of letters in a label.
     MAX_DIGITS = 7 #: Maximum number of digits of a number in label.
+    MAX_CHARS = 9 + MAX_DIGITS #: Maximum number of letters in a label.
     global CURRENT_OS
     def __init__(self, text, value):
         QtWidgets.QLabel.__init__(self)

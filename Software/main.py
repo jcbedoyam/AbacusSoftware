@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-DEBUG = True
+DEBUG = False
 
 import os
 import re
@@ -38,6 +38,9 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         QtWidgets.QMainWindow.__init__(self)
         self.setupUi(self)
         self.move(0, 0)
+        self.verticalLayout.setSpacing(0)
+        self.formLayout.setSpacing(0)
+        self.verticalLayout_3.setSpacing(0)
         self.setSettings()
         self.updateConstants()
         self.unlock_settings_button = None
@@ -122,7 +125,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.setWindowTitle(constants.WINDOW_NAME)
 
-        self.resize(550, 600)
+        self.resize(550, 650)
         self.connect()
 
     def aboutWindowCaller(self):
@@ -231,7 +234,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
                 (dA, sA), (dB, sB) = values
 
                 if common.timeInUnitsToMs(self.sampling_comboBox.currentText()) != samp:
-                    if samp > 1000:
+                    if samp >= 1000:
                         index = self.sampling_comboBox.findText('%d s'%(samp/1000))
                     else:
                         index = self.sampling_comboBox.findText('%d ms'%samp)
@@ -468,7 +471,13 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         user interaction with saving file
         """
-        dlg = QtWidgets.QFileDialog(directory = os.path.expanduser("~"))
+
+        try:
+            directory = constants.directory_lineEdit
+        except:
+            directory = os.path.expanduser("~")
+
+        dlg = QtWidgets.QFileDialog(directory = directory)
         dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
         nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
@@ -510,8 +519,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.acquisition_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
             self.connect_button.setText("Connect")
-            if self.unlock_settings_button != None:
-                self.delete_settings_button()
+            #if self.unlock_settings_button != None:
+            #    self.delete_settings_button()
 
         try:
             self.results_files.writeParams("Error,%s"%error_text)
