@@ -471,17 +471,12 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         """
         user interaction with saving file
         """
-<<<<<<< HEAD
-
         try:
             directory = constants.directory_lineEdit
         except:
             directory = os.path.expanduser("~")
 
         dlg = QtWidgets.QFileDialog(directory = directory)
-=======
-        dlg = QtWidgets.QFileDialog(directory = common.findDocuments())
->>>>>>> 3e912239da91a9579ca52e4f341e63d205775429
         dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
         dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
         nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
