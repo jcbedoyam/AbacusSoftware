@@ -324,7 +324,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
                 msg = "Connected to device in port,%s"%self.port_name
                 if self.results_files != None:
-                    self.results_files.writeParams(msg)
+                    try:
+                        self.results_files.writeParams(msg)
+                    except FileNotFoundError as e:
+                        self.errorWindow(e)
                 else:
                     self.params_buffer += constants.BREAKLINE + strftime("%H:%M:%S", localtime()) + "," + msg
 
@@ -338,9 +341,11 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def stopClocks(self):
         self.refresh_timer.stop()
-        # self.check_timer.stop()
         self.data_timer.stop()
-        self.data_ring.save()
+        try:
+            self.data_ring.save()
+        except FileNotFoundError as e:
+            self.errorWindow(e)
 
     def startAcquisition(self):
         if self.port == None:
@@ -375,6 +380,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             values = values.reshape((1, values.shape[0]))
             self.data_ring.extend(values)
         except abacus.exceptions.ExperimentError as e:
+            self.errorWindow(e)
+        except FileNotFoundError as e:
             self.errorWindow(e)
 
     def updateWidgets(self):
@@ -484,7 +491,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         dlg.selectNameFilter(constants.SUPPORTED_EXTENSIONS[constants.EXTENSION_DATA])
         if dlg.exec_():
             name = dlg.selectedFiles()[0]
-            self.save_as_lineEdit.setText(unicodePath(name))
+            self.save_as_lineEdit.setText(common.unicodePath(name))
             self.setSaveAs()
 
     def updateConstants(self):

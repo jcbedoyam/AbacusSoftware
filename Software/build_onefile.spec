@@ -1,5 +1,4 @@
 # -*- mode: python -*-
-
 block_cipher = None
 
 
@@ -21,7 +20,7 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='AbacusSoftware',
+          name='AbacusSoftware-1.1.5',
           debug=False,
           strip=False,
           upx=True,
