@@ -23,8 +23,9 @@ from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog
 import PyAbacus as abacus
 from PyAbacus.communication import findPorts, CommunicationPort
 
-import win_unicode_console
-win_unicode_console.enable()
+if constants.CURRENT_OS == "win32":
+    import win_unicode_console
+    win_unicode_console.enable()
 
 common.readConstantsFile()
 
@@ -559,6 +560,10 @@ def run():
     from time import sleep
 
     app = QtWidgets.QApplication(sys.argv)
+    QtWidgets.QApplication.setStyle(QtWidgets.QStyleFactory.create('Fusion')) # <- Choose the style
+
+    print(QtWidgets.QStyleFactory.keys())
+
     splash_pix = QtGui.QPixmap(':/splash.png').scaledToWidth(600)
     splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
     splash.show()
