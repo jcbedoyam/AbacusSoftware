@@ -259,6 +259,7 @@ class ConnectDialog(QtWidgets.QDialog):
 class SettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         QtWidgets.QDialog.__init__(self)
+        self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
 
         self.parent = parent
         self.setWindowTitle("Default settings")
@@ -387,6 +388,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.buttons = QtWidgets.QDialogButtonBox(QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel,
             QtCore.Qt.Horizontal, self)
 
+        self.buttons.button(QtWidgets.QDialogButtonBox.Ok).setText("Apply")
         self.buttons.accepted.connect(self.accept_replace)
         self.buttons.rejected.connect(self.reject)
 

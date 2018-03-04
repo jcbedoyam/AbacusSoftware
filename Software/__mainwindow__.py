@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'GUI\MainWindow\mainwindow.ui'
+# Form implementation generated from reading ui file 'GUI/MainWindow/mainwindow.ui'
 #
 # Created by: PyQt5 UI code generator 5.6
 #
@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
         self.centralWidget.setObjectName("centralWidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralWidget)
         self.verticalLayout.setContentsMargins(11, 11, 11, 11)
-        #self.verticalLayout.setSpacing(6)
+        self.verticalLayout.setSpacing(6)
         self.verticalLayout.setObjectName("verticalLayout")
         self.frame = QtWidgets.QFrame(self.centralWidget)
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -115,7 +115,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_2.addWidget(self.tabWidget)
         self.verticalLayout.addWidget(self.frame_2)
         self.plots_frame = QtWidgets.QFrame(self.centralWidget)
-        # self.plots_frame.setMinimumSize(QtCore.QSize(0, 200))
         self.plots_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.plots_frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.plots_frame.setObjectName("plots_frame")
@@ -131,9 +130,6 @@ class Ui_MainWindow(object):
         self.menuProperties = QtWidgets.QMenu(self.menuBar)
         self.menuProperties.setObjectName("menuProperties")
         MainWindow.setMenuBar(self.menuBar)
-        self.mainToolBar = QtWidgets.QToolBar(MainWindow)
-        self.mainToolBar.setObjectName("mainToolBar")
-        MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.mainToolBar)
         self.statusBar = QtWidgets.QStatusBar(MainWindow)
         self.statusBar.setObjectName("statusBar")
         MainWindow.setStatusBar(self.statusBar)
@@ -191,3 +187,4 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
+

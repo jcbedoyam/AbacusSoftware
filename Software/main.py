@@ -253,10 +253,10 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
 
-    def delete_settings_button(self):
-        self.formLayout.removeWidget(self.unlock_settings_button)
-        self.unlock_settings_button.deleteLater()
-        self.unlock_settings_button = None
+    # def delete_settings_button(self):
+    #     self.formLayout.removeWidget(self.unlock_settings_button)
+    #     self.unlock_settings_button.deleteLater()
+    #     self.unlock_settings_button = None
 
     def unlockSettings(self, unlock = True):
         self.sampling_comboBox.setEnabled(unlock)
@@ -267,7 +267,7 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.sleepB_spinBox.setEnabled(unlock)
         if unlock:
             self.unlock_settings_button.setEnabled(False)
-            self.unlock_settings_button.setStyleSheet("color: rgba(255, 255, 255, 0); background-color: rgba(255, 255, 255, 0);")
+            self.unlock_settings_button.setStyleSheet("color: rgba(237, 237, 237, 0); background-color: rgba(237, 237, 237, 0);")
         else:
             self.unlock_settings_button.setEnabled(True)
             self.unlock_settings_button.setStyleSheet("color: none; background-color: none;")
@@ -562,7 +562,7 @@ def run():
     app = QtWidgets.QApplication(sys.argv)
     QtWidgets.QApplication.setStyle(QtWidgets.QStyleFactory.create('Fusion')) # <- Choose the style
 
-    print(QtWidgets.QStyleFactory.keys())
+    # print(QtWidgets.QStyleFactory.keys())
 
     splash_pix = QtGui.QPixmap(':/splash.png').scaledToWidth(600)
     splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
