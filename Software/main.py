@@ -1,7 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-DEBUG = False
-
 import os
 import re
 import sys
@@ -10,7 +6,6 @@ import __GUI_images__
 import pyqtgraph as pg
 from datetime import datetime
 from time import time, localtime, strftime
-from __mainwindow__ import Ui_MainWindow
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import constants
@@ -18,7 +13,7 @@ import common
 from MenuBar import AboutWindow
 from exceptions import ExtentionError
 from files import ResultsFiles, RingBuffer
-from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog
+from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog, SubWindow
 
 import PyAbacus as abacus
 from PyAbacus.communication import findPorts, CommunicationPort
@@ -29,22 +24,33 @@ if constants.CURRENT_OS == "win32":
 
 common.readConstantsFile()
 
-class Main(QtWidgets.QMainWindow, Ui_MainWindow):
-    """
-        Defines the mainwindow.
+class MainWindow(QtWidgets.QMainWindow):
+    count = 0
 
-    Constants
-    """
-    def __init__(self):
-        QtWidgets.QMainWindow.__init__(self)
-        self.setupUi(self)
-        self.move(0, 0)
-        self.verticalLayout.setSpacing(0)
-        self.formLayout.setSpacing(0)
-        self.verticalLayout_3.setSpacing(0)
+    def __init__(self, parent = None):
+        super(QtWidgets.QMainWindow, self).__init__(parent)
+        self.mdi = QtWidgets.QMdiArea()
+        self.setCentralWidget(self.mdi)
+        """
+        settings
+        """
+        self.subPlots()
+        self.subwindow_plots.show()
+
+        self.subHistorical()
+        self.subwindow_historical.show()
+
+        self.subCurrent()
+        self.subwindow_current.show()
+
+        self.subSettings()
+        self.subwindow_settings.show()
+
+        """
+        Config
+        """
         self.setSettings()
         self.updateConstants()
-        self.unlock_settings_button = None
 
         self.port = None
         self.port_name = None
@@ -52,34 +58,15 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.experiment = None
         self.acquisition_button.clicked.connect(self.startAcquisition)
 
-        """
-        connect
-        """
         self.connect_dialog = None
         self.connect_button.clicked.connect(self.connect)
 
-        """
-        settigns connections
-        """
         self.sampling_comboBox.currentIndexChanged.connect(self.samplingMethod)
         self.coincidence_spinBox.valueChanged.connect(self.coincidenceWindowMethod)
         self.delayA_spinBox.valueChanged.connect(self.delayAMethod)
         self.delayB_spinBox.valueChanged.connect(self.delayBMethod)
         self.sleepA_spinBox.valueChanged.connect(self.sleepAMethod)
         self.sleepB_spinBox.valueChanged.connect(self.sleepBMethod)
-
-        """
-        table
-        """
-        self.historical_table = Table(4)
-        self.historical_layout = QtGui.QVBoxLayout()
-        self.historical_layout.addWidget(self.historical_table)
-        self.historical_tab.setLayout(self.historical_layout)
-
-        """
-        current labels
-        """
-        self.current_labels = CurrentLabels(self.current_tab)
 
         self.initPlots()
         self.refresh_timer = QtCore.QTimer()
@@ -104,14 +91,50 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.save_as_button.clicked.connect(self.chooseFile)
         self.save_as_lineEdit.returnPressed.connect(self.setSaveAs)
 
-        self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
-        self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
-        self.formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
         self.unlockSettings(True)
 
         """
         MenuBar
         """
+        self.menubar = self.menuBar()
+
+        self.menuFile = self.menubar.addMenu("File")
+        self.menuProperties = self.menubar.addMenu("Properties")
+        self.menuView = self.menubar.addMenu("View")
+        self.menuHelp = self.menubar.addMenu("Help")
+
+        self.statusBar = QtWidgets.QStatusBar(self.mdi)
+        self.statusBar.setObjectName("statusBar")
+        self.setStatusBar(self.statusBar)
+
+        self.actionAbout = QtWidgets.QAction('About', self)
+        self.actionSave_as = QtWidgets.QAction('Save as', self.mdi)
+        self.actionDefault_settings = QtWidgets.QAction('Default settings', self.mdi)
+        self.actionExit = QtWidgets.QAction('Exit', self.mdi)
+
+        self.menuFile.addAction(self.actionSave_as)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionExit)
+        self.menuHelp.addAction(self.actionAbout)
+        self.menuProperties.addAction(self.actionDefault_settings)
+
+        self.menuView.addAction("Show settings")
+        self.menuView.addAction("Show historical")
+        self.menuView.addAction("Show current")
+        self.menuView.addAction("Show plots")
+        self.menuView.addSeparator()
+        self.menuView.addAction("Tiled")
+        self.menuView.addAction("Cascade")
+
+        self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuProperties.menuAction())
+        self.menubar.addAction(self.menuView.menuAction())
+        self.menubar.addAction(self.menuHelp.menuAction())
+
+
+
+        self.menuView.triggered[QtWidgets.QAction].connect(self.handleViews)
+
         self.actionSave_as.triggered.connect(self.chooseFile)
         self.actionSave_as.setShortcut("Ctrl+S")
         self.actionDefault_settings.triggered.connect(self.settingsDialogCaller)
@@ -126,8 +149,141 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
 
         self.setWindowTitle(constants.WINDOW_NAME)
 
-        self.resize(550, 650)
+        self.mdi.cascadeSubWindows()
+
         self.connect()
+
+    def handleViews(self, q):
+        text = q.text()
+        if "Show" in text:
+            text = text[5:]
+            title = text[0].upper() + text[1:]
+            # exec("self.sub%s()"%title)
+            exec("self.subwindow_%s.show()"%text)
+
+        elif text == "Cascade":
+            self.mdi.cascadeSubWindows()
+
+        elif text == "Tiled":
+            self.mdi.tileSubWindows()
+
+    def subSettings(self):
+        def fillFormLayout(layout, values):
+            for (i, line) in enumerate(values):
+                layout.setWidget(i, QtWidgets.QFormLayout.LabelRole, line[0])
+                layout.setWidget(i, QtWidgets.QFormLayout.FieldRole, line[1])
+
+        settings_frame = QtWidgets.QFrame()
+        settings_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        settings_frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        settings_verticalLayout = QtWidgets.QVBoxLayout(settings_frame)
+        settings_verticalLayout.setContentsMargins(11, 11, 11, 11)
+        settings_verticalLayout.setSpacing(6)
+
+        settings_frame3 = QtWidgets.QFrame()
+        settings_frame3.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        settings_frame3.setFrameShadow(QtWidgets.QFrame.Raised)
+        settings_frame3_horizontalLayout =  QtWidgets.QHBoxLayout(settings_frame3)
+        label = QtWidgets.QLabel("Save as:")
+
+        self.save_as_lineEdit = QtWidgets.QLineEdit()
+        self.save_as_button = QtWidgets.QPushButton("Open")
+
+        settings_frame3_horizontalLayout.addWidget(label)
+        settings_frame3_horizontalLayout.addWidget(self.save_as_lineEdit)
+        settings_frame3_horizontalLayout.addWidget(self.save_as_button)
+
+        settings_frame2 = QtWidgets.QFrame()
+        settings_frame2.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        settings_frame2.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        settings_frame2_formLayout =  QtWidgets.QFormLayout(settings_frame2)
+
+        self.sampling_label = QtWidgets.QLabel("Sampling time:")
+        self.sampling_comboBox = QtWidgets.QComboBox()
+        self.coincidence_label = QtWidgets.QLabel("Coincidence window (ns):")
+        self.coincidence_spinBox = QtWidgets.QSpinBox()
+        self.delayA_label = QtWidgets.QLabel("Delay A (ns):")
+        self.delayA_spinBox = QtWidgets.QSpinBox()
+        self.delayB_label = QtWidgets.QLabel("Delay B (ns):")
+        self.delayB_spinBox = QtWidgets.QSpinBox()
+        self.sleepA_label = QtWidgets.QLabel("Sleep time A (ns):")
+        self.sleepA_spinBox = QtWidgets.QSpinBox()
+        self.sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
+        self.sleepB_spinBox = QtWidgets.QSpinBox()
+
+        widgets = [(self.sampling_label, self.sampling_comboBox),
+                    (self.coincidence_label, self.coincidence_spinBox),
+                    (self.delayA_label, self.delayA_spinBox),
+                    (self.delayB_label, self.delayB_spinBox),
+                    (self.sleepA_label, self.sleepA_spinBox),
+                    (self.sleepB_label, self.sleepB_spinBox),]
+
+        fillFormLayout(settings_frame2_formLayout, widgets)
+
+        self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
+        self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
+        settings_frame2_formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
+
+        settings_verticalLayout.addWidget(settings_frame3)
+        settings_verticalLayout.addWidget(settings_frame2)
+
+        self.connect_button = QtWidgets.QPushButton("Connect")
+        settings_verticalLayout.addWidget(self.connect_button)
+        self.acquisition_button = QtWidgets.QPushButton("Start Acquisition")
+        settings_verticalLayout.addWidget(self.acquisition_button)
+
+        # self.subwindow_settings = QtWidgets.QMdiSubWindow(self.mdi)
+        self.subwindow_settings = SubWindow()
+        self.subwindow_settings.setWidget(settings_frame)
+        self.subwindow_settings.setWindowTitle("Settings")
+
+        # self.subwindow_settings
+        self.mdi.addSubWindow(self.subwindow_settings)
+
+        self.setSettings()
+
+    def unlockSettings(self, unlock = True):
+        self.sampling_comboBox.setEnabled(unlock)
+        self.coincidence_spinBox.setEnabled(unlock)
+        self.delayA_spinBox.setEnabled(unlock)
+        self.delayB_spinBox.setEnabled(unlock)
+        self.sleepA_spinBox.setEnabled(unlock)
+        self.sleepB_spinBox.setEnabled(unlock)
+        if unlock:
+            self.unlock_settings_button.setEnabled(False)
+        else:
+            self.unlock_settings_button.setEnabled(True)
+
+    def subHistorical(self):
+        widget = QtWidgets.QWidget()
+        self.historical_table = Table(4)
+        historical_layout = QtGui.QVBoxLayout(widget)
+        historical_layout.addWidget(self.historical_table)
+
+        self.subwindow_historical = SubWindow()
+        self.subwindow_historical.setWidget(widget)
+        self.subwindow_historical.setWindowTitle("Historical")
+        self.mdi.addSubWindow(self.subwindow_historical)
+
+    def subCurrent(self):
+        widget = QtWidgets.QWidget()
+        self.current_labels = CurrentLabels(widget)
+
+        self.subwindow_current = SubWindow()
+        self.subwindow_current.setMinimumSize(300, 300)
+        self.subwindow_current.setWidget(widget)
+        self.subwindow_current.setWindowTitle("Current")
+        self.mdi.addSubWindow(self.subwindow_current)
+
+    def subPlots(self):
+        pg.setConfigOptions(foreground = 'k', background = None, antialias = True)
+        self.plot_win = pg.GraphicsWindow()
+
+        self.subwindow_plots = SubWindow()
+        self.subwindow_plots.setWidget(self.plot_win)
+        self.subwindow_plots.setWindowTitle("Plots")
+        self.mdi.addSubWindow(self.subwindow_plots)
 
     def aboutWindowCaller(self):
         self.about_window.show()
@@ -253,11 +409,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
 
-    # def delete_settings_button(self):
-    #     self.formLayout.removeWidget(self.unlock_settings_button)
-    #     self.unlock_settings_button.deleteLater()
-    #     self.unlock_settings_button = None
-
     def unlockSettings(self, unlock = True):
         self.sampling_comboBox.setEnabled(unlock)
         self.coincidence_spinBox.setEnabled(unlock)
@@ -267,10 +418,8 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.sleepB_spinBox.setEnabled(unlock)
         if unlock:
             self.unlock_settings_button.setEnabled(False)
-            self.unlock_settings_button.setStyleSheet("color: rgba(237, 237, 237, 0); background-color: rgba(237, 237, 237, 0);")
         else:
             self.unlock_settings_button.setEnabled(True)
-            self.unlock_settings_button.setStyleSheet("color: none; background-color: none;")
 
     def setSettings(self):
         common.setSamplingComboBox(self.sampling_comboBox)
@@ -408,9 +557,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.coins_line.setData(time_, data[:, 3])
 
     def initPlots(self):
-        pg.setConfigOptions(foreground = 'k', background = None, antialias = True)
-        self.plot_win = pg.GraphicsWindow()
-
         self.counts_plot = self.plot_win.addPlot()
         self.coins_plot = self.plot_win.addPlot(row = 1, col = 0)
 
@@ -422,10 +568,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
         self.countsB_line = self.counts_plot.plot(pen = "b", symbol='o', symbolPen = "b", symbolBrush="b", symbolSize=symbolSize, name="Detector B")
 
         self.coins_line = self.coins_plot.plot(pen = "k", symbol='o', symbolPen = "k", symbolBrush="k", symbolSize=symbolSize, name="Coincidences AB")
-
-        self.plot_layout = QtGui.QVBoxLayout()
-        self.plot_layout.addWidget(self.plot_win)
-        self.plots_frame.setLayout(self.plot_layout)
 
         self.counts_plot.setLabel('left', "Counts")
         self.coins_plot.setLabel('left', "Coincidences")
@@ -526,8 +668,6 @@ class Main(QtWidgets.QMainWindow, Ui_MainWindow):
             self.acquisition_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
             self.connect_button.setText("Connect")
-            #if self.unlock_settings_button != None:
-            #    self.delete_settings_button()
 
         try:
             self.results_files.writeParams("Error,%s"%error_text)
@@ -580,26 +720,12 @@ def run():
     sleep(1)
     splash.close()
 
-    main = Main()
+    main = MainWindow()
     main.setWindowIcon(icon)
     main.show()
     app.exec_()
     # sys.exit(app.exec_())
 
 if __name__ == "__main__":
-    if DEBUG:
-        import traceback
-        try:
-            run()
-        except Exception as e:
-            print(e)
-            print(traceback.format_exc())
-            while True:
-                try:
-                    pass
-                except KeyboardInterrupt:
-                    break
-        sys.exit()
-    else:
-        run()
-        sys.exit()
+    run()
+    sys.exit()

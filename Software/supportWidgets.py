@@ -360,8 +360,8 @@ class SettingsDialog(QtWidgets.QDialog):
         self.sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
         self.sleepB_spinBox = QtWidgets.QSpinBox()
 
-        self.from_device_label = QtWidgets.QLabel("Get settings from device:")
-        self.from_device_checkBox = QtWidgets.QCheckBox()
+        # self.from_device_label = QtWidgets.QLabel("Get settings from device:")
+        # self.from_device_checkBox = QtWidgets.QCheckBox()
 
         widgets = [(self.sampling_label, self.sampling_comboBox),
                     (self.coincidence_label, self.coincidence_spinBox),
@@ -455,3 +455,11 @@ class SettingsDialog(QtWidgets.QDialog):
         folder = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", common.findDocuments()))
         if folder != "":
             self.directory_lineEdit.setText(folder)
+
+class SubWindow(QtWidgets.QMdiSubWindow):
+    def __init__(self, parent = None):
+        super(SubWindow, self).__init__(parent)
+
+    def closeEvent(self, evnt):
+        evnt.ignore()
+        self.hide()
