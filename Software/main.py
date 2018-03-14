@@ -13,7 +13,7 @@ import common
 from MenuBar import AboutWindow
 from exceptions import ExtentionError
 from files import ResultsFiles, RingBuffer
-from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog, SubWindow
+from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog, SubWindow, ClickableLineEdit
 
 import PyAbacus as abacus
 from PyAbacus.communication import findPorts, CommunicationPort
@@ -29,8 +29,49 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent = None):
         super(QtWidgets.QMainWindow, self).__init__(parent)
-        self.mdi = QtWidgets.QMdiArea()
-        self.setCentralWidget(self.mdi)
+        widget = QtWidgets.QWidget()
+
+        layout = QtWidgets.QVBoxLayout(widget)
+
+        layout.setContentsMargins(11, 11, 11, 11)
+        layout.setSpacing(6)
+
+        frame = QtWidgets.QFrame()
+        frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        frame.setFrameShadow(QtWidgets.QFrame.Raised)
+
+        horizontalLayout =  QtWidgets.QHBoxLayout(frame)
+        label = QtWidgets.QLabel("Save as:")
+
+        self.save_as_lineEdit = ClickableLineEdit()
+        self.save_as_lineEdit.clicked.connect(self.chooseFile)
+
+        self.save_as_lineEdit.setReadOnly(True)
+        self.save_as_button = QtWidgets.QPushButton("Open")
+
+        horizontalLayout.addWidget(label)
+        horizontalLayout.addWidget(self.save_as_lineEdit)
+        horizontalLayout.addWidget(self.save_as_button)
+
+        layout.addWidget(frame)
+
+        frame2 = QtWidgets.QFrame()
+        layout2 = QtWidgets.QHBoxLayout(frame2)
+        layout.setSpacing(0)
+
+        self.connect_button = QtWidgets.QPushButton("Connect")
+        self.connect_button.setMaximumSize(QtCore.QSize(140, 60))
+        layout2.addWidget(self.connect_button)
+        self.acquisition_button = QtWidgets.QPushButton("Start Acquisition")
+        self.acquisition_button.setMaximumSize(QtCore.QSize(140, 60))
+        layout2.addWidget(self.acquisition_button)
+        layout.addWidget(frame2)
+
+        self.mdi = QtWidgets.QMdiArea(widget)
+        self.mdi.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        layout.addWidget(self.mdi)
+        self.setCentralWidget(widget)
+
         """
         settings
         """
@@ -103,7 +144,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuView = self.menubar.addMenu("View")
         self.menuHelp = self.menubar.addMenu("Help")
 
-        self.statusBar = QtWidgets.QStatusBar(self.mdi)
+        self.statusBar = QtWidgets.QStatusBar(self)
         self.statusBar.setObjectName("statusBar")
         self.setStatusBar(self.statusBar)
 
@@ -118,20 +159,22 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuHelp.addAction(self.actionAbout)
         self.menuProperties.addAction(self.actionDefault_settings)
 
-        self.menuView.addAction("Show settings")
-        self.menuView.addAction("Show historical")
-        self.menuView.addAction("Show current")
-        self.menuView.addAction("Show plots")
+
+        self.menuView.addAction(QtGui.QAction("Show settings", self.menubar, checkable=True))
+        self.menuView.addAction(QtGui.QAction("Show historical", self.menubar, checkable=True))
+        self.menuView.addAction(QtGui.QAction("Show current", self.menubar, checkable=True))
+        self.menuView.addAction(QtGui.QAction("Show plots", self.menubar, checkable=True))
         self.menuView.addSeparator()
         self.menuView.addAction("Tiled")
         self.menuView.addAction("Cascade")
+
+        for action in self.menuView.actions():
+            if action.isCheckable(): action.setChecked(True)
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuProperties.menuAction())
         self.menubar.addAction(self.menuView.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
-
-
 
         self.menuView.triggered[QtWidgets.QAction].connect(self.handleViews)
 
@@ -149,17 +192,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.setWindowTitle(constants.WINDOW_NAME)
 
+        # self.mdi.tileSubWindows()
         self.mdi.cascadeSubWindows()
+
+        # self.subwindow_plots.resize(self.size())
 
         self.connect()
 
     def handleViews(self, q):
         text = q.text()
         if "Show" in text:
+            for action in self.menuView.actions():
+                if text == action.text():
+                    action.setChecked(True)
             text = text[5:]
-            title = text[0].upper() + text[1:]
-            # exec("self.sub%s()"%title)
+            exec("self.subwindow_%s.hide()"%text)
             exec("self.subwindow_%s.show()"%text)
+            exec("self.subwindow_%s.setWindowState(self.subwindow_%s.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)"%(text, text))
+            exec("self.subwindow_%s.activateWindow()"%text)
 
         elif text == "Cascade":
             self.mdi.cascadeSubWindows()
@@ -178,20 +228,7 @@ class MainWindow(QtWidgets.QMainWindow):
         settings_frame.setFrameShadow(QtWidgets.QFrame.Raised)
         settings_verticalLayout = QtWidgets.QVBoxLayout(settings_frame)
         settings_verticalLayout.setContentsMargins(11, 11, 11, 11)
-        settings_verticalLayout.setSpacing(6)
-
-        settings_frame3 = QtWidgets.QFrame()
-        settings_frame3.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        settings_frame3.setFrameShadow(QtWidgets.QFrame.Raised)
-        settings_frame3_horizontalLayout =  QtWidgets.QHBoxLayout(settings_frame3)
-        label = QtWidgets.QLabel("Save as:")
-
-        self.save_as_lineEdit = QtWidgets.QLineEdit()
-        self.save_as_button = QtWidgets.QPushButton("Open")
-
-        settings_frame3_horizontalLayout.addWidget(label)
-        settings_frame3_horizontalLayout.addWidget(self.save_as_lineEdit)
-        settings_frame3_horizontalLayout.addWidget(self.save_as_button)
+        settings_verticalLayout.setSpacing(0)
 
         settings_frame2 = QtWidgets.QFrame()
         settings_frame2.setFrameShape(QtWidgets.QFrame.StyledPanel)
@@ -225,16 +262,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
         settings_frame2_formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
 
-        settings_verticalLayout.addWidget(settings_frame3)
+        # settings_verticalLayout.addWidget(settings_frame3)
         settings_verticalLayout.addWidget(settings_frame2)
 
-        self.connect_button = QtWidgets.QPushButton("Connect")
-        settings_verticalLayout.addWidget(self.connect_button)
-        self.acquisition_button = QtWidgets.QPushButton("Start Acquisition")
-        settings_verticalLayout.addWidget(self.acquisition_button)
-
         # self.subwindow_settings = QtWidgets.QMdiSubWindow(self.mdi)
-        self.subwindow_settings = SubWindow()
+        self.subwindow_settings = SubWindow(self)
         self.subwindow_settings.setWidget(settings_frame)
         self.subwindow_settings.setWindowTitle("Settings")
 
@@ -261,7 +293,7 @@ class MainWindow(QtWidgets.QMainWindow):
         historical_layout = QtGui.QVBoxLayout(widget)
         historical_layout.addWidget(self.historical_table)
 
-        self.subwindow_historical = SubWindow()
+        self.subwindow_historical = SubWindow(self)
         self.subwindow_historical.setWidget(widget)
         self.subwindow_historical.setWindowTitle("Historical")
         self.mdi.addSubWindow(self.subwindow_historical)
@@ -270,8 +302,8 @@ class MainWindow(QtWidgets.QMainWindow):
         widget = QtWidgets.QWidget()
         self.current_labels = CurrentLabels(widget)
 
-        self.subwindow_current = SubWindow()
-        self.subwindow_current.setMinimumSize(300, 300)
+        self.subwindow_current = SubWindow(self)
+        self.subwindow_current.setMinimumSize(200, 100)
         self.subwindow_current.setWidget(widget)
         self.subwindow_current.setWindowTitle("Current")
         self.mdi.addSubWindow(self.subwindow_current)
@@ -280,7 +312,7 @@ class MainWindow(QtWidgets.QMainWindow):
         pg.setConfigOptions(foreground = 'k', background = None, antialias = True)
         self.plot_win = pg.GraphicsWindow()
 
-        self.subwindow_plots = SubWindow()
+        self.subwindow_plots = SubWindow(self)
         self.subwindow_plots.setWidget(self.plot_win)
         self.subwindow_plots.setWindowTitle("Plots")
         self.mdi.addSubWindow(self.subwindow_plots)

@@ -23,6 +23,7 @@ class Table(QtWidgets.QTableWidget):
         self.setHorizontalHeaderLabels(self.headers)
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
+        self.horizontalHeader().setStretchLastSection(True);
 
     def insertData(self, data):
         rows, cols = data.shape
@@ -288,7 +289,8 @@ class SettingsDialog(QtWidgets.QDialog):
         self.file_tab_frame1_layout = QtWidgets.QHBoxLayout(self.file_tab_frame1)
 
         self.directory_label = QtWidgets.QLabel("Directory:")
-        self.directory_lineEdit = QtWidgets.QLineEdit()
+        self.directory_lineEdit = ClickableLineEdit()
+        # self.directory_lineEdit = QtWidgets.QLineEdit()
         self.directory_pushButton = QtWidgets.QPushButton("Open")
 
         self.file_tab_frame1_layout.addWidget(self.directory_label)
@@ -297,6 +299,8 @@ class SettingsDialog(QtWidgets.QDialog):
 
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame1)
 
+        self.directory_lineEdit.setReadOnly(True)
+        self.directory_lineEdit.clicked.connect(self.chooseFolder)
         self.directory_pushButton.clicked.connect(self.chooseFolder)
 
         # frame2
@@ -459,7 +463,19 @@ class SettingsDialog(QtWidgets.QDialog):
 class SubWindow(QtWidgets.QMdiSubWindow):
     def __init__(self, parent = None):
         super(SubWindow, self).__init__(parent)
+        self.parent = parent
 
     def closeEvent(self, evnt):
         evnt.ignore()
         self.hide()
+        name = self.windowTitle().lower()
+        actions = self.parent.menuView.actions()
+        for action in actions:
+            if name in action.text(): action.setChecked(False)
+
+class ClickableLineEdit(QtGui.QLineEdit):
+    clicked = QtCore.pyqtSignal()
+
+    def mousePressEvent(self, event):
+        self.clicked.emit()
+        QtGui.QLineEdit.mousePressEvent(self, event)
