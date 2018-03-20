@@ -191,12 +191,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settings_dialog = SettingsDialog(self)
 
         self.setWindowTitle(constants.WINDOW_NAME)
-
         # self.mdi.tileSubWindows()
         self.mdi.cascadeSubWindows()
-
-        # self.subwindow_plots.resize(self.size())
-
+        self.subwindow_plots.resize(400, 350)
         self.connect()
 
     def handleViews(self, q):
