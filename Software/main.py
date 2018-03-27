@@ -224,7 +224,6 @@ class MainWindow(QtWidgets.QMainWindow):
             check = True
         if check:
             version = url.checkUpdate()
-            version = ""
             if version != None:
                 msg = QtWidgets.QMessageBox()
                 msg.setIcon(QtWidgets.QMessageBox.Information)
