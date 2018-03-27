@@ -262,7 +262,7 @@ class ConnectDialog(QtWidgets.QDialog):
 class SettingsDialog(QtWidgets.QDialog):
     def __init__(self, parent):
         QtWidgets.QDialog.__init__(self)
-        self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint | QtCore.Qt.WindowTitleHint)
+        # self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint  | QtCore.Qt.WindowTitleHint)
 
         self.parent = parent
         self.setWindowTitle("Default settings")

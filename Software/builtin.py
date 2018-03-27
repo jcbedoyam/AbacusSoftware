@@ -126,6 +126,7 @@ class SweepDialogBase(QtWidgets.QDialog):
             self.timer.stop()
             self.completed = False
             self.startStopButton.setText("Start")
+            self.startStopButton.setStyleSheet("background-color: none")
             self.enableWidgets(True)
             self.parent.check_timer.start()
 
@@ -160,52 +161,18 @@ class SweepDialogBase(QtWidgets.QDialog):
         if ans: self.parent.startAcquisition()
         return ans
 
-class SleepDialog(SweepDialogBase):
-    def __init__(self, parent):
-        super(SleepDialog, self).__init__(parent)
-
-        self.setWindowTitle("Sleep time sweep")
-
-        self.startSpin.setMinimum(-abacus.MAX_SLEEP)
-        self.startSpin.setMaximum(abacus.MAX_DELAY - abacus.STEP_DELAY)
-        self.startSpin.setSingleStep(abacus.STEP_DELAY)
-        self.startSpin.setValue(abacus.MIN_DELAY)
-
-        self.stopSpin.setMinimum(abacus.MIN_DELAY)
-        self.stopSpin.setMaximum(abacus.MAX_DELAY)
-        self.stopSpin.setSingleStep(abacus.STEP_DELAY)
-        self.stopSpin.setValue(abacus.MAX_DELAY)
-
-        self.stepSpin.setMinimum(abacus.STEP_DELAY)
-        self.stepSpin.setMaximum(((abacus.MAX_DELAY - abacus.MIN_DELAY) // abacus.STEP_DELAY) * abacus.STEP_DELAY)
-        self.stepSpin.setSingleStep(abacus.STEP_DELAY)
-
-        self.plot.setLabel('left', "Counts")
-        self.plot.setLabel('bottom', "Sleep time", units='ns')
-
-    def startStop(self):
-        pass
-
 class DelayDialog(SweepDialogBase):
     def __init__(self, parent):
         super(DelayDialog, self).__init__(parent)
 
-        self.parent = parent
-
         self.setWindowTitle("Delay time sweep")
 
-        label = QtWidgets.QLabel("Channel:")
-        self.comboBox = QtWidgets.QComboBox()
-        self.comboBox.addItems(["A", "B"])
-
-        self.formLayout.insertRow(0, label, self.comboBox)
-
-        self.startSpin.setMinimum(abacus.MIN_DELAY)
+        self.startSpin.setMinimum(-abacus.MAX_DELAY)
         self.startSpin.setMaximum(abacus.MAX_DELAY - abacus.STEP_DELAY)
         self.startSpin.setSingleStep(abacus.STEP_DELAY)
-        self.startSpin.setValue(abacus.MIN_DELAY)
+        self.startSpin.setValue(-abacus.MAX_DELAY)
 
-        self.stopSpin.setMinimum(abacus.MIN_DELAY)
+        self.stopSpin.setMinimum(-abacus.MAX_DELAY)
         self.stopSpin.setMaximum(abacus.MAX_DELAY)
         self.stopSpin.setSingleStep(abacus.STEP_DELAY)
         self.stopSpin.setValue(abacus.MAX_DELAY)
@@ -229,6 +196,103 @@ class DelayDialog(SweepDialogBase):
             n = self.nSpin.value()
             range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + step, step)
             range_ = range_[range_ <= abacus.MAX_DELAY]
+
+            if self.parent.experiment != None:
+                if self.parent.streaming:
+                    if self.stopAcquisition():
+                        self.run(n, range_)
+                else:
+                    self.run(n, range_)
+            else:
+                self.parent.connect()
+                if self.parent.experiment != None:
+                    if self.parent.streaming:
+                        if self.stopAcquisition():
+                            self.run(n, range_)
+                    else:
+                        self.run(n, range_)
+
+    def run(self, n, range_):
+        self.cleanPlot()
+        self.completed = False
+        self.startStopButton.setText("Stop")
+        self.startStopButton.setStyleSheet("background-color: green")
+        self.enableWidgets(False)
+
+        self.header = "Delay time (ns)"  + constants.DELIMITER +  "Coincidences"
+
+        self.parent.check_timer.stop()
+        thread = Thread(target = self.heavyDuty, args = (n, range_))
+        thread.daemon = True
+        self.timer.start()
+        thread.start()
+
+    def heavyDuty(self, n, range_):
+        try:
+            for (i, delay) in enumerate(range_):
+                if not self.completed:
+                    if delay < 0:
+                        delay1 = abs(delay)
+                        delay2 = 0
+                    else:
+                        delay1 = 0
+                        delay2 = delay
+
+                    result = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
+                    self.x_data.append(delay)
+                    self.y_data.append(result)
+                else:
+                    break
+
+            self.completed = True
+        except Exception as e:
+            self.completed = True
+            self.error = e
+
+
+class SleepDialog(SweepDialogBase):
+    def __init__(self, parent):
+        super(SleepDialog, self).__init__(parent)
+
+        self.parent = parent
+
+        self.setWindowTitle("Sleep time sweep")
+
+        label = QtWidgets.QLabel("Channel:")
+        self.comboBox = QtWidgets.QComboBox()
+        self.comboBox.addItems(["A", "B"])
+
+        self.formLayout.insertRow(0, label, self.comboBox)
+
+        self.startSpin.setMinimum(abacus.MIN_SLEEP)
+        self.startSpin.setMaximum(abacus.MAX_SLEEP - abacus.STEP_SLEEP)
+        self.startSpin.setSingleStep(abacus.STEP_SLEEP)
+        self.startSpin.setValue(abacus.MIN_SLEEP)
+
+        self.stopSpin.setMinimum(abacus.MIN_SLEEP)
+        self.stopSpin.setMaximum(abacus.MAX_SLEEP)
+        self.stopSpin.setSingleStep(abacus.STEP_SLEEP)
+        self.stopSpin.setValue(abacus.MAX_SLEEP)
+
+        self.stepSpin.setMinimum(abacus.STEP_SLEEP)
+        self.stepSpin.setMaximum(((abacus.MAX_SLEEP - abacus.MIN_SLEEP) // abacus.STEP_SLEEP) * abacus.STEP_SLEEP)
+        self.stepSpin.setSingleStep(abacus.STEP_SLEEP)
+
+        self.plot.setLabel('left', "Counts")
+        self.plot.setLabel('bottom', "Sleep time", units='ns')
+
+    def startStop(self):
+        if self.startStopButton.text() == "Stop":
+            self.timer.stop()
+            self.completed = True
+            self.updatePlot()
+            self.completed = True
+
+        else:
+            step = self.stepSpin.value()
+            n = self.nSpin.value()
+            range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + step, step)
+            range_ = range_[range_ <= abacus.MAX_SLEEP]
             channel = self.comboBox.currentText()
 
             if self.parent.experiment != None:
@@ -250,9 +314,10 @@ class DelayDialog(SweepDialogBase):
         self.cleanPlot()
         self.completed = False
         self.startStopButton.setText("Stop")
+        self.startStopButton.setStyleSheet("background-color: green")
         self.enableWidgets(False)
 
-        self.header = "Delay time (ns)"  + constants.DELIMITER +  "Coincidences (%s)"%channel
+        self.header = "Sleep time (ns)"  + constants.DELIMITER +  "Counts (%s)"%channel
 
         self.parent.check_timer.stop()
         thread = Thread(target = self.heavyDuty, args = (channel, n, range_))
@@ -264,7 +329,7 @@ class DelayDialog(SweepDialogBase):
         try:
             for (i, delay) in enumerate(range_):
                 if not self.completed:
-                    result = self.parent.experiment.delaySweep(channel, delay, n)
+                    result = self.parent.experiment.sleepSweep(channel, delay, n)
                     self.x_data.append(delay)
                     self.y_data.append(result)
                 else:
