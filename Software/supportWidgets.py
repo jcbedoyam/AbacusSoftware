@@ -64,7 +64,7 @@ class AutoSizeLabel(QtWidgets.QLabel):
         self.setFont(QtGui.QFont(self.font_name))
         self.initial_font_size = 10
         self.font_size = 10
-        self.MAX_TRY = 40
+        self.MAX_TRY = 150
         self.height = self.contentsRect().height()
         self.width = self.contentsRect().width()
         self.name = text

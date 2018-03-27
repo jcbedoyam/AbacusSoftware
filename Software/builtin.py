@@ -1,6 +1,8 @@
 import constants
 import common
+from files import File
 import PyAbacus as abacus
+
 
 import numpy as np
 import pyqtgraph as pg
@@ -12,6 +14,8 @@ class SweepDialogBase(QtWidgets.QDialog):
     def __init__(self, parent):
         super(SweepDialogBase, self).__init__(parent)
         self.resize(400, 500)
+
+        self.parent = parent
 
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.verticalLayout.setContentsMargins(11, 11, 11, 11)
@@ -46,6 +50,8 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.nSpin = QtWidgets.QSpinBox()
         self.nSpin.setMinimum(1)
 
+        self.startSpin.valueChanged.connect(self.handleStart)
+
         self.formLayout.addRow(startLabel, self.startSpin)
         self.formLayout.addRow(stopLabel, self.stopSpin)
         self.formLayout.addRow(stepLabel, self.stepSpin)
@@ -77,14 +83,56 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.timer.setInterval(constants.CHECK_RATE)
         self.timer.timeout.connect(self.updatePlot)
 
+        self.header = None
+
+        self.error = None
+
+    def handleStart(self, value):
+        self.stopSpin.setMinimum(value + abacus.STEP_DELAY)
+
+    def warning(self, error):
+        error_text = str(error)
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Warning)
+        msg.setText(error_text)
+        msg.setWindowTitle("Warning")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        return msg.exec_()
+
+    def enableWidgets(self, enable):
+        self.startSpin.setEnabled(enable)
+        self.stopSpin.setEnabled(enable)
+        self.stepSpin.setEnabled(enable)
+        self.nSpin.setEnabled(enable)
+        try:
+            self.comboBox.setEnabled(enable)
+        except:
+            pass
+
     def updatePlot(self):
+        self.plot_line.setData(self.x_data, self.y_data)
+        if self.error != None:
+            self.parent.errorWindow(self.error)
+            self.error = None
+
         if self.completed:
+            if self.fileName != "":
+                file = File(self.fileName, self.header)
+                data = np.vstack((self.x_data, self.y_data)).T
+                file.npwrite(data, "%d" + constants.DELIMITER + "%d")
+
             self.x_data = []
             self.y_data = []
             self.timer.stop()
             self.completed = False
-        else:
-            self.plot_line.setData(self.x_data, self.y_data)
+            self.startStopButton.setText("Start")
+            self.enableWidgets(True)
+            self.parent.check_timer.start()
+
+    def cleanPlot(self):
+        self.x_data = []
+        self.y_data = []
+        self.plot_line.setData(self.x_data, self.y_data)
 
     def chooseFile(self):
         try:
@@ -103,8 +151,14 @@ class SweepDialogBase(QtWidgets.QDialog):
             self.fileName = common.unicodePath(name)
             self.lineEdit.setText(self.fileName)
 
-    def startStop(self):
-        pass
+    def stopAcquisition(self):
+        e = Exception("Data acquisition is active, in order to make the sweep it will be turned off.")
+        ans = self.warning(e)
+        if ans == QtWidgets.QMessageBox.Ok:
+            ans = True
+        else: ans = False
+        if ans: self.parent.startAcquisition()
+        return ans
 
 class SleepDialog(SweepDialogBase):
     def __init__(self, parent):
@@ -112,8 +166,25 @@ class SleepDialog(SweepDialogBase):
 
         self.setWindowTitle("Sleep time sweep")
 
+        self.startSpin.setMinimum(-abacus.MAX_SLEEP)
+        self.startSpin.setMaximum(abacus.MAX_DELAY - abacus.STEP_DELAY)
+        self.startSpin.setSingleStep(abacus.STEP_DELAY)
+        self.startSpin.setValue(abacus.MIN_DELAY)
+
+        self.stopSpin.setMinimum(abacus.MIN_DELAY)
+        self.stopSpin.setMaximum(abacus.MAX_DELAY)
+        self.stopSpin.setSingleStep(abacus.STEP_DELAY)
+        self.stopSpin.setValue(abacus.MAX_DELAY)
+
+        self.stepSpin.setMinimum(abacus.STEP_DELAY)
+        self.stepSpin.setMaximum(((abacus.MAX_DELAY - abacus.MIN_DELAY) // abacus.STEP_DELAY) * abacus.STEP_DELAY)
+        self.stepSpin.setSingleStep(abacus.STEP_DELAY)
+
         self.plot.setLabel('left', "Counts")
         self.plot.setLabel('bottom', "Sleep time", units='ns')
+
+    def startStop(self):
+        pass
 
 class DelayDialog(SweepDialogBase):
     def __init__(self, parent):
@@ -130,7 +201,7 @@ class DelayDialog(SweepDialogBase):
         self.formLayout.insertRow(0, label, self.comboBox)
 
         self.startSpin.setMinimum(abacus.MIN_DELAY)
-        self.startSpin.setMaximum(abacus.MAX_DELAY)
+        self.startSpin.setMaximum(abacus.MAX_DELAY - abacus.STEP_DELAY)
         self.startSpin.setSingleStep(abacus.STEP_DELAY)
         self.startSpin.setValue(abacus.MIN_DELAY)
 
@@ -147,26 +218,59 @@ class DelayDialog(SweepDialogBase):
         self.plot.setLabel('bottom', "Delay time", units='ns')
 
     def startStop(self):
-        step = self.stepSpin.value()
-        n = self.nSpin.value()
-        range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + step, step)
-        channel = self.comboBox.currentText()
+        if self.startStopButton.text() == "Stop":
+            self.timer.stop()
+            self.completed = True
+            self.updatePlot()
+            self.completed = True
 
-        if self.parent.experiment != None:
-            thread = Thread(target = self.heavyDuty, args = (channel, n, range_))
-            thread.daemon = True
-            thread.start()
-            self.timer.start(0)
+        else:
+            step = self.stepSpin.value()
+            n = self.nSpin.value()
+            range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + step, step)
+            range_ = range_[range_ <= abacus.MAX_DELAY]
+            channel = self.comboBox.currentText()
+
+            if self.parent.experiment != None:
+                if self.parent.streaming:
+                    if self.stopAcquisition():
+                        self.run(channel, n, range_)
+                else:
+                    self.run(channel, n, range_)
+            else:
+                self.parent.connect()
+                if self.parent.experiment != None:
+                    if self.parent.streaming:
+                        if self.stopAcquisition():
+                            self.run(channel, n, range_)
+                    else:
+                        self.run(channel, n, range_)
+
+    def run(self, channel, n, range_):
+        self.cleanPlot()
+        self.completed = False
+        self.startStopButton.setText("Stop")
+        self.enableWidgets(False)
+
+        self.header = "Delay time (ns)"  + constants.DELIMITER +  "Coincidences (%s)"%channel
+
+        self.parent.check_timer.stop()
+        thread = Thread(target = self.heavyDuty, args = (channel, n, range_))
+        thread.daemon = True
+        self.timer.start()
+        thread.start()
 
     def heavyDuty(self, channel, n, range_):
-        self.startStopButton.setEnabled(False)
         try:
             for (i, delay) in enumerate(range_):
-                result = self.parent.experiment.delaySweep(channel, delay, n)
-                self.x_data.append(delay)
-                self.y_data.append(result)
+                if not self.completed:
+                    result = self.parent.experiment.delaySweep(channel, delay, n)
+                    self.x_data.append(delay)
+                    self.y_data.append(result)
+                else:
+                    break
 
             self.completed = True
         except Exception as e:
-            print(e)
-        self.startStopButton.setEnabled(True)
+            self.completed = True
+            self.error = e
