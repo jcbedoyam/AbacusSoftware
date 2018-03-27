@@ -1,7 +1,7 @@
 import sys
 import os
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 CURRENT_OS = sys.platform
 DIRECTORY = os.path.dirname(sys.executable)

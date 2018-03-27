@@ -299,8 +299,6 @@ class SettingsDialog(QtWidgets.QDialog):
         self.file_tab_frame1_layout.addWidget(self.directory_pushButton)
 
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame1)
-
-        self.directory_lineEdit.setReadOnly(True)
         self.directory_lineEdit.clicked.connect(self.chooseFolder)
         self.directory_pushButton.clicked.connect(self.chooseFolder)
 
@@ -318,12 +316,15 @@ class SettingsDialog(QtWidgets.QDialog):
         self.parameters_lineEdit = QtWidgets.QLineEdit()
         self.autogenerate_label = QtWidgets.QLabel("Autogenerate file name:")
         self.autogenerate_checkBox = QtWidgets.QCheckBox()
+        self.check_updates_label = QtWidgets.QLabel("Check for updates:")
+        self.check_updates_checkBox = QtWidgets.QCheckBox()
         self.datetime_label = QtWidgets.QLabel("Use datetime:")
         self.datetime_checkBox = QtWidgets.QCheckBox()
 
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame2)
 
-        widgets = [(self.autogenerate_label, self.autogenerate_checkBox),
+        widgets = [(self.check_updates_label, self.check_updates_checkBox),
+                    (self.autogenerate_label, self.autogenerate_checkBox),
                     (self.datetime_label, self.datetime_checkBox),
                     (self.file_prefix_label, self.file_prefix_lineEdit),
                     (self.parameters_label, self.parameters_lineEdit),
@@ -336,6 +337,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame2)
 
         self.autogenerate_checkBox.setCheckState(2)
+        self.check_updates_checkBox.setCheckState(2)
         self.autogenerate_checkBox.stateChanged.connect(self.actogenerateMethod)
         self.datetime_checkBox.setCheckState(2)
         self.parameters_lineEdit.setText(constants.PARAMS_SUFFIX)

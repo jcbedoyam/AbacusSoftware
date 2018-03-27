@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import webbrowser
 import numpy as np
 import __GUI_images__
 import pyqtgraph as pg
@@ -11,6 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 import constants
 import common
 import builtin
+import url
 from MenuBar import AboutWindow
 from exceptions import ExtentionError
 from files import ResultsFiles, RingBuffer
@@ -212,7 +214,26 @@ class MainWindow(QtWidgets.QMainWindow):
         self.mdi.tileSubWindows()
         # self.mdi.cascadeSubWindows()
         self.subwindow_plots.resize(400, 350)
-        self.connect()
+
+    def softwareUpdate(self):
+        try:
+            check = constants.check_updates_checkBox
+        except:
+            if constants.SETTING_FILE_EXISTS:
+                os.remove(constants.SETTINGS_PATH)
+            check = True
+        if check:
+            version = url.checkUpdate()
+            version = ""
+            if version != None:
+                msg = QtWidgets.QMessageBox()
+                msg.setIcon(QtWidgets.QMessageBox.Information)
+                msg.setText("There is a new version avaible (%s).\nDo you want to download it?"%version)
+                msg.setWindowTitle("Update avaible")
+                msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+                if msg.exec_() == QtWidgets.QMessageBox.Yes:
+                    webbrowser.open(url.TARGET_URL)
+                    exit()
 
     def handleViews(self, q):
         text = q.text()
@@ -227,10 +248,6 @@ class MainWindow(QtWidgets.QMainWindow):
                     else:
                         action.setChecked(True)
                         exec("self.subwindow_%s.show()"%text)
-                    # action.setChecked(True)
-
-            # exec("self.subwindow_%s.setWindowState(self.subwindow_%s.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)"%(text, text))
-            # exec("self.subwindow_%s.activateWindow()"%text)
 
         elif text == "Cascade":
             self.mdi.cascadeSubWindows()
@@ -755,13 +772,24 @@ class MainWindow(QtWidgets.QMainWindow):
             else:
                 event.ignore()
 
+    def initial(self):
+        self.__sleep_timer__.stop()
+        self.softwareUpdate()
+        self.connect()
+
+    def show2(self):
+        self.show()
+
+        self.__sleep_timer__ = QtCore.QTimer()
+        self.__sleep_timer__.setInterval(10)
+        self.__sleep_timer__.timeout.connect(self.initial)
+        self.__sleep_timer__.start()
+
 def run():
     from time import sleep
 
     app = QtWidgets.QApplication(sys.argv)
     QtWidgets.QApplication.setStyle(QtWidgets.QStyleFactory.create('Fusion')) # <- Choose the style
-
-    # print(QtWidgets.QStyleFactory.keys())
 
     splash_pix = QtGui.QPixmap(':/splash.png').scaledToWidth(600)
     splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
@@ -781,9 +809,10 @@ def run():
 
     main = MainWindow()
     main.setWindowIcon(icon)
-    main.show()
+    main.show2()
+
     app.exec_()
-    # sys.exit(app.exec_())
+
 
 if __name__ == "__main__":
     run()
