@@ -23,6 +23,8 @@ class Table(QtWidgets.QTableWidget):
         self.setHorizontalHeaderLabels(self.headers)
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
+
+        self.horizontalHeader().setResizeMode(QtWidgets.QHeaderView.Stretch)
         self.horizontalHeader().setStretchLastSection(True);
 
     def insertData(self, data):
@@ -290,7 +292,6 @@ class SettingsDialog(QtWidgets.QDialog):
 
         self.directory_label = QtWidgets.QLabel("Directory:")
         self.directory_lineEdit = ClickableLineEdit()
-        # self.directory_lineEdit = QtWidgets.QLineEdit()
         self.directory_pushButton = QtWidgets.QPushButton("Open")
 
         self.file_tab_frame1_layout.addWidget(self.directory_label)
@@ -475,6 +476,9 @@ class SubWindow(QtWidgets.QMdiSubWindow):
 
 class ClickableLineEdit(QtGui.QLineEdit):
     clicked = QtCore.pyqtSignal()
+    def __init__(self, parent = None):
+        super(ClickableLineEdit, self).__init__(parent)
+        self.setReadOnly(True)
 
     def mousePressEvent(self, event):
         self.clicked.emit()

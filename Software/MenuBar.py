@@ -5,7 +5,6 @@ from constants import __version__
 from PyQt5 import QtCore, QtGui, QtWidgets
 from __about__ import Ui_Dialog as Ui_Dialog_about
 
-
 class AboutWindow(QtWidgets.QDialog, Ui_Dialog_about):
     def __init__(self, parent = None):
         super(AboutWindow, self).__init__(parent)

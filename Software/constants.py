@@ -1,7 +1,7 @@
 import sys
 import os
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 CURRENT_OS = sys.platform
 DIRECTORY = os.path.dirname(sys.executable)
@@ -32,7 +32,7 @@ WINDOW_NAME = "Tausand Abacus"
 DATA_REFRESH_RATE = 250 # fastest data refresh rate (ms)
 CHECK_RATE = 250
 
-BUFFER_ROWS = 100
+BUFFER_ROWS = 10000
 
 WIDGETS_NAMES = ["checkBox", "lineEdit", "comboBox", "spinBox"]
 WIDGETS_GET_ACTIONS = ["self.%s.isChecked()", "self.%s.text()", "self.%s.currentText()", "self.%s.value()"]

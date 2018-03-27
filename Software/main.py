@@ -10,6 +10,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 import constants
 import common
+import builtin
 from MenuBar import AboutWindow
 from exceptions import ExtentionError
 from files import ResultsFiles, RingBuffer
@@ -46,7 +47,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.save_as_lineEdit = ClickableLineEdit()
         self.save_as_lineEdit.clicked.connect(self.chooseFile)
 
-        self.save_as_lineEdit.setReadOnly(True)
         self.save_as_button = QtWidgets.QPushButton("Open")
 
         horizontalLayout.addWidget(label)
@@ -141,17 +141,30 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.menuFile = self.menubar.addMenu("File")
         self.menuProperties = self.menubar.addMenu("Properties")
+        self.menuBuildIn = self.menubar.addMenu("Built In")
         self.menuView = self.menubar.addMenu("View")
         self.menuHelp = self.menubar.addMenu("Help")
+
+        self.menuBuildInSweep = QtGui.QMenu("Sweep")
+
+        sleepSweep = QtWidgets.QAction('Sleep time', self)
+        delaySweep = QtWidgets.QAction('Delay time', self)
+
+        self.menuBuildInSweep.addAction(sleepSweep)
+        self.menuBuildInSweep.addAction(delaySweep)
+        sleepSweep.triggered.connect(self.sleepSweep)
+        delaySweep.triggered.connect(self.delaySweep)
+
+        self.menuBuildIn.addMenu(self.menuBuildInSweep)
 
         self.statusBar = QtWidgets.QStatusBar(self)
         self.statusBar.setObjectName("statusBar")
         self.setStatusBar(self.statusBar)
 
         self.actionAbout = QtWidgets.QAction('About', self)
-        self.actionSave_as = QtWidgets.QAction('Save as', self.mdi)
-        self.actionDefault_settings = QtWidgets.QAction('Default settings', self.mdi)
-        self.actionExit = QtWidgets.QAction('Exit', self.mdi)
+        self.actionSave_as = QtWidgets.QAction('Save as', self)
+        self.actionDefault_settings = QtWidgets.QAction('Default settings', self)
+        self.actionExit = QtWidgets.QAction('Exit', self)
 
         self.menuFile.addAction(self.actionSave_as)
         self.menuFile.addSeparator()
@@ -173,6 +186,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuProperties.menuAction())
+        self.menubar.addAction(self.menuBuildIn.menuAction())
         self.menubar.addAction(self.menuView.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
@@ -191,8 +205,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.settings_dialog = SettingsDialog(self)
 
         self.setWindowTitle(constants.WINDOW_NAME)
-        # self.mdi.tileSubWindows()
-        self.mdi.cascadeSubWindows()
+
+        self.sleepSweepDialog = builtin.SleepDialog(self)
+        self.delaySweepDialog = builtin.DelayDialog(self)
+
+        self.mdi.tileSubWindows()
+        # self.mdi.cascadeSubWindows()
         self.subwindow_plots.resize(400, 350)
         self.connect()
 
@@ -201,18 +219,30 @@ class MainWindow(QtWidgets.QMainWindow):
         if "Show" in text:
             for action in self.menuView.actions():
                 if text == action.text():
-                    action.setChecked(True)
-            text = text[5:]
-            exec("self.subwindow_%s.hide()"%text)
-            exec("self.subwindow_%s.show()"%text)
-            exec("self.subwindow_%s.setWindowState(self.subwindow_%s.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)"%(text, text))
-            exec("self.subwindow_%s.activateWindow()"%text)
+                    text = text[5:]
+                    check = not action.isChecked()
+                    if check:
+                        action.setChecked(False)
+                        exec("self.subwindow_%s.hide()"%text)
+                    else:
+                        action.setChecked(True)
+                        exec("self.subwindow_%s.show()"%text)
+                    # action.setChecked(True)
+
+            # exec("self.subwindow_%s.setWindowState(self.subwindow_%s.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)"%(text, text))
+            # exec("self.subwindow_%s.activateWindow()"%text)
 
         elif text == "Cascade":
             self.mdi.cascadeSubWindows()
 
         elif text == "Tiled":
             self.mdi.tileSubWindows()
+
+    def sleepSweep(self):
+        self.sleepSweepDialog.show()
+
+    def delaySweep(self):
+        self.delaySweepDialog.show()
 
     def subSettings(self):
         def fillFormLayout(layout, values):
