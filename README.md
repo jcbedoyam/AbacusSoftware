@@ -1,10 +1,14 @@
 # AbacusSoftware
 
 ## Getting windows ready
-### Installing environment:
+### Anaconda:
+#### Installing environment:
 ```
 conda create -n abacusenv python=3.4.5
 activate abacusenv
+```
+#### Dependencies
+```
 conda install -c anaconda pywin32
 pip install pyserial pyqtgraph pyinstaller
 conda install pyqt
