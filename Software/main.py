@@ -778,7 +778,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__sleep_timer__.timeout.connect(self.initial)
         self.__sleep_timer__.start()
 
-def softwareUpdate():
+def softwareUpdate(splash):
     try:
         check = constants.check_updates_checkBox
     except:
@@ -788,6 +788,7 @@ def softwareUpdate():
     if check:
         version = url.checkUpdate()
         if version != None:
+            splash.close()
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Information)
             msg.setText("There is a new version avaible (%s).\nDo you want to download it?"%version)
@@ -818,8 +819,7 @@ def run():
 
     sleep(1)
 
-    softwareUpdate()
-    splash.close()
+    softwareUpdate(splash)
 
     main = MainWindow()
     main.setWindowIcon(icon)

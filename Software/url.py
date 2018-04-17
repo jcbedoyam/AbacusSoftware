@@ -26,6 +26,6 @@ def checkUpdate():
 
     for i in range(n):
         if url_version[i] > current_version[i]:
-            return ".".join(url_version)
-            
+            return ".".join([str(v) for v in url_version])
+
     return None
