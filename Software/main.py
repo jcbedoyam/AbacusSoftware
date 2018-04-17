@@ -206,33 +206,27 @@ class MainWindow(QtWidgets.QMainWindow):
         self.about_window = AboutWindow()
         self.settings_dialog = SettingsDialog(self)
 
+        self.resize(800, 700)
         self.setWindowTitle(constants.WINDOW_NAME)
+        self.showMaximized()
+
+        # self.centerOnScreen()
 
         self.sleepSweepDialog = builtin.SleepDialog(self)
         self.delaySweepDialog = builtin.DelayDialog(self)
 
         self.mdi.tileSubWindows()
         # self.mdi.cascadeSubWindows()
-        self.subwindow_plots.resize(400, 350)
+        # self.subwindow_plots.resize(400, 350)
 
-    def softwareUpdate(self):
-        try:
-            check = constants.check_updates_checkBox
-        except:
-            if constants.SETTING_FILE_EXISTS:
-                os.remove(constants.SETTINGS_PATH)
-            check = True
-        if check:
-            version = url.checkUpdate()
-            if version != None:
-                msg = QtWidgets.QMessageBox()
-                msg.setIcon(QtWidgets.QMessageBox.Information)
-                msg.setText("There is a new version avaible (%s).\nDo you want to download it?"%version)
-                msg.setWindowTitle("Update avaible")
-                msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
-                if msg.exec_() == QtWidgets.QMessageBox.Yes:
-                    webbrowser.open(url.TARGET_URL)
-                    exit()
+
+    def centerOnScreen(self):
+        resolution = QtGui.QDesktopWidget().screenGeometry()
+        sw = resolution.width()
+        fw = self.frameSize().width()
+        print(sw, fw)
+        self.move((sw - fw) / 2,
+                  (resolution.height() / 2) - (self.frameSize().height() / 2))
 
     def handleViews(self, q):
         text = q.text()
@@ -773,7 +767,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def initial(self):
         self.__sleep_timer__.stop()
-        self.softwareUpdate()
+        # self.softwareUpdate()
         self.connect()
 
     def show2(self):
@@ -783,6 +777,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.__sleep_timer__.setInterval(10)
         self.__sleep_timer__.timeout.connect(self.initial)
         self.__sleep_timer__.start()
+
+def softwareUpdate():
+    try:
+        check = constants.check_updates_checkBox
+    except:
+        if constants.SETTING_FILE_EXISTS:
+            os.remove(constants.SETTINGS_PATH)
+        check = True
+    if check:
+        version = url.checkUpdate()
+        if version != None:
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Information)
+            msg.setText("There is a new version avaible (%s).\nDo you want to download it?"%version)
+            msg.setWindowTitle("Update avaible")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
+            if msg.exec_() == QtWidgets.QMessageBox.Yes:
+                webbrowser.open(url.TARGET_URL)
+                exit()
 
 def run():
     from time import sleep
@@ -804,14 +817,15 @@ def run():
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     sleep(1)
+
+    softwareUpdate()
     splash.close()
 
     main = MainWindow()
     main.setWindowIcon(icon)
+
     main.show2()
-
     app.exec_()
-
 
 if __name__ == "__main__":
     run()

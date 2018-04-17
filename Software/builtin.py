@@ -39,11 +39,14 @@ class SweepDialogBase(QtWidgets.QDialog):
 
         self.formLayout = QtWidgets.QFormLayout(self.groupBox)
 
+        samplingLabel = QtWidgets.QLabel("Sampling time:")
+
         startLabel = QtWidgets.QLabel("Start time (ns):")
         stopLabel = QtWidgets.QLabel("Stop time (ns):")
         stepLabel = QtWidgets.QLabel("Step size (ns):")
         nLabel = QtWidgets.QLabel("Number of measurements per step:")
 
+        self.samplingLabel = QtWidgets.QLabel(self.parent.sampling_comboBox.currentText())
         self.startSpin = QtWidgets.QSpinBox()
         self.stopSpin = QtWidgets.QSpinBox()
         self.stepSpin = QtWidgets.QSpinBox()
@@ -52,6 +55,7 @@ class SweepDialogBase(QtWidgets.QDialog):
 
         self.startSpin.valueChanged.connect(self.handleStart)
 
+        self.formLayout.addRow(samplingLabel, self.samplingLabel)
         self.formLayout.addRow(startLabel, self.startSpin)
         self.formLayout.addRow(stopLabel, self.stopSpin)
         self.formLayout.addRow(stepLabel, self.stepSpin)

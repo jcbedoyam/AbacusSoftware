@@ -5,7 +5,10 @@ URL_VERSION = "https://raw.githubusercontent.com/Tausand-dev/AbacusSoftware/mast
 TARGET_URL = "https://sourceforge.net/projects/quantum-temp/"
 
 def versionstr(version):
-    return version.replace(".", "")
+    if "=" in version:
+        version = version.split("=")[-1].replace('"', "").replace("'", "")
+    version = version.split(".")
+    return [int(v) for v in version]
 
 def checkUpdate():
     try:
@@ -13,16 +16,16 @@ def checkUpdate():
            html = response.read().decode().split("\n")
            for line in html:
                if "__version__" in line:
-                   line = versionstr(line)
-                   exec(line)
+                   url_version = versionstr(line)
                    break
-        url_version = int(__version__)
     except Exception as e:
         url_version = 0
 
-    current_version = int(versionstr(constants.__version__))
+    current_version = versionstr(constants.__version__)
+    n = min(len(url_version), len(current_version))
 
-    if url_version > current_version:
-        return __version__
-    else:
-        return None
+    for i in range(n):
+        if url_version[i] > current_version[i]:
+            return ".".join(url_version)
+            
+    return None
