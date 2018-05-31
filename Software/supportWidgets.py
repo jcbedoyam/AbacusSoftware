@@ -367,8 +367,14 @@ class SettingsDialog(QtWidgets.QDialog):
         self.sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
         self.sleepB_spinBox = QtWidgets.QSpinBox()
 
-        # self.from_device_label = QtWidgets.QLabel("Get settings from device:")
-        # self.from_device_checkBox = QtWidgets.QCheckBox()
+        self.sampling_comboBox.setEditable(True)
+        self.sampling_comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.sampling_comboBox.lineEdit().setReadOnly(True)
+        self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.delayA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.delayB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.sleepA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.sleepB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         widgets = [(self.sampling_label, self.sampling_comboBox),
                     (self.coincidence_label, self.coincidence_spinBox),

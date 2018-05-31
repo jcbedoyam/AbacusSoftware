@@ -21,9 +21,9 @@ from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog, 
 import PyAbacus as abacus
 from PyAbacus.communication import findPorts, CommunicationPort
 
-if constants.CURRENT_OS == "win32":
-    import win_unicode_console
-    win_unicode_console.enable()
+# if constants.CURRENT_OS == "win32":
+#     import win_unicode_console
+#     win_unicode_console.enable()
 
 common.readConstantsFile()
 
@@ -219,7 +219,6 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.mdi.cascadeSubWindows()
         # self.subwindow_plots.resize(400, 350)
 
-
     def centerOnScreen(self):
         resolution = QtGui.QDesktopWidget().screenGeometry()
         sw = resolution.width()
@@ -285,6 +284,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.sleepA_spinBox = QtWidgets.QSpinBox()
         self.sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
         self.sleepB_spinBox = QtWidgets.QSpinBox()
+
+        self.sampling_comboBox.setEditable(True)
+        self.sampling_comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.sampling_comboBox.lineEdit().setReadOnly(True)
+
+        self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.delayA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.delayB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.sleepA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.sleepB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         widgets = [(self.sampling_label, self.sampling_comboBox),
                     (self.coincidence_label, self.coincidence_spinBox),
@@ -392,6 +401,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.experiment.setSampling(value)
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
+
+            self.sleepSweepDialog.samplingLabel.setText(text_value)
+            self.delaySweepDialog.samplingLabel.setText(text_value)
         else:
             print("Sampling Value, %d"%value)
 
@@ -820,6 +832,7 @@ def run():
     sleep(1)
 
     softwareUpdate(splash)
+    splash.close()
 
     main = MainWindow()
     main.setWindowIcon(icon)

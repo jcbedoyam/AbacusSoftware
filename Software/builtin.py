@@ -53,6 +53,12 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.nSpin = QtWidgets.QSpinBox()
         self.nSpin.setMinimum(1)
 
+        self.samplingLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.startSpin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.stopSpin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.stepSpin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.nSpin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
         self.startSpin.valueChanged.connect(self.handleStart)
 
         self.formLayout.addRow(samplingLabel, self.samplingLabel)
@@ -243,8 +249,13 @@ class DelayDialog(SweepDialogBase):
                         delay2 = delay
 
                     result = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
+                    values = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
+                    result = []
+                    for value in values:
+                        result.append(value)
+
                     self.x_data.append(delay)
-                    self.y_data.append(result)
+                    self.y_data.append(np.mean(result))
                 else:
                     break
 
@@ -252,7 +263,6 @@ class DelayDialog(SweepDialogBase):
         except Exception as e:
             self.completed = True
             self.error = e
-
 
 class SleepDialog(SweepDialogBase):
     def __init__(self, parent):
@@ -265,6 +275,9 @@ class SleepDialog(SweepDialogBase):
         label = QtWidgets.QLabel("Channel:")
         self.comboBox = QtWidgets.QComboBox()
         self.comboBox.addItems(["A", "B"])
+        self.comboBox.setEditable(True)
+        self.comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.comboBox.lineEdit().setReadOnly(True)
 
         self.formLayout.insertRow(0, label, self.comboBox)
 
@@ -333,9 +346,13 @@ class SleepDialog(SweepDialogBase):
         try:
             for (i, delay) in enumerate(range_):
                 if not self.completed:
-                    result = self.parent.experiment.sleepSweep(channel, delay, n)
+                    # result = self.parent.experiment.sleepSweep(channel, delay, n)
+                    values = self.parent.experiment.sleepSweep(channel, delay, n)
+                    result = []
+                    for value in values:
+                        result.append(value)
                     self.x_data.append(delay)
-                    self.y_data.append(result)
+                    self.y_data.append(np.mean(result))
                 else:
                     break
 
