@@ -1,4 +1,4 @@
-import constants
+import abacusSoftware.constants as constants
 import urllib.request
 
 URL_VERSION = "https://raw.githubusercontent.com/Tausand-dev/AbacusSoftware/master/Software/constants.py"

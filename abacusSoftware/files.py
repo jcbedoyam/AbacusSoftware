@@ -2,7 +2,7 @@ import os
 import numpy as np
 from time import localtime, strftime
 
-import constants
+import abacusSoftware.constants as constants
 
 class File(object):
     def __init__(self, name, header = None):

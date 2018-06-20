@@ -1,14 +1,14 @@
-import constants
-import common
-from files import File
-import PyAbacus as abacus
+import abacusSoftware.constants as constants
+import abacusSoftware.common as common
+from abacusSoftware.files import File
+import pyAbacus as abacus
 
 
 import numpy as np
 import pyqtgraph as pg
 from threading import Thread
 from PyQt5 import QtWidgets, QtGui, QtCore
-from supportWidgets import ClickableLineEdit
+from abacusSoftware.supportWidgets import ClickableLineEdit
 
 class SweepDialogBase(QtWidgets.QDialog):
     def __init__(self, parent):

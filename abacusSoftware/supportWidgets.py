@@ -2,11 +2,11 @@ import os
 import numpy as np
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.QtGui import QTableWidgetItem
-from PyAbacus.constants import CURRENT_OS
+from pyAbacus.constants import CURRENT_OS
 
-import common
-import constants
-from PyAbacus.communication import findPorts
+import abacusSoftware.common as common
+import abacusSoftware.constants as constants
+from pyAbacus.communication import findPorts
 
 class Table(QtWidgets.QTableWidget):
     def __init__(self, cols):

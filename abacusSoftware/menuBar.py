@@ -1,9 +1,9 @@
-import __GUI_images__
+import abacusSoftware.__GUI_images__ as __GUI_images__
 
-import PyAbacus as pa
-from constants import __version__
+import pyAbacus as pa
+from abacusSoftware.constants import __version__
 from PyQt5 import QtCore, QtGui, QtWidgets
-from __about__ import Ui_Dialog as Ui_Dialog_about
+from abacusSoftware.__about__ import Ui_Dialog as Ui_Dialog_about
 
 class AboutWindow(QtWidgets.QDialog, Ui_Dialog_about):
     def __init__(self, parent = None):

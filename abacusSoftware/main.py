@@ -3,23 +3,23 @@ import re
 import sys
 import webbrowser
 import numpy as np
-import __GUI_images__
+import abacusSoftware.__GUI_images__
 import pyqtgraph as pg
 from datetime import datetime
 from time import time, localtime, strftime
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-import constants
-import common
-import builtin
-import url
-from MenuBar import AboutWindow
-from exceptions import ExtentionError
-from files import ResultsFiles, RingBuffer
-from supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog, SubWindow, ClickableLineEdit
+import abacusSoftware.constants as constants
+import abacusSoftware.common as common
+import abacusSoftware.builtin as builtin
+import abacusSoftware.url as url
+from abacusSoftware.menuBar import AboutWindow
+from abacusSoftware.exceptions import ExtentionError
+from abacusSoftware.files import ResultsFiles, RingBuffer
+from abacusSoftware.supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog, SubWindow, ClickableLineEdit
 
-import PyAbacus as abacus
-from PyAbacus.communication import findPorts, CommunicationPort
+import pyAbacus as abacus
+from pyAbacus.communication import findPorts, CommunicationPort
 
 # if constants.CURRENT_OS == "win32":
 #     import win_unicode_console

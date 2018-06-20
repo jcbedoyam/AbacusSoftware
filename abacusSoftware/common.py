@@ -1,6 +1,6 @@
 import os
-import constants
-import PyAbacus as abacus
+import abacusSoftware.constants as constants
+import pyAbacus as abacus
 from PyQt5 import QtGui
 
 def timeInUnitsToMs(time):
