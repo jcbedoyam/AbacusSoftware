@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Abacus Software"
-#define MyAppVersion "1.2.3"
+#define MyAppVersion "1.2.5"
 #define MyAppPublisher "Tausand"
 #define MyAppURL "http://www.tausand.com/"
 #define MyAppExeName "AbacusSoftware.exe"
@@ -20,86 +20,26 @@ AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
-DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
-OutputBaseFilename=setup
-SetupIconFile=E:\Tausand\AbacusSoftware\Software\GUI\images\abacus_small.ico
+OutputBaseFilename=AbacusSetup
+SetupIconFile=E:\Tausand\AbacusSoftware\abacusSoftware\GUI\images\abacus_small.ico
 Compression=lzma
 SolidCompression=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
+Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\AbacusSoftware.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_bz2.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_ctypes.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_decimal.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_elementtree.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_hashlib.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_lzma.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_multiprocessing.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_socket.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_ssl.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\_win32sysloader.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\AbacusSoftware.exe.manifest"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\base_library.zip"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\icudt57.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\icuin57.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\icuuc57.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\libjpeg.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\libpng16.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\mfc100u.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\MSVCP100.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\MSVCR100.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\numpy.core.multiarray.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\numpy.core.umath.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\numpy.fft.fftpack_lite.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\numpy.linalg._umath_linalg.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\numpy.linalg.lapack_lite.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\numpy.random.mtrand.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\numpy-atlas.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\pyexpat.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.Qt.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.QtCore.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.QtGui.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.QtOpenGL.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.QtPrintSupport.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.QtSvg.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.QtTest.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5.QtWidgets.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\python34.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\pythoncom34.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\pywintypes34.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Qt5Core.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Qt5Gui.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Qt5OpenGL.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Qt5PrintSupport.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Qt5Svg.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Qt5Test.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Qt5Widgets.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\select.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\sip.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\unicodedata.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\win32api.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\win32com.shell.shell.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\win32pdh.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\win32trace.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\win32ui.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\win32wnet.pyd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\zlib.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\Include\*"; DestDir: "{app}\Include"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\lib2to3\*"; DestDir: "{app}\lib2to3"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\PyQt5\*"; DestDir: "{app}\PyQt5"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "E:\Tausand\AbacusSoftware\Software\dist\AbacusSoftware\qt5_plugins\*"; DestDir: "{app}\qt5_plugins"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "E:\Tausand\AbacusSoftware\abacusSoftware\dist\AbacusSoftware\AbacusSoftware.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "E:\Tausand\AbacusSoftware\abacusSoftware\dist\AbacusSoftware\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
+Name: "{commonprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]

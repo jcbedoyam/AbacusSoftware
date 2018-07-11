@@ -401,13 +401,13 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.experiment.setSampling(value)
             except abacus.exceptions.ExperimentError as e:
                 self.errorWindow(e)
-
-            self.sleepSweepDialog.samplingLabel.setText(text_value)
-            self.delaySweepDialog.samplingLabel.setText(text_value)
         else:
             print("Sampling Value, %d"%value)
+        self.sleepSweepDialog.setSampling(text_value)
+        self.delaySweepDialog.setSampling(text_value)
 
     def coincidenceWindowMethod(self, val):
+        text_value = "%d"%val
         if self.experiment != None:
             try:
                 self.experiment.setCoinWindow(val)
@@ -417,6 +417,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.errorWindow(e)
         else:
             print("Coincidence Window Value: %d"%val)
+        self.sleepSweepDialog.setCoincidence(val)
+        self.delaySweepDialog.setCoincidence(val)
 
     def delayAMethod(self, val):
         if self.experiment != None:

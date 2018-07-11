@@ -40,13 +40,17 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.formLayout = QtWidgets.QFormLayout(self.groupBox)
 
         samplingLabel = QtWidgets.QLabel("Sampling time:")
+        coincidenceLabel = QtWidgets.QLabel("Coincidence Window:")
 
         startLabel = QtWidgets.QLabel("Start time (ns):")
         stopLabel = QtWidgets.QLabel("Stop time (ns):")
         stepLabel = QtWidgets.QLabel("Step size (ns):")
         nLabel = QtWidgets.QLabel("Number of measurements per step:")
 
-        self.samplingLabel = QtWidgets.QLabel(self.parent.sampling_comboBox.currentText())
+        self.samplingLabel = QtWidgets.QLabel("")
+        self.setSampling(self.parent.sampling_comboBox.currentText())
+        self.coincidenceLabel = QtWidgets.QLabel("")
+        self.setCoincidence(self.parent.coincidence_spinBox.value())
         self.startSpin = QtWidgets.QSpinBox()
         self.stopSpin = QtWidgets.QSpinBox()
         self.stepSpin = QtWidgets.QSpinBox()
@@ -54,6 +58,7 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.nSpin.setMinimum(1)
 
         self.samplingLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.coincidenceLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.startSpin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.stopSpin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.stepSpin.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -62,6 +67,7 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.startSpin.valueChanged.connect(self.handleStart)
 
         self.formLayout.addRow(samplingLabel, self.samplingLabel)
+        self.formLayout.addRow(coincidenceLabel, self.coincidenceLabel)
         self.formLayout.addRow(startLabel, self.startSpin)
         self.formLayout.addRow(stopLabel, self.stopSpin)
         self.formLayout.addRow(stepLabel, self.stepSpin)
@@ -171,6 +177,12 @@ class SweepDialogBase(QtWidgets.QDialog):
         if ans: self.parent.startAcquisition()
         return ans
 
+    def setSampling(self, txt):
+        self.samplingLabel.setText(txt)
+
+    def setCoincidence(self, val):
+        self.coincidenceLabel.setText("%d ns"%val)
+
 class DelayDialog(SweepDialogBase):
     def __init__(self, parent):
         super(DelayDialog, self).__init__(parent)
@@ -204,7 +216,7 @@ class DelayDialog(SweepDialogBase):
         else:
             step = self.stepSpin.value()
             n = self.nSpin.value()
-            range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + step, step)
+            range_ = np.arange(self.startSpin.value(), self.stopSpin.value(), step)
             range_ = range_[range_ <= abacus.MAX_DELAY]
 
             if self.parent.experiment != None:
@@ -308,7 +320,7 @@ class SleepDialog(SweepDialogBase):
         else:
             step = self.stepSpin.value()
             n = self.nSpin.value()
-            range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + step, step)
+            range_ = np.arange(self.startSpin.value(), self.stopSpin.value(), step)
             range_ = range_[range_ <= abacus.MAX_SLEEP]
             channel = self.comboBox.currentText()
 

@@ -3,7 +3,7 @@ block_cipher = None
 
 
 a = Analysis(['main.py'],
-             pathex=['E:\\Tausand\\AbacusSoftware\\Software\\GUI\\MainWindow'],
+             pathex=[],
              binaries=[],
              datas=[],
              hiddenimports=[],
@@ -22,7 +22,7 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          console=False, icon='GUI\\images\\abacus_small.ico')
+          console=False, icon='GUI\\images\\abacus_small.ico', version='fileversion.txt')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,

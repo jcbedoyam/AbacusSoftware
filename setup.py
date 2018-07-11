@@ -6,7 +6,7 @@ def read(fname):
 
 setup(
     name = "abacusSoftware",
-    version = "1.2.4",
+    version = "1.2.5",
     author = "Juan Barbosa",
     author_email = "js.barbosa10@uniandes.edu.co",
     description = ("Abacus Software is a suite of tools build to ensure your experience with Tausand's coincidence counters becomes simplified."),
