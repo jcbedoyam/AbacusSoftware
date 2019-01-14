@@ -1,15 +1,131 @@
 import os
 import numpy as np
-from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.QtGui import QTableWidgetItem
+from itertools import combinations
+
+try:
+    from PyQt5 import QtWidgets, QtGui, QtCore
+    from PyQt5.QtGui import QTableWidgetItem
+    from PyQt5.QtWidgets import QSizePolicy, QTabWidget, QWidget, QCheckBox, \
+                        QVBoxLayout, QFrame, QGroupBox, QLabel, QSizePolicy
+except ModuleNotFoundError:
+    from PyQt4 import QtWidgets, QtGui, QtCore
+    from PyQt4.QtGui import QTableWidgetItem
+    from PyQt4.QtWidgets import QSizePolicy
+
 from pyAbacus.constants import CURRENT_OS
 
 import abacusSoftware.common as common
 import abacusSoftware.constants as constants
-from pyAbacus.communication import findPorts
+from pyAbacus import findDevices
+
+class Tabs(QFrame):
+# class Tabs(QTabWidget):
+    def __init__(self, parent = None):
+        QFrame.__init__(self)
+        # QTabWidget.__init__(self)
+        self.parent = parent
+
+        self.all = []
+        self.letters = []
+        self.double = []
+        self.multiple = []
+
+        # self.single_tab = QWidget()
+        # self.double_tab = QWidget()
+        # self.multiple_tab = QWidget()
+
+        scrollArea1 = QtWidgets.QScrollArea()
+        scrollArea1.setWidgetResizable(True)
+        scrollArea1.setStyleSheet("background:transparent;")
+        scrollArea2 = QtWidgets.QScrollArea()
+        scrollArea2.setWidgetResizable(True)
+        scrollArea2.setStyleSheet("background:transparent;")
+        scrollArea3 = QtWidgets.QScrollArea()
+        scrollArea3.setWidgetResizable(True)
+        scrollArea3.setStyleSheet("background:transparent;")
+
+        self.single_tab = QGroupBox("Single")
+        self.double_tab = QGroupBox("Double")
+        self.multiple_tab = QGroupBox("Multiple")
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(6)
+
+        self.single_tab_layout = QVBoxLayout(self.single_tab)
+        self.double_tab_layout = QVBoxLayout(self.double_tab)
+        self.multiple_tab_layout = QVBoxLayout(self.multiple_tab)
+
+        # self.layout.addWidget(self.single_tab)
+        # self.layout.addWidget(self.double_tab)
+        # self.layout.addWidget(self.multiple_tab)
+
+        self.layout.addWidget(QLabel("<b>COUNTS</b>"))
+        self.layout.addWidget(scrollArea1)
+        self.layout.addWidget(scrollArea2)
+        self.layout.addWidget(scrollArea3)
+
+        scrollArea1.setWidget(self.single_tab)
+        scrollArea2.setWidget(self.double_tab)
+        scrollArea3.setWidget(self.multiple_tab)
+
+    def createSingle(self, letter, layout):
+        widget = QCheckBox(letter)
+        widget.setChecked(True)
+        widget.stateChanged.connect(self.signal)
+        setattr(self, letter, widget)
+        layout.addWidget(widget)
+
+    def setNumberChannels(self, n_channels):
+        self.deleteCheckBoxs()
+
+        self.letters = [chr(i + ord('A')) for i in range(n_channels)]
+        joined = "".join(self.letters)
+        self.double = ["".join(pair) for pair in combinations(joined, 2)]
+        self.multiple = []
+        if n_channels > 2:
+            for i in range(3, n_channels + 1):
+                self.multiple += ["".join(pair) for pair in combinations(joined, i)]
+
+        self.all = self.letters + self.double + self.multiple
+
+        for letter in self.letters:
+            self.createSingle(letter, self.single_tab_layout)
+        for letter in self.double:
+            self.createSingle(letter, self.double_tab_layout)
+        for letter in self.multiple:
+            self.createSingle(letter, self.multiple_tab_layout)
+
+    def createsingle(self, letter, layout):
+        widget = QCheckBox(letter)
+        widget.setChecked(True)
+        setattr(self, letter, widget)
+        layout.addWidget(widget)
+
+    def deleteSingle(self, widget, layout):
+        layout.removeWidget(widget)
+        widget.deleteLater()
+
+    def deleteCheckBoxs(self):
+        for letter in self.letters:
+            self.deleteSingle(getattr(self, letter), self.single_tab_layout)
+        for letter in self.double:
+            self.deleteSingle(getattr(self, letter), self.double_tab_layout)
+        for letter in self.multiple:
+            self.deleteSingle(getattr(self, letter), self.multiple_tab_layout)
+
+        self.all = []
+        self.letters = []
+        self.double = []
+        self.multiple = []
+
+    def getChecked(self):
+        return [letter for letter in self.all if getattr(self, letter).isChecked()]
+
+    def signal(self):
+        self.parent.activeChannelsChanged(self.getChecked())
 
 class Table(QtWidgets.QTableWidget):
-    def __init__(self, cols):
+    def __init__(self, cols, combinations):
         QtWidgets.QTableWidget.__init__(self)
         self.setColumnCount(cols)
         self.horizontalHeader().setSortIndicatorShown(False)
@@ -19,7 +135,7 @@ class Table(QtWidgets.QTableWidget):
 
         self.last_time = None
 
-        self.headers = ['time (s)', 'A', 'B', 'AB']
+        self.headers = ['Time (s)', 'ID'] + combinations
         self.setHorizontalHeaderLabels(self.headers)
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
@@ -140,24 +256,20 @@ class CurrentLabels(QtWidgets.QWidget):
         self.installEventFilter(self)
         self.labels = []
 
-    def createLabels(self, labels=["counts A", "counts B", "coinc AB"]):
-        for name in labels:
+    def createLabels(self, labels):
+        self.removeLabels()
+        n_colors = len(constants.COLORS)
+        for (i, name) in enumerate(labels):
             label = AutoSizeLabel(name, "0")
+            self.setColor(label, constants.COLORS[i % n_colors])
             self.layout.addWidget(label)
             self.labels.append(label)
 
-    # def createLabels(self, detectors, coincidences):
-    #     for detector in detectors:
-    #         name = detector.name
-    #         label = AutoSizeLabel(name, "0")
-    #         self.layout.addWidget(label)
-    #         self.labels.append(label)
-    #
-    #     for coin in coincidences:
-    #         name = coin.name
-    #         label = AutoSizeLabel(name, "0")
-    #         self.layout.addWidget(label)
-    #         self.labels.append(label)
+    def removeLabels(self):
+        for label in self.labels:
+            self.layout.removeWidget(label)
+            label.deleteLater()
+        self.labels = []
 
     def setColor(self, label, color):
         label.setColor(color)
@@ -243,7 +355,7 @@ class ConnectDialog(QtWidgets.QDialog):
 
     def refresh(self):
         self.clear()
-        self.ports = findPorts()
+        self.ports = findDevices()[0]
         ports_names = list(self.ports.keys())
         if len(ports_names) == 0:
             self.label.setText(constants.CONNECT_EMPTY_LABEL)
@@ -473,6 +585,8 @@ class SubWindow(QtWidgets.QMdiSubWindow):
     def __init__(self, parent = None):
         super(SubWindow, self).__init__(parent)
         self.parent = parent
+        self.setMinimumSize(280, 320)
+        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
 
     def closeEvent(self, evnt):
         evnt.ignore()

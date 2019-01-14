@@ -1,7 +1,7 @@
 import sys
 import os
 
-__version__ = "1.2.5"
+__version__ = "1.3.0"
 
 CURRENT_OS = sys.platform
 DIRECTORY = os.path.dirname(sys.executable)
@@ -33,6 +33,9 @@ DATA_REFRESH_RATE = 250 # fastest data refresh rate (ms)
 CHECK_RATE = 250
 
 BUFFER_ROWS = 10000
+
+COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#8c564b",
+        "#e377c2", "#7f7f7f", "#bcdb22", "#14becf"]
 
 WIDGETS_NAMES = ["checkBox", "lineEdit", "comboBox", "spinBox"]
 WIDGETS_GET_ACTIONS = ["self.%s.isChecked()", "self.%s.text()", "self.%s.currentText()", "self.%s.value()"]

@@ -11,35 +11,37 @@ def timeInUnitsToMs(time):
         value = int(time.replace('s', ''))*1000
     return value
 
-def setSamplingComboBox(comboBox, value = abacus.DEFAULT_SAMP):
+def setSamplingComboBox(comboBox, value = abacus.constants.SAMPLING_DEFAULT_VALUE):
     comboBox.clear()
 
     model = comboBox.model()
-    for row in abacus.SAMP_VALUES:
-        item = QtGui.QStandardItem(row)
-        if timeInUnitsToMs(row) < abacus.SAMP_CUTOFF:
-            item.setBackground(QtGui.QColor('red'))
-            item.setForeground(QtGui.QColor('white'))
+    for row in abacus.constants.SAMPLING_VALUES:
+        if row < 1000:
+            item = QtGui.QStandardItem("%d ms" % row)
+        else:
+            item = QtGui.QStandardItem("%d s" % (row // 1000))
+        # if row < abacus.SAMP_CUTOFF:
+        #     item.setBackground(QtGui.QColor('red'))
+        #     item.setForeground(QtGui.QColor('white'))
         model.appendRow(item)
+    # comboBox.setCurrentIndex(comboBox.findText("%"value))
 
-    comboBox.setCurrentIndex(comboBox.findText(value))
-
-def setCoincidenceSpinBox(spinBox, value = abacus.DEFAULT_COIN):
-    spinBox.setMinimum(abacus.MIN_COIN)
-    spinBox.setMaximum(abacus.MAX_COIN)
-    spinBox.setSingleStep(abacus.STEP_COIN)
+def setCoincidenceSpinBox(spinBox, value = abacus.constants.COINCIDENCE_WINDOW_DEFAULT_VALUE):
+    spinBox.setMinimum(abacus.constants.COINCIDENCE_WINDOW_MINIMUM_VALUE)
+    spinBox.setMaximum(abacus.constants.COINCIDENCE_WINDOW_MAXIMUM_VALUE)
+    spinBox.setSingleStep(abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE)
     spinBox.setValue(value)
 
-def setDelaySpinBox(spinBox, value = abacus.DEFAULT_DELAY):
-    spinBox.setMinimum(abacus.MIN_DELAY)
-    spinBox.setMaximum(abacus.MAX_DELAY)
-    spinBox.setSingleStep(abacus.STEP_DELAY)
+def setDelaySpinBox(spinBox, value = abacus.constants.DELAY_DEFAULT_VALUE):
+    spinBox.setMinimum(abacus.constants.DELAY_MINIMUM_VALUE)
+    spinBox.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE)
+    spinBox.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
     spinBox.setValue(value)
 
-def setSleepSpinBox(spinBox, value = abacus.DEFAULT_SLEEP):
-    spinBox.setMinimum(abacus.MIN_SLEEP)
-    spinBox.setMaximum(abacus.MAX_SLEEP)
-    spinBox.setSingleStep(abacus.STEP_SLEEP)
+def setSleepSpinBox(spinBox, value = abacus.constants.SLEEP_DEFAULT_VALUE):
+    spinBox.setMinimum(abacus.constants.SLEEP_MINIMUM_VALUE)
+    spinBox.setMaximum(abacus.constants.SLEEP_MAXIMUM_VALUE)
+    spinBox.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
     spinBox.setValue(value)
 
 def findWidgets(class_, widget):

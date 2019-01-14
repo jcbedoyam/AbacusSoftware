@@ -91,22 +91,24 @@ class RingBuffer():
     """
     Based on https://scimusing.wordpress.com/2013/10/25/ring-buffers-in-pythonnumpy/
     """
-    def __init__(self, rows, columns, file = None, fmt = constants.DELIMITER.join(["%.3f", "%d", "%d", "%d"])):
+    def __init__(self, rows, columns, combinations, file = None):
         self.data = np.zeros((rows, columns))
         self.index = 0
         self.file = file
-        self.fmt = fmt
+        self.combinations = combinations
+        self.data_fmt = ["%.3f"] + ["%d" for i in range(columns - 1)]
+        self.fmt = constants.DELIMITER.join(self.data_fmt)
         self.size = self.data.shape[0]
         self.total_movements = 0
         self.last_saved = 0
+        self.header_list = ["Time (s)", "ID"] + ["Counts %s"%letter for letter in self.combinations]
+        self.header = constants.DELIMITER.join(self.header_list)
 
-    def updateFormat(self, fmt = constants.DELIMITER.join(["%.3f", "%d", "%d", "%d"]), delimiter = None):
-        if delimiter == None:
-            self.fmt = fmt
-        else:
-            self.fmt = constants.DELIMITER.join(["%.3f", "%d", "%d", "%d"])
+    def updateDelimiter(self, delimiter):
+        self.fmt = delimiter.join(self.data_fmt)
+        self.header = delimiter.join(self.header_list)
         if self.file != None:
-            self.file.updateHeader(header = constants.DELIMITER.join(["Time (s)", "Counts A", "Counts B", "Coincidences AB"]))
+            self.file.updateHeader(header = self.header)
 
     def extend(self, x):
         "adds array x to ring buffer"
@@ -124,6 +126,7 @@ class RingBuffer():
 
     def setFile(self, file):
         self.file = file
+        self.file.updateHeader(self.header)
 
     def save(self):
         "Saves the buffer"

@@ -6,8 +6,15 @@ import numpy as np
 import abacusSoftware.__GUI_images__
 import pyqtgraph as pg
 from datetime import datetime
+from itertools import combinations
 from time import time, localtime, strftime
 from PyQt5 import QtCore, QtGui, QtWidgets
+
+try:
+    from PyQt5 import QtCore, QtGui, QtWidgets
+    from PyQt5.QtWidgets import QLabel, QSpinBox, QComboBox, QSizePolicy
+except ModuleNotFoundError:
+    from PyQt4.QtGui import QLabel, QSpinBox, QComboBox, QSizePolicy
 
 import abacusSoftware.constants as constants
 import abacusSoftware.common as common
@@ -16,14 +23,24 @@ import abacusSoftware.url as url
 from abacusSoftware.menuBar import AboutWindow
 from abacusSoftware.exceptions import ExtentionError
 from abacusSoftware.files import ResultsFiles, RingBuffer
-from abacusSoftware.supportWidgets import Table, CurrentLabels, ConnectDialog, SettingsDialog, SubWindow, ClickableLineEdit
+from abacusSoftware.supportWidgets import Table, CurrentLabels, ConnectDialog, \
+                        SettingsDialog, SubWindow, ClickableLineEdit, Tabs
 
 import pyAbacus as abacus
-from pyAbacus.communication import findPorts, CommunicationPort
+from pyAbacus import findDevices
+
+# from pyAbacus.communication import findDevices, CommunicationPort
 
 # if constants.CURRENT_OS == "win32":
 #     import win_unicode_console
 #     win_unicode_console.enable()
+
+def getCombinations(n_channels):
+    letters = [chr(i + ord('A')) for i in range(n_channels)]
+    joined = "".join(letters)
+    for i in range(2, n_channels + 1):
+        letters += ["".join(pair) for pair in combinations(joined, 2)]
+    return letters
 
 common.readConstantsFile()
 
@@ -32,6 +49,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent = None):
         super(QtWidgets.QMainWindow, self).__init__(parent)
+        self.number_channels = 0
+        self.active_channels = []
         widget = QtWidgets.QWidget()
 
         layout = QtWidgets.QVBoxLayout(widget)
@@ -44,7 +63,7 @@ class MainWindow(QtWidgets.QMainWindow):
         frame.setFrameShadow(QtWidgets.QFrame.Raised)
 
         horizontalLayout =  QtWidgets.QHBoxLayout(frame)
-        label = QtWidgets.QLabel("Save as:")
+        label = QLabel("Save as:")
 
         self.save_as_lineEdit = ClickableLineEdit()
         self.save_as_lineEdit.clicked.connect(self.chooseFile)
@@ -69,14 +88,34 @@ class MainWindow(QtWidgets.QMainWindow):
         layout2.addWidget(self.acquisition_button)
         layout.addWidget(frame2)
 
-        self.mdi = QtWidgets.QMdiArea(widget)
+        frame3 = QtWidgets.QFrame()
+        layout3 = QtWidgets.QHBoxLayout(frame3)
+        layout.addWidget(frame3)
+
+        toolbar_frame = QtWidgets.QFrame()
+        toolbar_frame_layout = QtWidgets.QVBoxLayout(toolbar_frame)
+
+        self.tabs_widget = Tabs(self)
+        toolbar_frame_layout.addWidget(self.tabs_widget)
+        toolbar_frame.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Expanding)
+        toolbar_frame.setMaximumWidth(250)
+
+        layout3.addWidget(toolbar_frame)
+        layout3.setContentsMargins(0, 0, 0, 0)
+        layout3.setSpacing(0)
+
+        self.mdi = QtWidgets.QMdiArea(frame3)
         self.mdi.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        layout.addWidget(self.mdi)
+        layout3.addWidget(self.mdi)
         self.setCentralWidget(widget)
 
         """
         settings
         """
+        self.delay_widgets = []
+        self.sleep_widgets = []
+        self.subSettings_delays_sleeps = []
+
         self.subPlots()
         self.subwindow_plots.show()
 
@@ -93,12 +132,10 @@ class MainWindow(QtWidgets.QMainWindow):
         Config
         """
         self.setSettings()
-        self.updateConstants()
+        # self.updateConstants()
 
-        self.port = None
         self.port_name = None
         self.streaming = False
-        self.experiment = None
         self.acquisition_button.clicked.connect(self.startAcquisition)
 
         self.connect_dialog = None
@@ -106,12 +143,16 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.sampling_comboBox.currentIndexChanged.connect(self.samplingMethod)
         self.coincidence_spinBox.valueChanged.connect(self.coincidenceWindowMethod)
-        self.delayA_spinBox.valueChanged.connect(self.delayAMethod)
-        self.delayB_spinBox.valueChanged.connect(self.delayBMethod)
-        self.sleepA_spinBox.valueChanged.connect(self.sleepAMethod)
-        self.sleepB_spinBox.valueChanged.connect(self.sleepBMethod)
 
-        self.initPlots()
+        """
+        Plot
+        """
+        self.plot_lines = []
+        self.legend = None
+        self.counts_plot = self.plot_win.addPlot()
+        self.counts_plot.setLabel('left', "Counts")
+        self.counts_plot.setLabel('bottom', "Time", units='s')
+
         self.refresh_timer = QtCore.QTimer()
         self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
         self.refresh_timer.timeout.connect(self.updateWidgets)
@@ -129,8 +170,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.init_time = 0
         self.init_date = datetime.now().strftime('%Y/%m/%d %H:%M:%S')
 
-        self.data_ring = RingBuffer(constants.BUFFER_ROWS, 4)
-
+        self.data_ring = None
+        self.combinations = []
+        self.combination_indexes = []
         self.save_as_button.clicked.connect(self.chooseFile)
         self.save_as_lineEdit.returnPressed.connect(self.setSaveAs)
 
@@ -157,7 +199,7 @@ class MainWindow(QtWidgets.QMainWindow):
         sleepSweep.triggered.connect(self.sleepSweep)
         delaySweep.triggered.connect(self.delaySweep)
 
-        self.menuBuildIn.addMenu(self.menuBuildInSweep)
+        # self.menuBuildIn.addMenu(self.menuBuildInSweep)
 
         self.statusBar = QtWidgets.QStatusBar(self)
         self.statusBar.setObjectName("statusBar")
@@ -172,8 +214,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
         self.menuHelp.addAction(self.actionAbout)
-        self.menuProperties.addAction(self.actionDefault_settings)
-
+        # self.menuProperties.addAction(self.actionDefault_settings)
 
         self.menuView.addAction(QtGui.QAction("Show settings", self.menubar, checkable=True))
         self.menuView.addAction(QtGui.QAction("Show historical", self.menubar, checkable=True))
@@ -204,26 +245,25 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.acquisition_button.setDisabled(True)
         self.about_window = AboutWindow()
-        self.settings_dialog = SettingsDialog(self)
+        # self.settings_dialog = SettingsDialog(self)
 
-        self.resize(800, 700)
+        # self.resize(800, 700)
         self.setWindowTitle(constants.WINDOW_NAME)
         self.showMaximized()
 
-        # self.centerOnScreen()
+        self.centerOnScreen()
 
-        self.sleepSweepDialog = builtin.SleepDialog(self)
-        self.delaySweepDialog = builtin.DelayDialog(self)
+        # self.sleepSweepDialog = builtin.SleepDialog(self)
+        # self.delaySweepDialog = builtin.DelayDialog(self)
 
         self.mdi.tileSubWindows()
-        # self.mdi.cascadeSubWindows()
-        # self.subwindow_plots.resize(400, 350)
+        self.mdi.cascadeSubWindows()
+        self.subwindow_plots.resize(400, 350)
 
     def centerOnScreen(self):
         resolution = QtGui.QDesktopWidget().screenGeometry()
         sw = resolution.width()
         fw = self.frameSize().width()
-        print(sw, fw)
         self.move((sw - fw) / 2,
                   (resolution.height() / 2) - (self.frameSize().height() / 2))
 
@@ -253,81 +293,146 @@ class MainWindow(QtWidgets.QMainWindow):
     def delaySweep(self):
         self.delaySweepDialog.show()
 
-    def subSettings(self):
-        def fillFormLayout(layout, values):
+    def subSettings(self, new = True):
+        def fillFormLayout(layout, values, new = True):
             for (i, line) in enumerate(values):
+                if not new: i += 2
                 layout.setWidget(i, QtWidgets.QFormLayout.LabelRole, line[0])
                 layout.setWidget(i, QtWidgets.QFormLayout.FieldRole, line[1])
 
-        settings_frame = QtWidgets.QFrame()
-        settings_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        settings_frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        settings_verticalLayout = QtWidgets.QVBoxLayout(settings_frame)
-        settings_verticalLayout.setContentsMargins(11, 11, 11, 11)
-        settings_verticalLayout.setSpacing(0)
+        def deleteWidgets(layout, widgets):
+            for label, widget in widgets:
+                layout.removeWidget(label)
+                layout.removeWidget(widget)
+                label.deleteLater()
+                widget.deleteLater()
 
-        settings_frame2 = QtWidgets.QFrame()
-        settings_frame2.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        settings_frame2.setFrameShadow(QtWidgets.QFrame.Raised)
+        def createWidgets():
+            delays = []
+            sleeps = []
+            self.delay_widgets = []
+            self.sleep_widgets = []
+            for i in range(self.number_channels):
+                letter = self.getLetter(i)
+                delay_label = 'delay_%s_label'%letter
+                delay_spinBox = 'delay_%s_spinBox'%letter
+                sleep_label = 'sleep_%s_label'%letter
+                sleep_spinBox = 'sleep_%s_spinBox'%letter
 
-        settings_frame2_formLayout =  QtWidgets.QFormLayout(settings_frame2)
+                setattr(self, delay_label, QLabel("Delay %s (ns):"%letter))
+                setattr(self, delay_spinBox, QSpinBox())
+                setattr(self, sleep_label, QLabel("Sleep %s (ns):"%letter))
+                setattr(self, sleep_spinBox, QSpinBox())
 
-        self.sampling_label = QtWidgets.QLabel("Sampling time:")
-        self.sampling_comboBox = QtWidgets.QComboBox()
-        self.coincidence_label = QtWidgets.QLabel("Coincidence window (ns):")
-        self.coincidence_spinBox = QtWidgets.QSpinBox()
-        self.delayA_label = QtWidgets.QLabel("Delay A (ns):")
-        self.delayA_spinBox = QtWidgets.QSpinBox()
-        self.delayB_label = QtWidgets.QLabel("Delay B (ns):")
-        self.delayB_spinBox = QtWidgets.QSpinBox()
-        self.sleepA_label = QtWidgets.QLabel("Sleep time A (ns):")
-        self.sleepA_spinBox = QtWidgets.QSpinBox()
-        self.sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
-        self.sleepB_spinBox = QtWidgets.QSpinBox()
+                getattr(self, delay_spinBox).setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+                getattr(self, sleep_spinBox).setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        self.sampling_comboBox.setEditable(True)
-        self.sampling_comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.sampling_comboBox.lineEdit().setReadOnly(True)
+                delays.append((getattr(self, delay_label), getattr(self, delay_spinBox)))
+                sleeps.append((getattr(self, sleep_label), getattr(self, sleep_spinBox)))
 
-        self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.delayA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.delayB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.sleepA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.sleepB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+                self.delay_widgets.append(getattr(self, delay_spinBox))
+                self.sleep_widgets.append(getattr(self, sleep_spinBox))
 
-        widgets = [(self.sampling_label, self.sampling_comboBox),
-                    (self.coincidence_label, self.coincidence_spinBox),
-                    (self.delayA_label, self.delayA_spinBox),
-                    (self.delayB_label, self.delayB_spinBox),
-                    (self.sleepA_label, self.sleepA_spinBox),
-                    (self.sleepB_label, self.sleepB_spinBox),]
+            self.subSettings_delays_sleeps = delays + sleeps
 
-        fillFormLayout(settings_frame2_formLayout, widgets)
+            if self.number_channels == 2:
+                self.delay_widgets[0].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
+                self.delay_widgets[1].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
+                self.sleep_widgets[0].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
+                self.sleep_widgets[1].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
+            elif self.number_channels == 4:
+                self.delay_widgets[0].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
+                self.delay_widgets[1].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
+                self.delay_widgets[2].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[2], 'C', arg))
+                self.delay_widgets[3].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[3], 'D', arg))
+                self.sleep_widgets[0].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
+                self.sleep_widgets[1].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
+                self.sleep_widgets[2].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[2], 'C', arg))
+                self.sleep_widgets[3].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[3], 'D', arg))
+            elif self.number_channels == 8:
+                self.delay_widgets[0].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
+                self.delay_widgets[1].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
+                self.delay_widgets[2].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[2], 'C', arg))
+                self.delay_widgets[3].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[3], 'D', arg))
+                self.delay_widgets[4].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[4], 'E', arg))
+                self.delay_widgets[5].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[5], 'F', arg))
+                self.delay_widgets[6].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[6], 'G', arg))
+                self.delay_widgets[7].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[7], 'H', arg))
+                self.sleep_widgets[0].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
+                self.sleep_widgets[1].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
+                self.sleep_widgets[2].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[2], 'C', arg))
+                self.sleep_widgets[3].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[3], 'D', arg))
+                self.sleep_widgets[4].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[4], 'E', arg))
+                self.sleep_widgets[5].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[5], 'F', arg))
+                self.sleep_widgets[6].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[6], 'G', arg))
+                self.sleep_widgets[7].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[7], 'H', arg))
 
-        self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
-        self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
-        settings_frame2_formLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
+        if new:
+            settings_frame = QtWidgets.QFrame()
+            settings_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+            settings_frame.setFrameShadow(QtWidgets.QFrame.Raised)
+            settings_verticalLayout = QtWidgets.QVBoxLayout(settings_frame)
+            settings_verticalLayout.setContentsMargins(11, 11, 11, 11)
+            settings_verticalLayout.setSpacing(0)
 
-        # settings_verticalLayout.addWidget(settings_frame3)
-        settings_verticalLayout.addWidget(settings_frame2)
+            scrollArea = QtWidgets.QScrollArea()
+            scrollArea.setWidgetResizable(True)
 
-        # self.subwindow_settings = QtWidgets.QMdiSubWindow(self.mdi)
-        self.subwindow_settings = SubWindow(self)
-        self.subwindow_settings.setWidget(settings_frame)
-        self.subwindow_settings.setWindowTitle("Settings")
+            self.settings_frame2 = QtWidgets.QFrame()
+            self.settings_frame2.setFrameShape(QtWidgets.QFrame.StyledPanel)
+            self.settings_frame2.setFrameShadow(QtWidgets.QFrame.Raised)
 
-        # self.subwindow_settings
-        self.mdi.addSubWindow(self.subwindow_settings)
+            settings_frame3 = QtWidgets.QFrame()
+
+            self.settings_frame2_formLayout =  QtWidgets.QFormLayout(self.settings_frame2)
+            settings_frame3_formLayout =  QtWidgets.QFormLayout(settings_frame3)
+
+            scrollArea.setWidget(self.settings_frame2)
+
+            self.sampling_label = QLabel("Sampling time:")
+            self.sampling_comboBox = QComboBox()
+            self.coincidence_label = QLabel("Coincidence window (ns):")
+            self.coincidence_spinBox = QSpinBox()
+
+            self.sampling_comboBox.setEditable(True)
+            self.sampling_comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            self.sampling_comboBox.lineEdit().setReadOnly(True)
+
+            self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+            createWidgets()
+
+            widgets = [(self.sampling_label, self.sampling_comboBox),
+                    (self.coincidence_label, self.coincidence_spinBox)]
+
+            self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
+            self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
+
+            fillFormLayout(self.settings_frame2_formLayout, widgets)
+            settings_frame3_formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
+
+            settings_verticalLayout.addWidget(scrollArea)
+            settings_verticalLayout.addWidget(settings_frame3)
+
+            self.subwindow_settings = SubWindow(self)
+            self.subwindow_settings.setWidget(settings_frame)
+            self.subwindow_settings.setWindowTitle("Settings")
+
+            self.settings_frame2.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+            self.mdi.addSubWindow(self.subwindow_settings)
+
+        else:
+            deleteWidgets(self.settings_frame2_formLayout, self.subSettings_delays_sleeps)
+            createWidgets()
+            fillFormLayout(self.settings_frame2_formLayout, self.subSettings_delays_sleeps, new = False)
 
         self.setSettings()
 
     def unlockSettings(self, unlock = True):
         self.sampling_comboBox.setEnabled(unlock)
         self.coincidence_spinBox.setEnabled(unlock)
-        self.delayA_spinBox.setEnabled(unlock)
-        self.delayB_spinBox.setEnabled(unlock)
-        self.sleepA_spinBox.setEnabled(unlock)
-        self.sleepB_spinBox.setEnabled(unlock)
+        for widget in self.delay_widgets + self.sleep_widgets:
+            widget.setEnabled(unlock)
         if unlock:
             self.unlock_settings_button.setEnabled(False)
         else:
@@ -335,9 +440,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def subHistorical(self):
         widget = QtWidgets.QWidget()
-        self.historical_table = Table(4)
-        historical_layout = QtGui.QVBoxLayout(widget)
-        historical_layout.addWidget(self.historical_table)
+        self.historical_table = Table(2, [])
+        self.historical_layout = QtGui.QVBoxLayout(widget)
+        self.historical_layout.addWidget(self.historical_table)
 
         self.subwindow_historical = SubWindow(self)
         self.subwindow_historical.setWidget(widget)
@@ -380,15 +485,18 @@ class MainWindow(QtWidgets.QMainWindow):
     def sendSettings(self):
         self.samplingMethod(self.sampling_comboBox.currentIndex())
         self.coincidenceWindowMethod(self.coincidence_spinBox.value())
-        self.delayAMethod(self.delayA_spinBox.value())
-        self.delayBMethod(self.delayB_spinBox.value())
-        self.sleepAMethod(self.sleepA_spinBox.value())
-        self.sleepBMethod(self.sleepB_spinBox.value())
+
+        for i in range(self.number_channels):
+            letter = self.getLetter(i)
+            delay_widget = self.delay_widgets[i]
+            sleep_widget = self.sleep_widgets[i]
+            self.delayMethod(delay_widget, letter, delay_widget.value())
+            self.sleepMethod(sleep_widget, letter, sleep_widget.value())
 
     def samplingMethod(self, index):
         text_value = self.sampling_comboBox.currentText()
         value = common.timeInUnitsToMs(text_value)
-        if value > 0 and self.experiment != None:
+        if value > 0 and self.port_name != None:
             if value > constants.DATA_REFRESH_RATE:
                 self.refresh_timer.setInterval(value)
             else:
@@ -398,135 +506,127 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.results_files != None:
                 self.results_files.writeParams("Sampling time (ms),%s"%value)
             try:
-                self.experiment.setSampling(value)
-            except abacus.exceptions.ExperimentError as e:
+                abacus.setSetting(self.port_name, 'sampling', value)
+            except abacus.BaseError as e:
                 self.errorWindow(e)
         else:
             print("Sampling Value, %d"%value)
-        self.sleepSweepDialog.setSampling(text_value)
-        self.delaySweepDialog.setSampling(text_value)
+        # self.sleepSweepDialog.setSampling(text_value)
+        # self.delaySweepDialog.setSampling(text_value)
 
     def coincidenceWindowMethod(self, val):
         text_value = "%d"%val
-        if self.experiment != None:
+        if self.port_name != None:
             try:
-                self.experiment.setCoinWindow(val)
+                abacus.setSetting(self.port_name, 'coincidence_window', val)
+                self.coincidence_spinBox.setStyleSheet("color: black")
                 if self.results_files != None:
                     self.results_files.writeParams("Coincidence Window (ns), %s"%str(val))
-            except abacus.exceptions.ExperimentError as e:
+            except abacus.InvalidValueError:
+                self.coincidence_spinBox.setStyleSheet("color: red")
+            except abacus.BaseError:
                 self.errorWindow(e)
         else:
             print("Coincidence Window Value: %d"%val)
-        self.sleepSweepDialog.setCoincidence(val)
-        self.delaySweepDialog.setCoincidence(val)
+        # self.sleepSweepDialog.setCoincidence(val)
+        # self.delaySweepDialog.setCoincidence(val)
 
-    def delayAMethod(self, val):
-        if self.experiment != None:
+    def delayMethod(self, widget, letter, val):
+        if self.port_name != None:
             try:
-                self.experiment.detectors[0].setDelay(val)
+                abacus.setSetting(self.port_name, 'delay_%s'%letter, val)
+                widget.setStyleSheet("color: black")
                 if self.results_files != None:
                     self.results_files.writeParams("Delay A (ns), %s"%str(val))
-            except abacus.exceptions.ExperimentError as e:
+            except abacus.InvalidValueError:
+                widget.setStyleSheet("color: red")
+            except abacus.BaseError as e:
                 self.errorWindow(e)
         else:
-            print("Delay A Value: %d"%val)
+            print("Delay %s Value: %d"%(letter, val))
 
-    def delayBMethod(self, val):
-        if self.experiment != None:
+    def sleepMethod(self, widget, letter, val):
+        if self.port_name != None:
             try:
-                self.experiment.detectors[1].setDelay(val)
+                abacus.setSetting(self.port_name, 'sleep_%s'%letter, val)
                 if self.results_files != None:
-                    self.results_files.writeParams("Delay B (ns), %s"%str(val))
-            except abacus.exceptions.ExperimentError as e:
+                    self.results_files.writeParams("sleep A (ns), %s"%str(val))
+            except abacus.InvalidValueError:
+                widget.setStyleSheet("color: red")
+            except abacus.BaseError as e:
                 self.errorWindow(e)
         else:
-            print("Delay B Value: %d"%val)
+            print("Sleep %s Value: %d"%(letter, val))
 
-    def sleepAMethod(self, val):
-        if self.experiment != None:
-            try:
-                self.experiment.detectors[0].setSleep(val)
-                if self.results_files != None:
-                    self.results_files.writeParams("Sleep A (ns), %s"%str(val))
-            except abacus.exceptions.ExperimentError as e:
-                self.errorWindow(e)
-        else:
-            print("Sleep A Value: %d"%val)
+    def activeChannelsChanged(self, actives):
+        self.active_channels = actives
+        self.initPlots()
+        self.current_labels.createLabels(self.active_channels)
+        self.combination_indexes = [i for (i, com) in enumerate(self.combinations) if com in self.active_channels]
 
-    def sleepBMethod(self, val):
-        if self.experiment != None:
-            try:
-                self.experiment.detectors[1].setSleep(val)
-                if self.results_files != None:
-                    self.results_files.writeParams("Sleep B (ns), %s"%str(val))
-            except abacus.exceptions.ExperimentError as e:
-                self.errorWindow(e)
-        else:
-            print("Sleep B Value: %d"%val)
+        "Clear table"
+        self.historical_layout.removeWidget(self.historical_table)
+        self.historical_table.deleteLater()
+
+        "Create new table"
+        self.historical_table = Table(len(self.active_channels) + 2, self.active_channels)
+        self.historical_layout.addWidget(self.historical_table)
+
+    def getLetter(self, i):
+        return chr(i + ord('A'))
 
     def checkParams(self):
-        if self.experiment != None:
+        if self.port_name != None:
             try:
-                self.experiment.periodicCheck()
-                samp = self.experiment.getSamplingValue()
-                coin = self.experiment.getCoinwinValue()
-                values = self.experiment.getDetectorsTimersValues()
-                (dA, sA), (dB, sB) = values
-
+                settings = abacus.getAllSettings(self.port_name)
+                samp = settings.getSetting("sampling")
+                coin = settings.getSetting("coincidence_window")
+                if self.coincidence_spinBox.value() != coin:
+                    self.coincidence_spinBox.setValue(coin)
+                for i in range(self.number_channels):
+                    letter = self.getLetter(i)
+                    delay = self.delay_widgets[i]
+                    sleep = self.sleep_widgets[i]
+                    delay_new_val = settings.getSetting("delay_%s"%letter)
+                    sleep_new_val = settings.getSetting("sleep_%s"%letter)
+                    if delay.value() != delay_new_val:
+                        delay.setValue(delay_new_val)
+                    if sleep.value() != sleep_new_val:
+                        sleep.setValue(sleep_new_val)
                 if common.timeInUnitsToMs(self.sampling_comboBox.currentText()) != samp:
                     if samp >= 1000:
-                        index = self.sampling_comboBox.findText('%d s'%(samp/1000))
+                        index = self.sampling_comboBox.findText('%d s'%(samp//1000))
                     else:
                         index = self.sampling_comboBox.findText('%d ms'%samp)
                     self.sampling_comboBox.setCurrentIndex(index)
-                if self.coincidence_spinBox.value() != coin:
-                    self.coincidence_spinBox.setValue(coin)
-                if self.delayA_spinBox.value() != dA:
-                    self.delayA_spinBox.setValue(dA)
-                if self.delayB_spinBox.value() != dB:
-                    self.delayB_spinBox.setValue(dB)
-                if self.sleepA_spinBox.value() != sA:
-                    self.sleepA_spinBox.setValue(sA)
-                if self.sleepB_spinBox.value() != sB:
-                    self.sleepB_spinBox.setValue(sB)
-            except abacus.exceptions.ExperimentError as e:
+            except abacus.BaseError as e:
                 self.errorWindow(e)
-
-    def unlockSettings(self, unlock = True):
-        self.sampling_comboBox.setEnabled(unlock)
-        self.coincidence_spinBox.setEnabled(unlock)
-        self.delayA_spinBox.setEnabled(unlock)
-        self.delayB_spinBox.setEnabled(unlock)
-        self.sleepA_spinBox.setEnabled(unlock)
-        self.sleepB_spinBox.setEnabled(unlock)
-        if unlock:
-            self.unlock_settings_button.setEnabled(False)
-        else:
-            self.unlock_settings_button.setEnabled(True)
 
     def setSettings(self):
         common.setSamplingComboBox(self.sampling_comboBox)
         common.setCoincidenceSpinBox(self.coincidence_spinBox)
-        common.setDelaySpinBox(self.delayA_spinBox)
-        common.setDelaySpinBox(self.delayB_spinBox)
-        common.setSleepSpinBox(self.sleepA_spinBox)
-        common.setSleepSpinBox(self.sleepB_spinBox)
+        for widget in self.delay_widgets:
+            common.setDelaySpinBox(widget)
+        for widget in self.sleep_widgets:
+            common.setSleepSpinBox(widget)
 
     def cleanPort(self):
         if self.streaming:
             self.startAcquisition()
 
-        if self.port != None:
-            self.port.close()
+        if self.port_name != None:
+            abacus.close(self.port_name)
             self.port_name = None
-            self.port = None
-
-        if self.experiment != None:
+            self.setNumberChannels(0)
+            self.subSettings(new = False)
             self.check_timer.stop()
-            self.experiment = None
+
+    def setNumberChannels(self, n):
+        self.number_channels = n
+        self.tabs_widget.setNumberChannels(n)
 
     def connect(self):
-        if self.port != None:
+        if self.port_name != None:
             self.connect_button.setText("Connect")
             self.acquisition_button.setDisabled(True)
             if self.results_files != None:
@@ -541,17 +641,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
             if port != "":
                 self.port_name = port
-                self.port = CommunicationPort(self.connect_dialog.ports[self.port_name])
-                self.experiment = abacus.Experiment(self.port)
-
+                abacus.open(self.port_name)
+                n = abacus.getChannelsFromName(self.port_name)
+                self.setNumberChannels(n)
                 self.acquisition_button.setDisabled(False)
                 self.acquisition_button.setStyleSheet("background-color: none")
                 self.acquisition_button.setText("Start acquisition")
                 self.connect_button.setText("Disconnect")
 
-                if len(self.current_labels.labels) == 0:
-                    self.current_labels.createLabels()
-                    self.current_labels.setColors(["red", "blue", "black"])
+                self.subSettings(new = False)
+
+                self.combinations = getCombinations(n)
+                self.activeChannelsChanged(self.combinations)
+
+
+                self.data_ring = RingBuffer(constants.BUFFER_ROWS, len(self.combinations) + 2, self.combinations)
+                if self.results_files != None:
+                    self.data_ring.setFile(self.results_files.data_file)
+
                 # self.checkParams()
                 self.check_timer.start()
 
@@ -581,7 +688,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.errorWindow(e)
 
     def startAcquisition(self):
-        if self.port == None:
+        if self.port_name == None:
             QtWidgets.QMessageBox.warning(self, 'Error', "Port has not been choosed", QtWidgets.QMessageBox.Ok)
         elif self.results_files != None:
             if self.streaming:
@@ -606,55 +713,62 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def updateData(self):
         try:
-            time_, detectors, coins = self.experiment.currentValues()
-            time_ += -self.init_time
+            if len(self.active_channels) > len(self.combinations) // 2:
+                counters, id = abacus.getAllCounters(self.port_name)
+            else:
+                counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
 
-            values = np.array([time_] + detectors + coins)
+            time_ = time() - self.init_time
+            values = counters.getValues(self.combinations)
+            values = np.array([time_, id] + values)
             values = values.reshape((1, values.shape[0]))
             self.data_ring.extend(values)
-        except abacus.exceptions.ExperimentError as e:
+
+        except abacus.BaseError as e:
             self.errorWindow(e)
         except FileNotFoundError as e:
             self.errorWindow(e)
 
     def updateWidgets(self):
+        pass
         data = self.data_ring[:]
-
         self.updatePlots(data)
         self.updateTable(data)
         self.updateCurrents(data)
 
     def updateTable(self, data):
-        self.historical_table.insertData(data)
+        try: self.historical_table.insertData(data)
+        except AttributeError: pass
 
     def updateCurrents(self, data):
-        for i in range(1, 4):
-            self.current_labels.changeValue(i-1, data[-1, i])
+        for (pos, index) in enumerate(self.combination_indexes):
+            self.current_labels.changeValue(pos, data[-1, index + 2])
 
     def updatePlots(self, data):
         time_ = data[:, 0]
+        for (i, j) in enumerate(self.combination_indexes):
+            self.plot_lines[i].setData(time_, data[:, j + 2])
 
-        self.countsA_line.setData(time_, data[:, 1])
-        self.countsB_line.setData(time_, data[:, 2])
-
-        self.coins_line.setData(time_, data[:, 3])
+    def removePlots(self):
+        if self.legend != None:
+            self.legend.scene().removeItem(self.legend)
+        for line in self.plot_lines:
+            line.clear()
+        self.plot_lines = []
+        self.legend = None
 
     def initPlots(self):
-        self.counts_plot = self.plot_win.addPlot()
-        self.coins_plot = self.plot_win.addPlot(row = 1, col = 0)
-
-        self.counts_plot.addLegend()
-        self.coins_plot.addLegend()
-
+        self.removePlots()
+        self.legend = self.counts_plot.addLegend()
+        n = len(constants.COLORS)
         symbolSize = 5
-        self.countsA_line = self.counts_plot.plot(pen = "r", symbol='o', symbolPen = "r", symbolBrush="r", symbolSize=symbolSize, name="Detector A")
-        self.countsB_line = self.counts_plot.plot(pen = "b", symbol='o', symbolPen = "b", symbolBrush="b", symbolSize=symbolSize, name="Detector B")
-
-        self.coins_line = self.coins_plot.plot(pen = "k", symbol='o', symbolPen = "k", symbolBrush="k", symbolSize=symbolSize, name="Coincidences AB")
-
-        self.counts_plot.setLabel('left', "Counts")
-        self.coins_plot.setLabel('left', "Coincidences")
-        self.coins_plot.setLabel('bottom', "Time", units='s')
+        for i in range(len(self.active_channels)):
+            color = constants.COLORS[i % n]
+            letter = self.active_channels[i]
+            plot = self.counts_plot.plot(pen = color, symbol='o',
+                symbolPen = color, symbolBrush = color,
+                symbolSize = symbolSize, name = letter)
+            self.plot_lines.append(plot)
 
     def setSaveAs(self):
         new_file_name = self.save_as_lineEdit.text()
@@ -669,7 +783,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     else:
                         self.results_files.changeName(name, ext)
                     names = self.results_files.getNames()
-                    self.data_ring.setFile(self.results_files.data_file)
+                    if self.data_ring != None:
+                        self.data_ring.setFile(self.results_files.data_file)
                     self.statusBar.showMessage('Files: %s, %s.'%(names))
                     try:
                         self.results_files.checkFilesExists()
@@ -732,7 +847,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.save_as_lineEdit.setText(common.unicodePath(path))
                 self.setSaveAs()
 
-            self.data_ring.updateFormat(delimiter = constants.DELIMITER)
+            self.data_ring.updateDelimiter(constants.DELIMITER)
 
         except AttributeError:
             pass
@@ -742,7 +857,7 @@ class MainWindow(QtWidgets.QMainWindow):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Warning)
 
-        if type(exception) is abacus.exceptions.ExperimentError:
+        if type(exception) is abacus.BaseError:
             self.stopClocks()
             self.cleanPort()
             self.experiment = None
