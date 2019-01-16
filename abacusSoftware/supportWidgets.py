@@ -107,6 +107,7 @@ class Tabs(QFrame):
         self.letters = []
         self.double = []
         self.multiple = []
+        self.multiple_checked = []
         self.number_channels = 0
 
         scrollArea1 = QtWidgets.QScrollArea()
@@ -142,7 +143,6 @@ class Tabs(QFrame):
     def createSingle(self, letter, layout):
         widget = QCheckBox(letter)
         widget.setChecked(True)
-        # widget.stateChanged.connect(self.signal)
         setattr(self, letter, widget)
         layout.addWidget(widget)
         return widget
@@ -195,28 +195,24 @@ class Tabs(QFrame):
     def signal(self):
         self.parent.activeChannelsChanged(self.getChecked())
 
-    def signalMultiple(self):
+    def signalMultiple(self, user_input = True):
         multiple_checked = [letter for letter in self.multiple if getattr(self, letter).isChecked()]
-        disarm = [getattr(self, letter).setChecked(False) for letter in multiple_checked]
+        new = [m for m in multiple_checked if not m in self.multiple_checked]
 
         if self.number_channels == 4: max = self.MAX_CHECKED_4CH
         elif self.number_channels == 8: max = self.MAX_CHECKED_8CH
 
-        if len(multiple_checked) > max:
-            is_ = "are"
-            if max == 1: is_ = "is"
-            channels = ", ".join(multiple_checked)
-            error = "Only %d multiple coincidence %s possible. %s were active."%(max, is_, channels)
+        if len(self.multiple_checked) == max and len(new):
+            getattr(self, self.multiple_checked[-1]).setChecked(False)
+            del self.multiple_checked[-1]
 
+        self.multiple_checked += new
+        if len(new):
+            self.parent.sendMultipleCoincidences(new)
+            self.signal()
 
-            msg = QtWidgets.QMessageBox()
-            msg.setIcon(QtWidgets.QMessageBox.Warning)
-            msg.setText(error)
-            msg.setWindowTitle("Warning")
-            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-            msg.exec_()
-
-        else: self.signal()
+    def setChecked(self, letters):
+        getattr(self, letters).setChecked(True)
 
 class Table(QtWidgets.QTableWidget):
     def __init__(self, active_labels, active_indexes):

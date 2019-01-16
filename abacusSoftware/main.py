@@ -97,7 +97,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tabs_widget = Tabs(self)
         toolbar_frame_layout.addWidget(self.tabs_widget)
         toolbar_frame.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Expanding)
-        toolbar_frame.setMaximumWidth(250)
+        toolbar_frame.setMaximumWidth(300)
 
         layout3.addWidget(toolbar_frame)
         layout3.setContentsMargins(0, 0, 0, 0)
@@ -189,8 +189,8 @@ class MainWindow(QtWidgets.QMainWindow):
         sleepSweep = QtWidgets.QAction('Sleep time', self)
         delaySweep = QtWidgets.QAction('Delay time', self)
 
-        self.menuBuildInSweep.addAction(sleepSweep)
-        self.menuBuildInSweep.addAction(delaySweep)
+        # self.menuBuildInSweep.addAction(sleepSweep)
+        # self.menuBuildInSweep.addAction(delaySweep)
         sleepSweep.triggered.connect(self.sleepSweep)
         delaySweep.triggered.connect(self.delaySweep)
 
@@ -478,6 +478,14 @@ class MainWindow(QtWidgets.QMainWindow):
             value = int(time.replace('s', ''))*1000
         return value
 
+    def sendMultipleCoincidences(self, coincidences):
+        if self.port_name != None:
+            try:
+                for (i, letters) in enumerate(coincidences):
+                    abacus.setSetting(self.port_name, 'config_custom_c%d'%(i + 1), letters)
+            except Exception as e:
+                self.errorWindow(e)
+
     def sendSettings(self):
         self.samplingMethod(self.sampling_widget.getValue())
         self.coincidenceWindowMethod(self.coincidence_spinBox.value())
@@ -574,7 +582,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.historical_table.deleteLater()
 
         "Create new table"
-        print(self.active_channels, self.combination_indexes)
         self.historical_table = Table(self.active_channels, self.combination_indexes)
         self.historical_layout.addWidget(self.historical_table)
 
@@ -589,6 +596,14 @@ class MainWindow(QtWidgets.QMainWindow):
                 settings = abacus.getAllSettings(self.port_name)
                 samp = settings.getSetting("sampling")
                 coin = settings.getSetting("coincidence_window")
+                if self.number_channels == 4:
+                    custom = settings.getSetting("config_custom_c1")
+                    self.tabs_widget.setChecked(custom)
+                elif self.number_channels == 8:
+                    for i in range(8):
+                        custom = settings.getSetting("config_custom_c%d"%(i + 1))
+                        self.tabs_widget.setChecked(custom)
+
                 if self.coincidence_spinBox.value() != coin:
                     self.coincidence_spinBox.setValue(coin)
                 for i in range(self.number_channels):
@@ -717,13 +732,25 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.warning(self, 'Error', "Please choose an output file.", QtWidgets.QMessageBox.Ok)
 
     def updateData(self):
-        def get(time_, id):
-            values = counters.getValues(self.combinations)
+        def get(counters, time_, id):
+            last = -1
+            if self.number_channels == 4: last = 10
+            elif self.number_channels == 8: last = 36
+            values = counters.getValues(self.combinations[:last])
+            "could be better"
+            i = 1
+            for letters in self.combinations[last :]:
+                if letters in self.active_channels:
+                    val = counters.getValue("custom_c%d"%i)
+                    i += 1
+                else: val = 0
+                values.append(val)
+
             values = np.array([time_, id] + values)
             values = values.reshape((1, values.shape[0]))
             self.data_ring.extend(values)
         try:
-            if len(self.active_channels) > len(self.combinations) // 2:
+            if self.number_channels == 2:
                 counters, id = abacus.getAllCounters(self.port_name)
             else:
                 counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
@@ -731,9 +758,9 @@ class MainWindow(QtWidgets.QMainWindow):
             time_ = time() - self.init_time
             data = self.data_ring[:]
             if len(data) == 0:
-                get(time_, id)
+                get(counters, time_, id)
             elif data[-1, 1] != id:
-                get(time_, id)
+                get(counters, time_, id)
 
         except abacus.BaseError as e:
             self.errorWindow(e)
@@ -913,8 +940,6 @@ class MainWindow(QtWidgets.QMainWindow):
         reply = QtWidgets.QMessageBox.question(self, 'Exit',
                          quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
         if reply == QtWidgets.QMessageBox.Yes:
-            try: self.cleanPort()
-            except: pass
             event.accept()
         else:
             event.ignore()
