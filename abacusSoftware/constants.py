@@ -7,6 +7,8 @@ CURRENT_OS = sys.platform
 DIRECTORY = os.path.dirname(sys.executable)
 SETTINGS_PATH = os.path.join(DIRECTORY, "settings.py")
 
+print("SETTINGS PATH ON:", SETTINGS_PATH)
+
 SETTING_FILE_EXISTS = False
 
 BREAKLINE = "\n"

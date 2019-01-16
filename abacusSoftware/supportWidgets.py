@@ -6,7 +6,8 @@ try:
     from PyQt5 import QtWidgets, QtGui, QtCore
     from PyQt5.QtGui import QTableWidgetItem
     from PyQt5.QtWidgets import QSizePolicy, QTabWidget, QWidget, QCheckBox, \
-                        QVBoxLayout, QFrame, QGroupBox, QLabel, QSizePolicy
+                        QVBoxLayout, QFrame, QGroupBox, QLabel, QSizePolicy, \
+                        QComboBox, QSpinBox, QFormLayout
 except ModuleNotFoundError:
     from PyQt4 import QtWidgets, QtGui, QtCore
     from PyQt4.QtGui import QTableWidgetItem
@@ -16,23 +17,97 @@ from pyAbacus.constants import CURRENT_OS
 
 import abacusSoftware.common as common
 import abacusSoftware.constants as constants
+import pyAbacus as abacus
 from pyAbacus import findDevices
 
+class SamplingWidget(object):
+    def __init__(self, layout, label, method, number_channels = 2):
+        self.layout = layout
+        self.label = label
+        self.method = method
+        self.is_comboBox = True
+        self.number_channels = 0
+        self.widget = None
+        self.value = 0
+        self.changeNumberChannels(number_channels)
+
+    def isComboBox(self):
+        return self.is_comboBox
+
+    def setEnabled(self, enabled):
+        self.widget.setEnabled(enabled)
+
+    def getValue(self):
+        if self.isComboBox():
+            text_value = self.widget.currentText()
+            return common.timeInUnitsToMs(text_value)
+        else:
+            value = self.widget.value()
+            step = 10**int(np.log10(value) - 1)
+            if step < 1: step = 1
+            self.widget.setSingleStep(step)
+            return value
+
+    def valid(self):
+        if not self.isComboBox():
+            self.widget.setStyleSheet("color: black")
+
+    def invalid(self):
+        if not self.isComboBox():
+            self.widget.setStyleSheet("color: red")
+
+    def setValue(self, value):
+        if self.isComboBox():
+            if value >= 1000:
+                index = self.widget.findText('%d s' % (value // 1000))
+            else:
+                index = self.widget.findText('%d ms' % value)
+            self.widget.setCurrentIndex(index)
+        else:
+            self.widget.setValue(value)
+
+    def changeNumberChannels(self, number_channels):
+        self.number_channels = number_channels
+        if self.widget != None:
+            self.layout.removeWidget(self.widget)
+            self.widget.deleteLater()
+
+        if self.number_channels > 2:
+            self.is_comboBox = False
+            self.widget = QSpinBox()
+            self.widget.setMinimum(min(abacus.constants.SAMPLING_VALUES))
+            self.widget.setMaximum(max(abacus.constants.SAMPLING_VALUES))
+            self.widget.valueChanged.connect(self.method)
+            self.widget.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+            self.label.setText("Sampling time (ms):")
+            self.widget.setValue(abacus.constants.SAMPLING_DEFAULT_VALUE)
+            self.getValue()
+        else:
+            self.is_comboBox = True
+            self.widget = QComboBox()
+            self.widget.currentIndexChanged.connect(self.method)
+            self.widget.setEditable(True)
+            self.widget.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            self.widget.lineEdit().setReadOnly(True)
+            common.setSamplingComboBox(self.widget)
+
+            self.label.setText("Sampling time:")
+
+        self.layout.setWidget(0, QFormLayout.FieldRole, self.widget)
+
 class Tabs(QFrame):
-# class Tabs(QTabWidget):
+    MAX_CHECKED_4CH = 1
+    MAX_CHECKED_8CH = 8
     def __init__(self, parent = None):
         QFrame.__init__(self)
-        # QTabWidget.__init__(self)
         self.parent = parent
 
         self.all = []
         self.letters = []
         self.double = []
         self.multiple = []
-
-        # self.single_tab = QWidget()
-        # self.double_tab = QWidget()
-        # self.multiple_tab = QWidget()
+        self.number_channels = 0
 
         scrollArea1 = QtWidgets.QScrollArea()
         scrollArea1.setWidgetResizable(True)
@@ -55,10 +130,6 @@ class Tabs(QFrame):
         self.double_tab_layout = QVBoxLayout(self.double_tab)
         self.multiple_tab_layout = QVBoxLayout(self.multiple_tab)
 
-        # self.layout.addWidget(self.single_tab)
-        # self.layout.addWidget(self.double_tab)
-        # self.layout.addWidget(self.multiple_tab)
-
         self.layout.addWidget(QLabel("<b>COUNTS</b>"))
         self.layout.addWidget(scrollArea1)
         self.layout.addWidget(scrollArea2)
@@ -71,12 +142,14 @@ class Tabs(QFrame):
     def createSingle(self, letter, layout):
         widget = QCheckBox(letter)
         widget.setChecked(True)
-        widget.stateChanged.connect(self.signal)
+        # widget.stateChanged.connect(self.signal)
         setattr(self, letter, widget)
         layout.addWidget(widget)
+        return widget
 
     def setNumberChannels(self, n_channels):
         self.deleteCheckBoxs()
+        self.number_channels = n_channels
 
         self.letters = [chr(i + ord('A')) for i in range(n_channels)]
         joined = "".join(self.letters)
@@ -89,17 +162,15 @@ class Tabs(QFrame):
         self.all = self.letters + self.double + self.multiple
 
         for letter in self.letters:
-            self.createSingle(letter, self.single_tab_layout)
+            widget = self.createSingle(letter, self.single_tab_layout)
+            widget.stateChanged.connect(self.signal)
         for letter in self.double:
-            self.createSingle(letter, self.double_tab_layout)
+            widget = self.createSingle(letter, self.double_tab_layout)
+            widget.stateChanged.connect(self.signal)
         for letter in self.multiple:
-            self.createSingle(letter, self.multiple_tab_layout)
-
-    def createsingle(self, letter, layout):
-        widget = QCheckBox(letter)
-        widget.setChecked(True)
-        setattr(self, letter, widget)
-        layout.addWidget(widget)
+            widget = self.createSingle(letter, self.multiple_tab_layout)
+            widget.setChecked(False)
+            widget.stateChanged.connect(self.signalMultiple)
 
     def deleteSingle(self, widget, layout):
         layout.removeWidget(widget)
@@ -124,18 +195,44 @@ class Tabs(QFrame):
     def signal(self):
         self.parent.activeChannelsChanged(self.getChecked())
 
+    def signalMultiple(self):
+        multiple_checked = [letter for letter in self.multiple if getattr(self, letter).isChecked()]
+        disarm = [getattr(self, letter).setChecked(False) for letter in multiple_checked]
+
+        if self.number_channels == 4: max = self.MAX_CHECKED_4CH
+        elif self.number_channels == 8: max = self.MAX_CHECKED_8CH
+
+        if len(multiple_checked) > max:
+            is_ = "are"
+            if max == 1: is_ = "is"
+            channels = ", ".join(multiple_checked)
+            error = "Only %d multiple coincidence %s possible. %s were active."%(max, is_, channels)
+
+
+            msg = QtWidgets.QMessageBox()
+            msg.setIcon(QtWidgets.QMessageBox.Warning)
+            msg.setText(error)
+            msg.setWindowTitle("Warning")
+            msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+            msg.exec_()
+
+        else: self.signal()
+
 class Table(QtWidgets.QTableWidget):
-    def __init__(self, cols, combinations):
+    def __init__(self, active_labels, active_indexes):
         QtWidgets.QTableWidget.__init__(self)
+        cols = len(active_indexes) + 2
         self.setColumnCount(cols)
         self.horizontalHeader().setSortIndicatorShown(False)
         self.verticalHeader().setDefaultSectionSize(18)
         self.verticalHeader().setMinimumSectionSize(18)
         self.verticalHeader().setSortIndicatorShown(False)
 
-        self.last_time = None
+        self.last_data = 0
+        self.n_active = len(active_indexes)
+        self.active_indexes = active_indexes
 
-        self.headers = ['Time (s)', 'ID'] + combinations
+        self.headers = ['Time (s)', 'ID'] + active_labels
         self.setHorizontalHeaderLabels(self.headers)
         self.resizeRowsToContents()
         self.resizeColumnsToContents()
@@ -145,23 +242,21 @@ class Table(QtWidgets.QTableWidget):
 
     def insertData(self, data):
         rows, cols = data.shape
+        data = data[self.last_data : ]
+        self.last_data = rows
+        rows = data.shape[0]
 
-        if self.last_time == None:
-            self.last_time = data[0, 0]
-            index = 0
-        else:
-            index = np.where(data[:, 0] == self.last_time)[0][0]
-            self.last_time = data[-1, 0]
-            data = data[index + 1:]
-
-        for i in range(data.shape[0]):
+        for i in range(rows):
             self.insertRow(0)
-            for j in range(cols):
-                if j == 0:
-                    fmt = "%.3f"
+            for j in range(self.n_active + 2):
+                fmt = "%d"
+                if j < 2:
+                    if j == 0:
+                        fmt = "%.3f"
+                    value = fmt % data[i, j]
                 else:
-                    fmt = "%d"
-                self.setItem(0, j, QTableWidgetItem(fmt%data[i, j]))
+                    value = fmt % data[i, 2 + self.active_indexes[j - 2]]
+                self.setItem(0, j, QTableWidgetItem(value))
                 self.item(0, j).setTextAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignVCenter)
 
 class AutoSizeLabel(QtWidgets.QLabel):
@@ -239,7 +334,6 @@ class AutoSizeLabel(QtWidgets.QLabel):
                 else:
                     if CURRENT_OS == 'win32':
                         self.font_size += -1
-
                     else:
                         self.font_size += -2
                     f.setPixelSize(max(self.font_size, 1))
@@ -296,18 +390,17 @@ class CurrentLabels(QtWidgets.QWidget):
             return True
 
     def resizeEvent(self, evt):
-        sizes = [None]*3
-        try:
-            for (i, label) in enumerate(self.labels):
-                label.resize()
-                sizes[i] = label.font_size
+        sizes = [None]*len(self.labels)
+        for (i, label) in enumerate(self.labels):
+            label.resize()
+            sizes[i] = label.font_size
 
-            if len(self.labels) > 0:
+        if len(self.labels) > 0:
+            try:
                 size = max(sizes)
                 for label in self.labels:
                     label.setFontSize(size)
-        except Exception as e:
-            print(e)
+            except TypeError: pass
 
 class ConnectDialog(QtWidgets.QDialog):
     def __init__(self):
@@ -355,7 +448,7 @@ class ConnectDialog(QtWidgets.QDialog):
 
     def refresh(self):
         self.clear()
-        self.ports = findDevices()[0]
+        self.ports = findDevices(print_on = False)[0]
         ports_names = list(self.ports.keys())
         if len(ports_names) == 0:
             self.label.setText(constants.CONNECT_EMPTY_LABEL)
@@ -372,9 +465,9 @@ class ConnectDialog(QtWidgets.QDialog):
         self.reject()
 
 class SettingsDialog(QtWidgets.QDialog):
+    MAX_CHANNELS = 4
     def __init__(self, parent):
         QtWidgets.QDialog.__init__(self)
-        # self.setWindowFlags(QtCore.Qt.WindowSystemMenuHint  | QtCore.Qt.WindowTitleHint)
 
         self.parent = parent
         self.setWindowTitle("Default settings")
@@ -463,49 +556,60 @@ class SettingsDialog(QtWidgets.QDialog):
         """
         self.settings_tab_verticalLayout = QtWidgets.QVBoxLayout(self.settings_tab)
 
+        scrollArea = QtWidgets.QScrollArea()
+        scrollArea.setWidgetResizable(True)
+
         self.settings_tab_frame = QtWidgets.QFrame()
         self.settings_tab_frame_layout = QtWidgets.QFormLayout(self.settings_tab_frame)
 
+        scrollArea.setWidget(self.settings_tab_frame)
+
         self.sampling_label = QtWidgets.QLabel("Sampling time:")
-        self.sampling_comboBox = QtWidgets.QComboBox()
+        self.sampling_widget = QtWidgets.QComboBox()
         self.coincidence_label = QtWidgets.QLabel("Coincidence window (ns):")
         self.coincidence_spinBox = QtWidgets.QSpinBox()
-        self.delayA_label = QtWidgets.QLabel("Delay A (ns):")
-        self.delayA_spinBox = QtWidgets.QSpinBox()
-        self.delayB_label = QtWidgets.QLabel("Delay B (ns):")
-        self.delayB_spinBox = QtWidgets.QSpinBox()
-        self.sleepA_label = QtWidgets.QLabel("Sleep time A (ns):")
-        self.sleepA_spinBox = QtWidgets.QSpinBox()
-        self.sleepB_label = QtWidgets.QLabel("Sleep time B (ns):")
-        self.sleepB_spinBox = QtWidgets.QSpinBox()
 
-        self.sampling_comboBox.setEditable(True)
-        self.sampling_comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.sampling_comboBox.lineEdit().setReadOnly(True)
+        self.sampling_widget.setEditable(True)
+        self.sampling_widget.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.sampling_widget.lineEdit().setReadOnly(True)
         self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.delayA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.delayB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.sleepA_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.sleepB_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        widgets = [(self.sampling_label, self.sampling_comboBox),
-                    (self.coincidence_label, self.coincidence_spinBox),
-                    (self.delayA_label, self.delayA_spinBox),
-                    (self.delayB_label, self.delayB_spinBox),
-                    (self.sleepA_label, self.sleepA_spinBox),
-                    (self.sleepB_label, self.sleepB_spinBox),]
-                    # (self.from_device_label, self.from_device_checkBox)]
+        widgets = [(self.sampling_label, self.sampling_widget),
+                    (self.coincidence_label, self.coincidence_spinBox)]
+
+        letters = [chr(i + ord('A')) for i in range(self.MAX_CHANNELS)]
+        self.delays = []
+        self.sleeps = []
+        d_labels = []
+        s_labels = []
+        for letter in letters:
+            d_label = QtWidgets.QLabel("Delay %s (ns):" % letter)
+            d_spinBox = QtWidgets.QSpinBox()
+            s_label = QtWidgets.QLabel("Sleep time %s (ns):" % letter)
+            s_spinBox = QtWidgets.QSpinBox()
+            d_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            s_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            common.setDelaySpinBox(d_spinBox)
+            common.setSleepSpinBox(s_spinBox)
+
+            setattr(self, "delay_%s_label"%letter, d_label)
+            setattr(self, "sleep_%s_label"%letter, s_label)
+            setattr(self, "delay_%s_spinBox"%letter, d_spinBox)
+            setattr(self, "sleep_%s_spinBox"%letter, s_spinBox)
+            d_labels.append(d_label)
+            s_labels.append(s_label)
+            self.delays.append(d_spinBox)
+            self.sleeps.append(s_spinBox)
+
+        widgets += [(d_labels[i], self.delays[i]) for i in range(self.MAX_CHANNELS)]
+        widgets += [(s_labels[i], self.sleeps[i]) for i in range(self.MAX_CHANNELS)]
 
         self.fillFormLayout(self.settings_tab_frame_layout, widgets)
 
         self.settings_tab_verticalLayout.addWidget(self.settings_tab_frame)
 
-        common.setSamplingComboBox(self.sampling_comboBox)
+        common.setSamplingComboBox(self.sampling_widget)
         common.setCoincidenceSpinBox(self.coincidence_spinBox)
-        common.setDelaySpinBox(self.delayA_spinBox)
-        common.setDelaySpinBox(self.delayB_spinBox)
-        common.setSleepSpinBox(self.sleepA_spinBox)
-        common.setSleepSpinBox(self.sleepB_spinBox)
 
         """
         buttons
@@ -520,7 +624,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.verticalLayout.addWidget(self.buttons)
 
         self.setConstants()
-        self.constantsWriter()
+        # self.constantsWriter()
 
     def actogenerateMethod(self, val):
         self.datetime_checkBox.setEnabled(val)
@@ -544,6 +648,9 @@ class SettingsDialog(QtWidgets.QDialog):
                 else:
                     string = "%s = %s"%(item, val)
                 lines.append(string)
+        val_txt = self.sampling_widget.currentText()
+        val = common.timeInUnitsToMs(val_txt)
+        lines.append("sampling_widget = %d" % val)
         self.writeDefault(lines)
         lines += ["EXTENSION_DATA = '%s'"%self.extension_comboBox.currentText(),
                     "EXTENSION_PARAMS = '%s.txt'"%self.parameters_lineEdit.text()]
@@ -555,6 +662,7 @@ class SettingsDialog(QtWidgets.QDialog):
         lines += ["DELIMITER = '%s'"%delimiter]
         self.updateConstants(lines)
         self.parent.updateConstants()
+        # self.parent.samplingMethod(val, force_write = True)
 
     def accept_replace(self):
         self.constantsWriter()

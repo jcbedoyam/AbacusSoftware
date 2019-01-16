@@ -20,9 +20,9 @@ exe = EXE(pyz,
           a.binaries,
           a.zipfiles,
           a.datas,
-          name='AbacusSoftware-1.2.3',
+          name='AbacusSoftware-1.3.0',
           debug=False,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
-          console=False, icon='GUI\\images\\abacus_small.ico')
+          console=True, icon='GUI\\images\\abacus_small.ico')

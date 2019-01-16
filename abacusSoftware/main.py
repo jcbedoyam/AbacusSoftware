@@ -24,12 +24,9 @@ from abacusSoftware.menuBar import AboutWindow
 from abacusSoftware.exceptions import ExtentionError
 from abacusSoftware.files import ResultsFiles, RingBuffer
 from abacusSoftware.supportWidgets import Table, CurrentLabels, ConnectDialog, \
-                        SettingsDialog, SubWindow, ClickableLineEdit, Tabs
+                        SettingsDialog, SubWindow, ClickableLineEdit, Tabs, SamplingWidget
 
 import pyAbacus as abacus
-from pyAbacus import findDevices
-
-# from pyAbacus.communication import findDevices, CommunicationPort
 
 # if constants.CURRENT_OS == "win32":
 #     import win_unicode_console
@@ -39,7 +36,7 @@ def getCombinations(n_channels):
     letters = [chr(i + ord('A')) for i in range(n_channels)]
     joined = "".join(letters)
     for i in range(2, n_channels + 1):
-        letters += ["".join(pair) for pair in combinations(joined, 2)]
+        letters += ["".join(pair) for pair in combinations(joined, i)]
     return letters
 
 common.readConstantsFile()
@@ -49,6 +46,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(self, parent = None):
         super(QtWidgets.QMainWindow, self).__init__(parent)
+        self.port_name = None
+        self.start_position = None
         self.number_channels = 0
         self.active_channels = []
         widget = QtWidgets.QWidget()
@@ -112,6 +111,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         settings
         """
+        self.sampling_widget = None
         self.delay_widgets = []
         self.sleep_widgets = []
         self.subSettings_delays_sleeps = []
@@ -131,17 +131,12 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         Config
         """
-        self.setSettings()
-        # self.updateConstants()
-
-        self.port_name = None
         self.streaming = False
         self.acquisition_button.clicked.connect(self.startAcquisition)
 
         self.connect_dialog = None
         self.connect_button.clicked.connect(self.connect)
 
-        self.sampling_comboBox.currentIndexChanged.connect(self.samplingMethod)
         self.coincidence_spinBox.valueChanged.connect(self.coincidenceWindowMethod)
 
         """
@@ -199,7 +194,7 @@ class MainWindow(QtWidgets.QMainWindow):
         sleepSweep.triggered.connect(self.sleepSweep)
         delaySweep.triggered.connect(self.delaySweep)
 
-        # self.menuBuildIn.addMenu(self.menuBuildInSweep)
+        self.menuBuildIn.addMenu(self.menuBuildInSweep)
 
         self.statusBar = QtWidgets.QStatusBar(self)
         self.statusBar.setObjectName("statusBar")
@@ -214,12 +209,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionExit)
         self.menuHelp.addAction(self.actionAbout)
-        # self.menuProperties.addAction(self.actionDefault_settings)
+        self.menuProperties.addAction(self.actionDefault_settings)
 
-        self.menuView.addAction(QtGui.QAction("Show settings", self.menubar, checkable=True))
-        self.menuView.addAction(QtGui.QAction("Show historical", self.menubar, checkable=True))
-        self.menuView.addAction(QtGui.QAction("Show current", self.menubar, checkable=True))
-        self.menuView.addAction(QtGui.QAction("Show plots", self.menubar, checkable=True))
+        self.menuView.addAction(QtGui.QAction("Show settings", self.menubar, checkable = True))
+        self.menuView.addAction(QtGui.QAction("Show historical", self.menubar, checkable = True))
+        self.menuView.addAction(QtGui.QAction("Show current", self.menubar, checkable = True))
+        self.menuView.addAction(QtGui.QAction("Show plots", self.menubar, checkable = True))
         self.menuView.addSeparator()
         self.menuView.addAction("Tiled")
         self.menuView.addAction("Cascade")
@@ -245,27 +240,27 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.acquisition_button.setDisabled(True)
         self.about_window = AboutWindow()
-        # self.settings_dialog = SettingsDialog(self)
-
-        # self.resize(800, 700)
+        self.settings_dialog = SettingsDialog(self)
         self.setWindowTitle(constants.WINDOW_NAME)
-        self.showMaximized()
 
-        self.centerOnScreen()
-
-        # self.sleepSweepDialog = builtin.SleepDialog(self)
-        # self.delaySweepDialog = builtin.DelayDialog(self)
+        self.sleepSweepDialog = builtin.SleepDialog(self)
+        self.delaySweepDialog = builtin.DelayDialog(self)
 
         self.mdi.tileSubWindows()
         self.mdi.cascadeSubWindows()
-        self.subwindow_plots.resize(400, 350)
+
+        self.setSettings()
+        self.updateConstants()
 
     def centerOnScreen(self):
         resolution = QtGui.QDesktopWidget().screenGeometry()
+        x_0 = self.pos().x()
+        y_0 = self.pos().y()
         sw = resolution.width()
-        fw = self.frameSize().width()
-        self.move((sw - fw) / 2,
-                  (resolution.height() / 2) - (self.frameSize().height() / 2))
+        sh = resolution.height()
+        fh = self.frameSize().height()
+        y_o = (sh - fh) / 2
+        self.move(sw / 2 - x_0, y_o)
 
     def handleViews(self, q):
         text = q.text()
@@ -274,12 +269,15 @@ class MainWindow(QtWidgets.QMainWindow):
                 if text == action.text():
                     text = text[5:]
                     check = not action.isChecked()
+                    subwindow = getattr(self, "subwindow_%s" % text)
                     if check:
                         action.setChecked(False)
-                        exec("self.subwindow_%s.hide()"%text)
+                        print("here")
+                        subwindow.hide()
                     else:
                         action.setChecked(True)
-                        exec("self.subwindow_%s.show()"%text)
+                        print("True")
+                        subwindow.show()
 
         elif text == "Cascade":
             self.mdi.cascadeSubWindows()
@@ -390,25 +388,22 @@ class MainWindow(QtWidgets.QMainWindow):
             scrollArea.setWidget(self.settings_frame2)
 
             self.sampling_label = QLabel("Sampling time:")
-            self.sampling_comboBox = QComboBox()
+            self.sampling_widget = SamplingWidget(self.settings_frame2_formLayout, \
+                                self.sampling_label, self.samplingMethod)
             self.coincidence_label = QLabel("Coincidence window (ns):")
             self.coincidence_spinBox = QSpinBox()
-
-            self.sampling_comboBox.setEditable(True)
-            self.sampling_comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            self.sampling_comboBox.lineEdit().setReadOnly(True)
-
             self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
             createWidgets()
 
-            widgets = [(self.sampling_label, self.sampling_comboBox),
-                    (self.coincidence_label, self.coincidence_spinBox)]
+            self.settings_frame2_formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.sampling_label)
+            self.settings_frame2_formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.coincidence_label)
+            self.settings_frame2_formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.coincidence_spinBox)
 
             self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
             self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
 
-            fillFormLayout(self.settings_frame2_formLayout, widgets)
+            # fillFormLayout(self.settings_frame2_formLayout, widgets)
             settings_frame3_formLayout.setWidget(0, QtWidgets.QFormLayout.LabelRole, self.unlock_settings_button)
 
             settings_verticalLayout.addWidget(scrollArea)
@@ -426,10 +421,11 @@ class MainWindow(QtWidgets.QMainWindow):
             createWidgets()
             fillFormLayout(self.settings_frame2_formLayout, self.subSettings_delays_sleeps, new = False)
 
+        # createSampling()
         self.setSettings()
 
     def unlockSettings(self, unlock = True):
-        self.sampling_comboBox.setEnabled(unlock)
+        self.sampling_widget.setEnabled(unlock)
         self.coincidence_spinBox.setEnabled(unlock)
         for widget in self.delay_widgets + self.sleep_widgets:
             widget.setEnabled(unlock)
@@ -440,7 +436,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def subHistorical(self):
         widget = QtWidgets.QWidget()
-        self.historical_table = Table(2, [])
+        self.historical_table = Table([], [])
         self.historical_layout = QtGui.QVBoxLayout(widget)
         self.historical_layout.addWidget(self.historical_table)
 
@@ -483,7 +479,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return value
 
     def sendSettings(self):
-        self.samplingMethod(self.sampling_comboBox.currentIndex())
+        self.samplingMethod(self.sampling_widget.getValue())
         self.coincidenceWindowMethod(self.coincidence_spinBox.value())
 
         for i in range(self.number_channels):
@@ -493,29 +489,36 @@ class MainWindow(QtWidgets.QMainWindow):
             self.delayMethod(delay_widget, letter, delay_widget.value())
             self.sleepMethod(sleep_widget, letter, sleep_widget.value())
 
-    def samplingMethod(self, index):
-        text_value = self.sampling_comboBox.currentText()
-        value = common.timeInUnitsToMs(text_value)
-        if value > 0 and self.port_name != None:
-            if value > constants.DATA_REFRESH_RATE:
-                self.refresh_timer.setInterval(value)
+    def samplingMethod(self, value, force_write = False):
+        if self.sampling_widget != None:
+            if force_write: self.sampling_widget.setValue(value)
+            value = self.sampling_widget.getValue()
+            if value > 0 and self.port_name != None:
+                if value > constants.DATA_REFRESH_RATE: self.refresh_timer.setInterval(value)
+                else: self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
+                self.data_timer.setInterval(value)
+                try:
+                    abacus.setSetting(self.port_name, 'sampling', value)
+                    self.sampling_widget.valid()
+                    if self.results_files != None:
+                        self.results_files.writeParams("Sampling time (ms),%s"%value)
+                except abacus.InvalidValueError:
+                    self.sampling_widget.invalid()
+                except abacus.BaseError as e:
+                    self.errorWindow(e)
             else:
-                self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
-
-            self.data_timer.setInterval(value)
-            if self.results_files != None:
-                self.results_files.writeParams("Sampling time (ms),%s"%value)
-            try:
-                abacus.setSetting(self.port_name, 'sampling', value)
-            except abacus.BaseError as e:
-                self.errorWindow(e)
-        else:
-            print("Sampling Value, %d"%value)
-        # self.sleepSweepDialog.setSampling(text_value)
-        # self.delaySweepDialog.setSampling(text_value)
+                print("Sampling Value, %d"%value)
+        try:
+            self.sleepSweepDialog.setSampling(value)
+            self.delaySweepDialog.setSampling(value)
+        except AttributeError: pass
 
     def coincidenceWindowMethod(self, val):
         text_value = "%d"%val
+        if self.number_channels > 2:
+            step = 10**int(np.log10(val) - 1)
+            if step < 10: step = 5
+            self.coincidence_spinBox.setSingleStep(step)
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'coincidence_window', val)
@@ -528,8 +531,10 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.errorWindow(e)
         else:
             print("Coincidence Window Value: %d"%val)
-        # self.sleepSweepDialog.setCoincidence(val)
-        # self.delaySweepDialog.setCoincidence(val)
+        try:
+            self.sleepSweepDialog.setCoincidence(val)
+            self.delaySweepDialog.setCoincidence(val)
+        except AttributeError: pass
 
     def delayMethod(self, widget, letter, val):
         if self.port_name != None:
@@ -569,8 +574,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.historical_table.deleteLater()
 
         "Create new table"
-        self.historical_table = Table(len(self.active_channels) + 2, self.active_channels)
+        print(self.active_channels, self.combination_indexes)
+        self.historical_table = Table(self.active_channels, self.combination_indexes)
         self.historical_layout.addWidget(self.historical_table)
+
+        self.updateWidgets()
 
     def getLetter(self, i):
         return chr(i + ord('A'))
@@ -593,17 +601,13 @@ class MainWindow(QtWidgets.QMainWindow):
                         delay.setValue(delay_new_val)
                     if sleep.value() != sleep_new_val:
                         sleep.setValue(sleep_new_val)
-                if common.timeInUnitsToMs(self.sampling_comboBox.currentText()) != samp:
-                    if samp >= 1000:
-                        index = self.sampling_comboBox.findText('%d s'%(samp//1000))
-                    else:
-                        index = self.sampling_comboBox.findText('%d ms'%samp)
-                    self.sampling_comboBox.setCurrentIndex(index)
+
+                if self.sampling_widget.getValue() != samp:
+                    self.sampling_widget.setValue(samp)
             except abacus.BaseError as e:
                 self.errorWindow(e)
 
     def setSettings(self):
-        common.setSamplingComboBox(self.sampling_comboBox)
         common.setCoincidenceSpinBox(self.coincidence_spinBox)
         for widget in self.delay_widgets:
             common.setDelaySpinBox(widget)
@@ -624,6 +628,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def setNumberChannels(self, n):
         self.number_channels = n
         self.tabs_widget.setNumberChannels(n)
+        self.sampling_widget.changeNumberChannels(n)
+        self.sleepSweepDialog.setNumberChannels(n)
+        self.tabs_widget.signal()
 
     def connect(self):
         if self.port_name != None:
@@ -643,6 +650,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.port_name = port
                 abacus.open(self.port_name)
                 n = abacus.getChannelsFromName(self.port_name)
+                self.combinations = getCombinations(n)
+
                 self.setNumberChannels(n)
                 self.acquisition_button.setDisabled(False)
                 self.acquisition_button.setStyleSheet("background-color: none")
@@ -651,15 +660,11 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 self.subSettings(new = False)
 
-                self.combinations = getCombinations(n)
-                self.activeChannelsChanged(self.combinations)
-
-
                 self.data_ring = RingBuffer(constants.BUFFER_ROWS, len(self.combinations) + 2, self.combinations)
                 if self.results_files != None:
                     self.data_ring.setFile(self.results_files.data_file)
 
-                # self.checkParams()
+                self.updateConstants()
                 self.check_timer.start()
 
                 msg = "Connected to device in port,%s"%self.port_name
@@ -712,6 +717,11 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QMessageBox.warning(self, 'Error', "Please choose an output file.", QtWidgets.QMessageBox.Ok)
 
     def updateData(self):
+        def get(time_, id):
+            values = counters.getValues(self.combinations)
+            values = np.array([time_, id] + values)
+            values = values.reshape((1, values.shape[0]))
+            self.data_ring.extend(values)
         try:
             if len(self.active_channels) > len(self.combinations) // 2:
                 counters, id = abacus.getAllCounters(self.port_name)
@@ -719,10 +729,11 @@ class MainWindow(QtWidgets.QMainWindow):
                 counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
 
             time_ = time() - self.init_time
-            values = counters.getValues(self.combinations)
-            values = np.array([time_, id] + values)
-            values = values.reshape((1, values.shape[0]))
-            self.data_ring.extend(values)
+            data = self.data_ring[:]
+            if len(data) == 0:
+                get(time_, id)
+            elif data[-1, 1] != id:
+                get(time_, id)
 
         except abacus.BaseError as e:
             self.errorWindow(e)
@@ -730,15 +741,15 @@ class MainWindow(QtWidgets.QMainWindow):
             self.errorWindow(e)
 
     def updateWidgets(self):
-        pass
-        data = self.data_ring[:]
-        self.updatePlots(data)
-        self.updateTable(data)
-        self.updateCurrents(data)
+        if self.data_ring != None:
+            data = self.data_ring[:]
+            if data.shape[0]:
+                self.updatePlots(data)
+                self.updateTable(data)
+                self.updateCurrents(data)
 
     def updateTable(self, data):
-        try: self.historical_table.insertData(data)
-        except AttributeError: pass
+        self.historical_table.insertData(data)
 
     def updateCurrents(self, data):
         for (pos, index) in enumerate(self.combination_indexes):
@@ -838,7 +849,6 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateConstants(self):
         try:
             common.updateConstants(self)
-
             if constants.autogenerate_checkBox:
                 file_name = constants.file_prefix_lineEdit
                 if constants.datetime_checkBox: file_name += strftime("_%Y%m%d_%H%M")
@@ -847,10 +857,12 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.save_as_lineEdit.setText(common.unicodePath(path))
                 self.setSaveAs()
 
-            self.data_ring.updateDelimiter(constants.DELIMITER)
+            self.sampling_widget.setValue(constants.sampling_widget)
+            self.sendSettings()
 
-        except AttributeError:
-            pass
+            if self.data_ring != None: self.data_ring.updateDelimiter(constants.DELIMITER)
+
+        except AttributeError as e: pass
 
     def errorWindow(self, exception):
         error_text = str(exception)
@@ -866,7 +878,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.acquisition_button.setStyleSheet("background-color: red")
             msg.setIcon(QtWidgets.QMessageBox.Critical)
             self.connect_button.setText("Connect")
-
         try:
             self.results_files.writeParams("Error,%s"%error_text)
         except Exception:
@@ -874,29 +885,42 @@ class MainWindow(QtWidgets.QMainWindow):
 
         msg.setText('An Error has ocurred.\n%s'%error_text)
         msg.setWindowTitle("Error")
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()
 
     def closeEvent(self, event):
         if self.results_files == None:
-            event.accept()
-        elif self.results_files.areEmpty():
-            event.accept()
-        elif self.results_files.data_file.isEmpty():
-            self.results_files.params_file.delete()
+            if self.results_files.data_file.isEmpty():
+                self.results_files.params_file.delete()
+
+        # if self.results_files == None:
+        #     event.accept()
+        # elif self.results_files.areEmpty():
+        #     event.accept()
+        # elif self.results_files.data_file.isEmpty():
+        #     temp = False
+        #     if self.data_ring != None:
+        #         if len(self.data_ring[:]) == 0: temp = True
+        #     else: temp = True
+        #     if temp:
+        #         self.results_files.params_file.delete()
+        #         event.accept()
+        #     else:
+        #         exit()
+        # else:
+        #     exit()
+        quit_msg = "Are you sure you want to exit the program?"
+        reply = QtWidgets.QMessageBox.question(self, 'Exit',
+                         quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            try: self.cleanPort()
+            except: pass
             event.accept()
         else:
-            quit_msg = "Are you sure you want to exit the program?"
-            reply = QtWidgets.QMessageBox.question(self, 'Exit',
-                             quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
-            if reply == QtWidgets.QMessageBox.Yes:
-                event.accept()
-            else:
-                event.ignore()
+            event.ignore()
 
     def initial(self):
         self.__sleep_timer__.stop()
-        # self.softwareUpdate()
         self.connect()
 
     def show2(self):
@@ -955,6 +979,10 @@ def run():
     main.setWindowIcon(icon)
 
     main.show2()
+    main.resize(800, 500)
+    main.mdi.tileSubWindows()
+    main.centerOnScreen()
+
     app.exec_()
 
 if __name__ == "__main__":

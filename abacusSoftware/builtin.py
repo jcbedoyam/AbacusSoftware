@@ -1,8 +1,8 @@
 import abacusSoftware.constants as constants
 import abacusSoftware.common as common
+# from abacusSoftware.supportWidgets import SamplingWidget
 from abacusSoftware.files import File
 import pyAbacus as abacus
-
 
 import numpy as np
 import pyqtgraph as pg
@@ -48,7 +48,7 @@ class SweepDialogBase(QtWidgets.QDialog):
         nLabel = QtWidgets.QLabel("Number of measurements per step:")
 
         self.samplingLabel = QtWidgets.QLabel("")
-        self.setSampling(self.parent.sampling_comboBox.currentText())
+        self.setSampling(0)
         self.coincidenceLabel = QtWidgets.QLabel("")
         self.setCoincidence(self.parent.coincidence_spinBox.value())
         self.startSpin = QtWidgets.QSpinBox()
@@ -104,7 +104,7 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.error = None
 
     def handleStart(self, value):
-        self.stopSpin.setMinimum(value + abacus.STEP_DELAY)
+        self.stopSpin.setMinimum(value + abacus.constants.DELAY_STEP_VALUE)
 
     def warning(self, error):
         error_text = str(error)
@@ -177,8 +177,8 @@ class SweepDialogBase(QtWidgets.QDialog):
         if ans: self.parent.startAcquisition()
         return ans
 
-    def setSampling(self, txt):
-        self.samplingLabel.setText(txt)
+    def setSampling(self, val):
+        self.samplingLabel.setText("%d (ms)"%val)
 
     def setCoincidence(self, val):
         self.coincidenceLabel.setText("%d ns"%val)
@@ -189,19 +189,19 @@ class DelayDialog(SweepDialogBase):
 
         self.setWindowTitle("Delay time sweep")
 
-        self.startSpin.setMinimum(-abacus.MAX_DELAY)
-        self.startSpin.setMaximum(abacus.MAX_DELAY - abacus.STEP_DELAY)
-        self.startSpin.setSingleStep(abacus.STEP_DELAY)
-        self.startSpin.setValue(-abacus.MAX_DELAY)
+        self.startSpin.setMinimum(-abacus.constants.DELAY_MINIMUM_VALUE)
+        self.startSpin.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE - abacus.constants.DELAY_STEP_VALUE)
+        self.startSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
+        self.startSpin.setValue(-abacus.constants.DELAY_MAXIMUM_VALUE)
 
-        self.stopSpin.setMinimum(-abacus.MAX_DELAY)
-        self.stopSpin.setMaximum(abacus.MAX_DELAY)
-        self.stopSpin.setSingleStep(abacus.STEP_DELAY)
-        self.stopSpin.setValue(abacus.MAX_DELAY)
+        self.stopSpin.setMinimum(-abacus.constants.DELAY_MAXIMUM_VALUE)
+        self.stopSpin.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE)
+        self.stopSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
+        self.stopSpin.setValue(abacus.constants.DELAY_MAXIMUM_VALUE)
 
-        self.stepSpin.setMinimum(abacus.STEP_DELAY)
-        self.stepSpin.setMaximum(((abacus.MAX_DELAY - abacus.MIN_DELAY) // abacus.STEP_DELAY) * abacus.STEP_DELAY)
-        self.stepSpin.setSingleStep(abacus.STEP_DELAY)
+        self.stepSpin.setMinimum(abacus.constants.DELAY_STEP_VALUE)
+        self.stepSpin.setMaximum(((abacus.constants.DELAY_MAXIMUM_VALUE - abacus.constants.DELAY_MINIMUM_VALUE) // abacus.constants.DELAY_STEP_VALUE) * abacus.constants.DELAY_STEP_VALUE)
+        self.stepSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
 
         self.plot.setLabel('left', "Coincidences")
         self.plot.setLabel('bottom', "Delay time", units='ns')
@@ -217,9 +217,9 @@ class DelayDialog(SweepDialogBase):
             step = self.stepSpin.value()
             n = self.nSpin.value()
             range_ = np.arange(self.startSpin.value(), self.stopSpin.value(), step)
-            range_ = range_[range_ <= abacus.MAX_DELAY]
+            range_ = range_[range_ <= abacus.constants.DELAY_MAXIMUM_VALUE]
 
-            if self.parent.experiment != None:
+            if self.parent.port_name != None:
                 if self.parent.streaming:
                     if self.stopAcquisition():
                         self.run(n, range_)
@@ -227,7 +227,7 @@ class DelayDialog(SweepDialogBase):
                     self.run(n, range_)
             else:
                 self.parent.connect()
-                if self.parent.experiment != None:
+                if self.parent.port_name != None:
                     if self.parent.streaming:
                         if self.stopAcquisition():
                             self.run(n, range_)
@@ -250,31 +250,33 @@ class DelayDialog(SweepDialogBase):
         thread.start()
 
     def heavyDuty(self, n, range_):
-        try:
-            for (i, delay) in enumerate(range_):
-                if not self.completed:
-                    if delay < 0:
-                        delay1 = abs(delay)
-                        delay2 = 0
-                    else:
-                        delay1 = 0
-                        delay2 = delay
-
-                    result = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
-                    values = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
-                    result = []
-                    for value in values:
-                        result.append(value)
-
-                    self.x_data.append(delay)
-                    self.y_data.append(np.mean(result))
-                else:
-                    break
-
-            self.completed = True
-        except Exception as e:
-            self.completed = True
-            self.error = e
+        self.completed = True
+        # try:
+        #     for (i, delay) in enumerate(range_):
+        #         if not self.completed:
+        #             if delay < 0:
+        #                 delay1 = abs(delay)
+        #                 delay2 = 0
+        #             else:
+        #                 delay1 = 0
+        #                 delay2 = delay
+        #
+        #
+        #             # result = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
+        #             # values = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
+        #             result = []
+        #             for value in values:
+        #                 result.append(value)
+        #
+        #             self.x_data.append(delay)
+        #             self.y_data.append(np.mean(result))
+        #         else:
+        #             break
+        #
+        #     self.completed = True
+        # except Exception as e:
+        #     self.completed = True
+        #     self.error = e
 
 class SleepDialog(SweepDialogBase):
     def __init__(self, parent):
@@ -286,26 +288,26 @@ class SleepDialog(SweepDialogBase):
 
         label = QtWidgets.QLabel("Channel:")
         self.comboBox = QtWidgets.QComboBox()
-        self.comboBox.addItems(["A", "B"])
+        self.setNumberChannels(0)
         self.comboBox.setEditable(True)
         self.comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.comboBox.lineEdit().setReadOnly(True)
 
         self.formLayout.insertRow(0, label, self.comboBox)
 
-        self.startSpin.setMinimum(abacus.MIN_SLEEP)
-        self.startSpin.setMaximum(abacus.MAX_SLEEP - abacus.STEP_SLEEP)
-        self.startSpin.setSingleStep(abacus.STEP_SLEEP)
-        self.startSpin.setValue(abacus.MIN_SLEEP)
+        self.startSpin.setMinimum(abacus.constants.SLEEP_MINIMUM_VALUE)
+        self.startSpin.setMaximum(abacus.constants.SLEEP_MAXIMUM_VALUE - abacus.constants.SLEEP_STEP_VALUE)
+        self.startSpin.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
+        self.startSpin.setValue(abacus.constants.SLEEP_MINIMUM_VALUE)
 
-        self.stopSpin.setMinimum(abacus.MIN_SLEEP)
-        self.stopSpin.setMaximum(abacus.MAX_SLEEP)
-        self.stopSpin.setSingleStep(abacus.STEP_SLEEP)
-        self.stopSpin.setValue(abacus.MAX_SLEEP)
+        self.stopSpin.setMinimum(abacus.constants.SLEEP_MINIMUM_VALUE)
+        self.stopSpin.setMaximum(abacus.constants.SLEEP_MAXIMUM_VALUE)
+        self.stopSpin.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
+        self.stopSpin.setValue(abacus.constants.SLEEP_MAXIMUM_VALUE)
 
-        self.stepSpin.setMinimum(abacus.STEP_SLEEP)
-        self.stepSpin.setMaximum(((abacus.MAX_SLEEP - abacus.MIN_SLEEP) // abacus.STEP_SLEEP) * abacus.STEP_SLEEP)
-        self.stepSpin.setSingleStep(abacus.STEP_SLEEP)
+        self.stepSpin.setMinimum(abacus.constants.SLEEP_STEP_VALUE)
+        self.stepSpin.setMaximum(((abacus.constants.SLEEP_MAXIMUM_VALUE - abacus.constants.SLEEP_MINIMUM_VALUE) // abacus.constants.SLEEP_STEP_VALUE) * abacus.constants.SLEEP_STEP_VALUE)
+        self.stepSpin.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
 
         self.plot.setLabel('left', "Counts")
         self.plot.setLabel('bottom', "Sleep time", units='ns')
@@ -321,10 +323,10 @@ class SleepDialog(SweepDialogBase):
             step = self.stepSpin.value()
             n = self.nSpin.value()
             range_ = np.arange(self.startSpin.value(), self.stopSpin.value(), step)
-            range_ = range_[range_ <= abacus.MAX_SLEEP]
+            range_ = range_[range_ <= abacus.constants.SLEEP_MAXIMUM_VALUE]
             channel = self.comboBox.currentText()
 
-            if self.parent.experiment != None:
+            if self.parent.port_name != None:
                 if self.parent.streaming:
                     if self.stopAcquisition():
                         self.run(channel, n, range_)
@@ -332,7 +334,7 @@ class SleepDialog(SweepDialogBase):
                     self.run(channel, n, range_)
             else:
                 self.parent.connect()
-                if self.parent.experiment != None:
+                if self.parent.port_name!= None:
                     if self.parent.streaming:
                         if self.stopAcquisition():
                             self.run(channel, n, range_)
@@ -355,20 +357,25 @@ class SleepDialog(SweepDialogBase):
         thread.start()
 
     def heavyDuty(self, channel, n, range_):
-        try:
-            for (i, delay) in enumerate(range_):
-                if not self.completed:
-                    # result = self.parent.experiment.sleepSweep(channel, delay, n)
-                    values = self.parent.experiment.sleepSweep(channel, delay, n)
-                    result = []
-                    for value in values:
-                        result.append(value)
-                    self.x_data.append(delay)
-                    self.y_data.append(np.mean(result))
-                else:
-                    break
+        self.completed = True
+        # try:
+        #     for (i, delay) in enumerate(range_):
+        #         if not self.completed:
+        #             # result = self.parent.experiment.sleepSweep(channel, delay, n)
+        #             values = self.parent.experiment.sleepSweep(channel, delay, n)
+        #             result = []
+        #             for value in values:
+        #                 result.append(value)
+        #             self.x_data.append(delay)
+        #             self.y_data.append(np.mean(result))
+        #         else:
+        #             break
+        #
+        #     self.completed = True
+        # except Exception as e:
+        #     self.completed = True
+        #     self.error = e
 
-            self.completed = True
-        except Exception as e:
-            self.completed = True
-            self.error = e
+    def setNumberChannels(self, number_channels):
+        self.comboBox.clear()
+        self.comboBox.addItems([chr(i + ord('A')) for i in range(number_channels)])

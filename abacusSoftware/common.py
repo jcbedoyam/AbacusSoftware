@@ -24,7 +24,9 @@ def setSamplingComboBox(comboBox, value = abacus.constants.SAMPLING_DEFAULT_VALU
         #     item.setBackground(QtGui.QColor('red'))
         #     item.setForeground(QtGui.QColor('white'))
         model.appendRow(item)
-    # comboBox.setCurrentIndex(comboBox.findText("%"value))
+    if value < 1000: unit = "ms"
+    else: unit = "s"; value = value // 1000
+    comboBox.setCurrentIndex(comboBox.findText("%d %s"%(value, unit)))
 
 def setCoincidenceSpinBox(spinBox, value = abacus.constants.COINCIDENCE_WINDOW_DEFAULT_VALUE):
     spinBox.setMinimum(abacus.constants.COINCIDENCE_WINDOW_MINIMUM_VALUE)
