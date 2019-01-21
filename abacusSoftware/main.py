@@ -733,18 +733,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def updateData(self):
         def get(counters, time_, id):
-            last = -1
+            last = 3
             if self.number_channels == 4: last = 10
             elif self.number_channels == 8: last = 36
             values = counters.getValues(self.combinations[:last])
             "could be better"
             i = 1
-            for letters in self.combinations[last :]:
-                if letters in self.active_channels:
-                    val = counters.getValue("custom_c%d"%i)
-                    i += 1
-                else: val = 0
-                values.append(val)
+            if self.number_channels > 2:
+                for letters in self.combinations[last :]:
+                    if letters in self.active_channels:
+                        val = counters.getValue("custom_c%d"%i)
+                        i += 1
+                    else: val = 0
+                    values.append(val)
 
             values = np.array([time_, id] + values)
             values = values.reshape((1, values.shape[0]))
@@ -899,7 +900,6 @@ class MainWindow(QtWidgets.QMainWindow):
         if type(exception) is abacus.BaseError:
             self.stopClocks()
             self.cleanPort()
-            self.experiment = None
             self.streaming = False
             self.acquisition_button.setDisabled(True)
             self.acquisition_button.setStyleSheet("background-color: red")
@@ -916,7 +916,7 @@ class MainWindow(QtWidgets.QMainWindow):
         msg.exec_()
 
     def closeEvent(self, event):
-        if self.results_files == None:
+        if self.results_files != None:
             if self.results_files.data_file.isEmpty():
                 self.results_files.params_file.delete()
 
@@ -1011,5 +1011,6 @@ def run():
     app.exec_()
 
 if __name__ == "__main__":
+    abacus.constants.DEBUG = True
     run()
     sys.exit()
