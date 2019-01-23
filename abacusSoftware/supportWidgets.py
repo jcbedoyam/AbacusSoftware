@@ -212,7 +212,8 @@ class Tabs(QFrame):
             self.signal()
 
     def setChecked(self, letters):
-        getattr(self, letters).setChecked(True)
+        if letters:
+            getattr(self, letters).setChecked(True)
 
 class Table(QtWidgets.QTableWidget):
     def __init__(self, active_labels, active_indexes):

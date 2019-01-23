@@ -767,6 +767,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.errorWindow(e)
         except FileNotFoundError as e:
             self.errorWindow(e)
+        except IndexError:
+            pass
 
     def updateWidgets(self):
         if self.data_ring != None:
