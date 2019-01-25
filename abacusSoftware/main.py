@@ -10,6 +10,8 @@ from itertools import combinations
 from time import time, localtime, strftime
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+from serial.serialutil import SerialException
+
 try:
     from PyQt5 import QtCore, QtGui, QtWidgets
     from PyQt5.QtWidgets import QLabel, QSpinBox, QComboBox, QSizePolicy
@@ -483,7 +485,8 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 for (i, letters) in enumerate(coincidences):
                     abacus.setSetting(self.port_name, 'config_custom_c%d'%(i + 1), letters)
-            except Exception as e:
+            except SerialException as e:
+            # except Exception as e:
                 self.errorWindow(e)
 
     def sendSettings(self):
@@ -512,7 +515,8 @@ class MainWindow(QtWidgets.QMainWindow):
                         self.results_files.writeParams("Sampling time (ms),%s"%value)
                 except abacus.InvalidValueError:
                     self.sampling_widget.invalid()
-                except abacus.BaseError as e:
+                except SerialException as e:
+                # except abacus.BaseError as e:
                     self.errorWindow(e)
             else:
                 print("Sampling Value, %d"%value)
@@ -535,8 +539,10 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.results_files.writeParams("Coincidence Window (ns), %s"%str(val))
             except abacus.InvalidValueError:
                 self.coincidence_spinBox.setStyleSheet("color: red")
-            except abacus.BaseError:
+            except serial.serialutil.SerialException:
                 self.errorWindow(e)
+            # except abacus.BaseError:
+            #     self.errorWindow(e)
         else:
             print("Coincidence Window Value: %d"%val)
         try:
@@ -553,7 +559,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.results_files.writeParams("Delay A (ns), %s"%str(val))
             except abacus.InvalidValueError:
                 widget.setStyleSheet("color: red")
-            except abacus.BaseError as e:
+            except SerialException as e:
+            # except abacus.BaseError as e:
                 self.errorWindow(e)
         else:
             print("Delay %s Value: %d"%(letter, val))
@@ -566,7 +573,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     self.results_files.writeParams("sleep A (ns), %s"%str(val))
             except abacus.InvalidValueError:
                 widget.setStyleSheet("color: red")
-            except abacus.BaseError as e:
+            except SerialException as e:
+            # except abacus.BaseError as e:
                 self.errorWindow(e)
         else:
             print("Sleep %s Value: %d"%(letter, val))
@@ -619,7 +627,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
                 if self.sampling_widget.getValue() != samp:
                     self.sampling_widget.setValue(samp)
-            except abacus.BaseError as e:
+            # except abacus.BaseError as e:
+            except SerialException as e:
                 self.errorWindow(e)
 
     def setSettings(self):
@@ -751,10 +760,10 @@ class MainWindow(QtWidgets.QMainWindow):
             values = values.reshape((1, values.shape[0]))
             self.data_ring.extend(values)
         try:
-            if self.number_channels == 2:
-                counters, id = abacus.getAllCounters(self.port_name)
-            else:
-                counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
+            # if self.number_channels == 2:
+            counters, id = abacus.getAllCounters(self.port_name)
+            # else:
+            #     counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
 
             time_ = time() - self.init_time
             data = self.data_ring[:]
@@ -763,12 +772,11 @@ class MainWindow(QtWidgets.QMainWindow):
             elif data[-1, 1] != id:
                 get(counters, time_, id)
 
-        except abacus.BaseError as e:
+        except SerialException as e:
+        # except abacus.BaseError as e:
             self.errorWindow(e)
         except FileNotFoundError as e:
             self.errorWindow(e)
-        except IndexError:
-            pass
 
     def updateWidgets(self):
         if self.data_ring != None:
@@ -899,7 +907,7 @@ class MainWindow(QtWidgets.QMainWindow):
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Warning)
 
-        if type(exception) is abacus.BaseError:
+        if type(exception) is SerialException:
             self.stopClocks()
             self.cleanPort()
             self.streaming = False
