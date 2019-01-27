@@ -125,7 +125,7 @@ class Tabs(QFrame):
         self.multiple_tab = QGroupBox("Multiple")
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.layout.setSpacing(6)
+        self.layout.setSpacing(3)
 
         self.single_tab_layout = QVBoxLayout(self.single_tab)
         self.double_tab_layout = QVBoxLayout(self.double_tab)
@@ -344,6 +344,8 @@ class CurrentLabels(QtWidgets.QWidget):
         QtWidgets.QWidget.__init__(self, parent)
         # self.setSizePolicy(QtWidgets.QSizePolicy.Ignored, QtWidgets.QSizePolicy.Ignored)
         self.layout = QtWidgets.QVBoxLayout(parent)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
         self.installEventFilter(self)
         self.labels = []
 
@@ -471,7 +473,8 @@ class SettingsDialog(QtWidgets.QDialog):
 
         self.verticalLayout = QtWidgets.QVBoxLayout(self)
         self.verticalLayout.setContentsMargins(11, 11, 11, 11)
-        self.verticalLayout.setSpacing(6)
+        # self.verticalLayout.setContentsMargins(0, 0, 0, 0)
+        self.verticalLayout.setSpacing(0)
 
         self.tabWidget = QtWidgets.QTabWidget(self)
 
@@ -690,8 +693,8 @@ class SubWindow(QtWidgets.QMdiSubWindow):
     def __init__(self, parent = None):
         super(SubWindow, self).__init__(parent)
         self.parent = parent
-        self.setMinimumSize(280, 320)
-        self.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.setMinimumSize(200, 120)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def closeEvent(self, evnt):
         evnt.ignore()

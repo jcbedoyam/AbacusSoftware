@@ -80,7 +80,7 @@ class ResultsFiles(object):
 
     def writeParams(self, text):
         current_time = strftime("%H:%M:%S", localtime())
-        text = "%s,%s"%(current_time, text)
+        text = "%s, %s"%(current_time, text)
         self.params_file.write(text)
 
     def checkFilesExists(self):
@@ -103,6 +103,10 @@ class RingBuffer():
         self.last_saved = 0
         self.header_list = ["Time (s)", "ID"] + ["Counts %s"%letter for letter in self.combinations]
         self.header = constants.DELIMITER.join(self.header_list)
+
+    def isEmpty(self):
+        if self.last_saved == 0: return True
+        return False
 
     def updateDelimiter(self, delimiter):
         self.fmt = delimiter.join(self.data_fmt)
@@ -130,7 +134,7 @@ class RingBuffer():
 
     def save(self):
         "Saves the buffer"
-        if self.file != None:
+        if (self.file != None) and (self.index != self.last_saved):
             from_index = self.size - self.index + self.last_saved
             self.last_saved = self.index
             data = self.get()[from_index%self.size:]

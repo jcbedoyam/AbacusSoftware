@@ -14,9 +14,11 @@ from serial.serialutil import SerialException
 
 try:
     from PyQt5 import QtCore, QtGui, QtWidgets
-    from PyQt5.QtWidgets import QLabel, QSpinBox, QComboBox, QSizePolicy
+    from PyQt5.QtWidgets import QLabel, QSpinBox, QComboBox, QSizePolicy, QAction, \
+                            QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, \
+                            QPushButton, QMdiArea
 except ModuleNotFoundError:
-    from PyQt4.QtGui import QLabel, QSpinBox, QComboBox, QSizePolicy
+    from PyQt4.QtGui import QLabel, QSpinBox, QComboBox, QSizePolicy, QAction
 
 import abacusSoftware.constants as constants
 import abacusSoftware.common as common
@@ -30,6 +32,7 @@ from abacusSoftware.supportWidgets import Table, CurrentLabels, ConnectDialog, \
 
 import pyAbacus as abacus
 
+STDOUT = None
 # if constants.CURRENT_OS == "win32":
 #     import win_unicode_console
 #     win_unicode_console.enable()
@@ -43,33 +46,31 @@ def getCombinations(n_channels):
 
 common.readConstantsFile()
 
-class MainWindow(QtWidgets.QMainWindow):
-    count = 0
-
+class MainWindow(QMainWindow):
     def __init__(self, parent = None):
-        super(QtWidgets.QMainWindow, self).__init__(parent)
+        super(QMainWindow, self).__init__(parent)
         self.port_name = None
         self.start_position = None
         self.number_channels = 0
         self.active_channels = []
-        widget = QtWidgets.QWidget()
+        widget = QWidget()
 
-        layout = QtWidgets.QVBoxLayout(widget)
+        layout = QVBoxLayout(widget)
 
-        layout.setContentsMargins(11, 11, 11, 11)
-        layout.setSpacing(6)
+        layout.setContentsMargins(0, 0, 11, 0)
+        layout.setSpacing(0)
 
-        frame = QtWidgets.QFrame()
-        frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        frame = QFrame()
+        frame.setFrameShape(QFrame.StyledPanel)
+        frame.setFrameShadow(QFrame.Raised)
 
-        horizontalLayout =  QtWidgets.QHBoxLayout(frame)
+        horizontalLayout =  QHBoxLayout(frame)
         label = QLabel("Save as:")
 
         self.save_as_lineEdit = ClickableLineEdit()
         self.save_as_lineEdit.clicked.connect(self.chooseFile)
 
-        self.save_as_button = QtWidgets.QPushButton("Open")
+        self.save_as_button = QPushButton("Open")
 
         horizontalLayout.addWidget(label)
         horizontalLayout.addWidget(self.save_as_lineEdit)
@@ -77,35 +78,37 @@ class MainWindow(QtWidgets.QMainWindow):
 
         layout.addWidget(frame)
 
-        frame2 = QtWidgets.QFrame()
-        layout2 = QtWidgets.QHBoxLayout(frame2)
-        layout.setSpacing(0)
+        frame2 = QFrame()
+        layout2 = QHBoxLayout(frame2)
+        layout2.setContentsMargins(0, 6, 0, 6)
+        layout2.setSpacing(0)
 
-        self.connect_button = QtWidgets.QPushButton("Connect")
+        self.connect_button = QPushButton("Connect")
         self.connect_button.setMaximumSize(QtCore.QSize(140, 60))
         layout2.addWidget(self.connect_button)
-        self.acquisition_button = QtWidgets.QPushButton("Start Acquisition")
+        self.acquisition_button = QPushButton("Start Acquisition")
         self.acquisition_button.setMaximumSize(QtCore.QSize(140, 60))
         layout2.addWidget(self.acquisition_button)
         layout.addWidget(frame2)
 
-        frame3 = QtWidgets.QFrame()
-        layout3 = QtWidgets.QHBoxLayout(frame3)
+        frame3 = QFrame()
+        layout3 = QHBoxLayout(frame3)
         layout.addWidget(frame3)
 
-        toolbar_frame = QtWidgets.QFrame()
-        toolbar_frame_layout = QtWidgets.QVBoxLayout(toolbar_frame)
+        toolbar_frame = QFrame()
+        toolbar_frame_layout = QVBoxLayout(toolbar_frame)
 
         self.tabs_widget = Tabs(self)
         toolbar_frame_layout.addWidget(self.tabs_widget)
         toolbar_frame.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Expanding)
-        toolbar_frame.setMaximumWidth(300)
+        toolbar_frame.setMinimumWidth(120)
+        toolbar_frame.setMaximumWidth(150)
 
         layout3.addWidget(toolbar_frame)
         layout3.setContentsMargins(0, 0, 0, 0)
         layout3.setSpacing(0)
 
-        self.mdi = QtWidgets.QMdiArea(frame3)
+        self.mdi = QMdiArea(frame3)
         self.mdi.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         layout3.addWidget(self.mdi)
         self.setCentralWidget(widget)
@@ -188,8 +191,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.menuBuildInSweep = QtGui.QMenu("Sweep")
 
-        sleepSweep = QtWidgets.QAction('Sleep time', self)
-        delaySweep = QtWidgets.QAction('Delay time', self)
+        sleepSweep = QAction('Sleep time', self)
+        delaySweep = QAction('Delay time', self)
 
         # self.menuBuildInSweep.addAction(sleepSweep)
         # self.menuBuildInSweep.addAction(delaySweep)
@@ -202,10 +205,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.statusBar.setObjectName("statusBar")
         self.setStatusBar(self.statusBar)
 
-        self.actionAbout = QtWidgets.QAction('About', self)
-        self.actionSave_as = QtWidgets.QAction('Save as', self)
-        self.actionDefault_settings = QtWidgets.QAction('Default settings', self)
-        self.actionExit = QtWidgets.QAction('Exit', self)
+        self.actionAbout = QAction('About', self)
+        self.actionSave_as = QAction('Save as', self)
+        self.actionDefault_settings = QAction('Default settings', self)
+        self.actionExit = QAction('Exit', self)
 
         self.menuFile.addAction(self.actionSave_as)
         self.menuFile.addSeparator()
@@ -213,10 +216,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menuHelp.addAction(self.actionAbout)
         self.menuProperties.addAction(self.actionDefault_settings)
 
-        self.menuView.addAction(QtGui.QAction("Show settings", self.menubar, checkable = True))
-        self.menuView.addAction(QtGui.QAction("Show historical", self.menubar, checkable = True))
-        self.menuView.addAction(QtGui.QAction("Show current", self.menubar, checkable = True))
-        self.menuView.addAction(QtGui.QAction("Show plots", self.menubar, checkable = True))
+        self.menuView.addAction(QAction("Show settings", self.menuView, checkable = True))
+        self.menuView.addAction(QAction("Show historical", self.menuView, checkable = True))
+        self.menuView.addAction(QAction("Show current", self.menuView, checkable = True))
+        self.menuView.addAction(QAction("Show plots", self.menuView, checkable = True))
         self.menuView.addSeparator()
         self.menuView.addAction("Tiled")
         self.menuView.addAction("Cascade")
@@ -230,7 +233,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.menubar.addAction(self.menuView.menuAction())
         self.menubar.addAction(self.menuHelp.menuAction())
 
-        self.menuView.triggered[QtWidgets.QAction].connect(self.handleViews)
+        self.menuView.triggered.connect(self.handleViews)
 
         self.actionSave_as.triggered.connect(self.chooseFile)
         self.actionSave_as.setShortcut("Ctrl+S")
@@ -254,6 +257,25 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setSettings()
         self.updateConstants()
 
+    def aboutWindowCaller(self):
+        self.about_window.show()
+
+    def activeChannelsChanged(self, actives):
+        self.active_channels = actives
+        self.initPlots()
+        self.current_labels.createLabels(self.active_channels)
+        self.combination_indexes = [i for (i, com) in enumerate(self.combinations) if com in self.active_channels]
+
+        "Clear table"
+        self.historical_layout.removeWidget(self.historical_table)
+        self.historical_table.deleteLater()
+
+        "Create new table"
+        self.historical_table = Table(self.active_channels, self.combination_indexes)
+        self.historical_layout.addWidget(self.historical_table)
+
+        self.updateWidgets()
+
     def centerOnScreen(self):
         resolution = QtGui.QDesktopWidget().screenGeometry()
         x_0 = self.pos().x()
@@ -263,6 +285,211 @@ class MainWindow(QtWidgets.QMainWindow):
         fh = self.frameSize().height()
         y_o = (sh - fh) / 2
         self.move(sw / 2 - x_0, y_o)
+
+    def checkFileName(self, name):
+        if "." in name:
+            name, ext = name.split(".")
+            ext = ".%s"%ext
+        else:
+            try:
+                ext = constants.extension_comboBox
+                print(ext)
+            except AttributeError:
+                ext = constants.EXTENSION_DATA
+            name = common.unicodePath(name)
+            self.save_as_lineEdit.setText(name + ext)
+        if ext in constants.SUPPORTED_EXTENSIONS.keys():
+            return name, ext
+        else:
+            raise ExtentionError()
+
+    def checkParams(self):
+        if self.port_name != None:
+            try:
+                settings = abacus.getAllSettings(self.port_name)
+                samp = settings.getSetting("sampling")
+                coin = settings.getSetting("coincidence_window")
+                if self.number_channels == 4:
+                    custom = settings.getSetting("config_custom_c1")
+                    self.tabs_widget.setChecked(custom)
+                elif self.number_channels == 8:
+                    for i in range(8):
+                        custom = settings.getSetting("config_custom_c%d"%(i + 1))
+                        self.tabs_widget.setChecked(custom)
+
+                if self.coincidence_spinBox.value() != coin:
+                    self.coincidence_spinBox.setValue(coin)
+                for i in range(self.number_channels):
+                    letter = self.getLetter(i)
+                    delay = self.delay_widgets[i]
+                    sleep = self.sleep_widgets[i]
+                    delay_new_val = settings.getSetting("delay_%s"%letter)
+                    sleep_new_val = settings.getSetting("sleep_%s"%letter)
+                    if delay.value() != delay_new_val:
+                        delay.setValue(delay_new_val)
+                    if sleep.value() != sleep_new_val:
+                        sleep.setValue(sleep_new_val)
+
+                if self.sampling_widget.getValue() != samp:
+                    self.sampling_widget.setValue(samp)
+            except abacus.BaseError as e:
+                pass
+            except SerialException as e:
+                self.errorWindow(e)
+
+    def chooseFile(self):
+        """
+        user interaction with saving file
+        """
+        try:
+            directory = constants.directory_lineEdit
+        except:
+            directory = os.path.expanduser("~")
+
+        dlg = QtWidgets.QFileDialog(directory = directory)
+        dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
+        dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
+        dlg.setNameFilters(nameFilters)
+        dlg.selectNameFilter(constants.SUPPORTED_EXTENSIONS[constants.EXTENSION_DATA])
+        if dlg.exec_():
+            name = dlg.selectedFiles()[0]
+            self.save_as_lineEdit.setText(common.unicodePath(name))
+            self.setSaveAs()
+
+    def cleanPort(self):
+        if self.streaming:
+            self.startAcquisition()
+
+        if self.port_name != None:
+            abacus.close(self.port_name)
+            self.port_name = None
+            self.data_ring = None
+            self.setNumberChannels(0)
+            self.subSettings(new = False)
+            self.check_timer.stop()
+
+    def closeEvent(self, event):
+        quit_msg = "Are you sure you want to exit the program?"
+        reply = QtWidgets.QMessageBox.question(self, 'Exit',
+                         quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            try:
+                self.data_ring.save()
+            except: pass
+            if self.results_files != None:
+                if self.results_files.data_file.isEmpty():
+                    self.results_files.params_file.delete()
+            event.accept()
+        else:
+            event.ignore()
+
+    def coincidenceWindowMethod(self, val):
+        text_value = "%d"%val
+        if self.number_channels > 2:
+            step = 10**int(np.log10(val) - 1)
+            if step < 10: step = 5
+            self.coincidence_spinBox.setSingleStep(step)
+        if self.port_name != None:
+            try:
+                abacus.setSetting(self.port_name, 'coincidence_window', val)
+                self.coincidence_spinBox.setStyleSheet("color: black")
+                self.writeParams("Coincidence Window (ns), %s"%val)
+            except abacus.InvalidValueError:
+                self.coincidence_spinBox.setStyleSheet("color: red")
+            except serial.serialutil.SerialException:
+                self.errorWindow(e)
+            # except abacus.BaseError:
+            #     self.errorWindow(e)
+        elif abacus.constants.DEBUG:
+            print("Coincidence Window Value: %d"%val)
+        try:
+            self.sleepSweepDialog.setCoincidence(val)
+            self.delaySweepDialog.setCoincidence(val)
+        except AttributeError: pass
+
+    def connect(self):
+        if self.port_name != None:
+            self.connect_button.setText("Connect")
+            self.acquisition_button.setDisabled(True)
+            if self.results_files != None:
+                self.results_files.writeParams("Disconnected from device in port,%s"%self.port_name)
+            self.cleanPort()
+        else:
+            self.connect_dialog = ConnectDialog()
+            self.connect_dialog.refresh()
+            self.connect_dialog.exec_()
+
+            port = self.connect_dialog.comboBox.currentText()
+
+            if port != "":
+                abacus.open(port)
+                n = abacus.getChannelsFromName(port)
+                self.combinations = getCombinations(n)
+
+                self.setNumberChannels(n)
+                self.acquisition_button.setDisabled(False)
+                self.acquisition_button.setStyleSheet("background-color: none")
+                self.acquisition_button.setText("Start acquisition")
+                self.connect_button.setText("Disconnect")
+
+                self.subSettings(new = False)
+
+                self.data_ring = RingBuffer(constants.BUFFER_ROWS, len(self.combinations) + 2, self.combinations)
+                if self.results_files != None:
+                    self.data_ring.setFile(self.results_files.data_file)
+
+                self.port_name = port # not before
+                self.writeParams("Connected to device in port, %s"%self.port_name)
+                self.updateConstants()
+                self.check_timer.start()
+
+            else:
+                self.connect_button.setText("Connect")
+                self.acquisition_button.setDisabled(True)
+
+    def delayMethod(self, widget, letter, val):
+        if self.port_name != None:
+            try:
+                abacus.setSetting(self.port_name, 'delay_%s'%letter, val)
+                widget.setStyleSheet("color: black")
+                self.writeParams("Delay %s (ns), %s"%(letter, val))
+            except abacus.InvalidValueError:
+                widget.setStyleSheet("color: red")
+            except SerialException as e:
+            # except abacus.BaseError as e:
+                self.errorWindow(e)
+        elif abacus.constants.DEBUG:
+            print("Delay %s Value: %d"%(letter, val))
+
+    def delaySweep(self):
+        self.delaySweepDialog.show()
+
+    def errorWindow(self, exception):
+        error_text = str(exception)
+        msg = QtWidgets.QMessageBox()
+        msg.setIcon(QtWidgets.QMessageBox.Warning)
+
+        if type(exception) is SerialException:
+            self.stopClocks()
+            self.cleanPort()
+            self.streaming = False
+            self.acquisition_button.setDisabled(True)
+            self.acquisition_button.setStyleSheet("background-color: red")
+            msg.setIcon(QtWidgets.QMessageBox.Critical)
+            self.connect_button.setText("Connect")
+        try:
+            self.results_files.writeParams("Error,%s"%error_text)
+        except Exception:
+            pass
+
+        msg.setText('An Error has ocurred.\n%s'%error_text)
+        msg.setWindowTitle("Error")
+        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
+        msg.exec_()
+
+    def getLetter(self, i):
+        return chr(i + ord('A'))
 
     def handleViews(self, q):
         text = q.text()
@@ -287,11 +514,213 @@ class MainWindow(QtWidgets.QMainWindow):
         elif text == "Tiled":
             self.mdi.tileSubWindows()
 
+    def initial(self):
+        self.__sleep_timer__.stop()
+        self.connect()
+
+    def initPlots(self):
+        self.removePlots()
+        self.legend = self.counts_plot.addLegend()
+        n = len(constants.COLORS)
+        symbolSize = 5
+        for i in range(len(self.active_channels)):
+            color = constants.COLORS[i % n]
+            letter = self.active_channels[i]
+            plot = self.counts_plot.plot(pen = color, symbol='o',
+                symbolPen = color, symbolBrush = color,
+                symbolSize = symbolSize, name = letter)
+            self.plot_lines.append(plot)
+
+    def removePlots(self):
+        if self.legend != None:
+            self.legend.scene().removeItem(self.legend)
+        for line in self.plot_lines:
+            line.clear()
+        self.plot_lines = []
+        self.legend = None
+
+    def samplingMethod(self, value, force_write = False):
+        if self.sampling_widget != None:
+            if force_write: self.sampling_widget.setValue(value)
+            value = self.sampling_widget.getValue()
+            if value > 0 and self.port_name != None:
+                if value > constants.DATA_REFRESH_RATE: self.refresh_timer.setInterval(value)
+                else: self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
+                self.data_timer.setInterval(value)
+                try:
+                    abacus.setSetting(self.port_name, 'sampling', value)
+                    self.sampling_widget.valid()
+                    self.writeParams("Sampling time (ms), %s"%value)
+                except abacus.InvalidValueError:
+                    self.sampling_widget.invalid()
+                except SerialException as e:
+                # except abacus.BaseError as e:
+                    self.errorWindow(e)
+            elif abacus.constants.DEBUG:
+                print("Sampling Value, %d"%value)
+        try:
+            self.sleepSweepDialog.setSampling(value)
+            self.delaySweepDialog.setSampling(value)
+        except AttributeError: pass
+
+    def sendMultipleCoincidences(self, coincidences):
+        if self.port_name != None:
+            try:
+                for (i, letters) in enumerate(coincidences):
+                    abacus.setSetting(self.port_name, 'config_custom_c%d'%(i + 1), letters)
+            except SerialException as e:
+            # except Exception as e:
+                self.errorWindow(e)
+
+    def sendSettings(self):
+        self.samplingMethod(self.sampling_widget.getValue())
+        self.coincidenceWindowMethod(self.coincidence_spinBox.value())
+
+        for i in range(self.number_channels):
+            letter = self.getLetter(i)
+            delay_widget = self.delay_widgets[i]
+            sleep_widget = self.sleep_widgets[i]
+            self.delayMethod(delay_widget, letter, delay_widget.value())
+            self.sleepMethod(sleep_widget, letter, sleep_widget.value())
+
+    def setNumberChannels(self, n):
+        self.number_channels = n
+        self.tabs_widget.setNumberChannels(n)
+        self.sampling_widget.changeNumberChannels(n)
+        self.sleepSweepDialog.setNumberChannels(n)
+        self.tabs_widget.signal()
+
+    def setSaveAs(self):
+        new_file_name = self.save_as_lineEdit.text()
+        try:
+            if new_file_name != "":
+                try:
+                    name, ext = self.checkFileName(new_file_name)
+                    if self.results_files == None:
+                        self.results_files = ResultsFiles(name, ext, self.init_date)
+                        self.results_files.params_file.header += self.params_buffer
+                        self.params_buffer = ""
+                    else:
+                        self.results_files.changeName(name, ext)
+                    names = self.results_files.getNames()
+                    if self.data_ring != None:
+                        self.data_ring.setFile(self.results_files.data_file)
+                    self.statusBar.showMessage('Files: %s, %s.'%(names))
+                    try:
+                        self.results_files.checkFilesExists()
+                    except FileExistsError:
+                        if abacus.constants.DEBUG:
+                            print("FileExistsError on setSaveAs")
+                except ExtentionError as e:
+                    self.save_as_lineEdit.setText("")
+                    self.errorWindow(e)
+            elif abacus.constants.DEBUG:
+                print("EmptyName on setSaveAs")
+        except FileNotFoundError as e:
+            self.errorWindow(e)
+
+    def setSettings(self):
+        common.setCoincidenceSpinBox(self.coincidence_spinBox)
+        for widget in self.delay_widgets:
+            common.setDelaySpinBox(widget)
+        for widget in self.sleep_widgets:
+            common.setSleepSpinBox(widget)
+
+    def settingsDialogCaller(self):
+        self.settings_dialog.show()
+
+    def show2(self):
+        self.show()
+
+        self.__sleep_timer__ = QtCore.QTimer()
+        self.__sleep_timer__.setInterval(10)
+        self.__sleep_timer__.timeout.connect(self.initial)
+        self.__sleep_timer__.start()
+
+    def sleepMethod(self, widget, letter, val):
+        if self.port_name != None:
+            try:
+                abacus.setSetting(self.port_name, 'sleep_%s'%letter, val)
+                self.writeParams("Sleep %s (ns), %s"%(letter, val))
+            except abacus.InvalidValueError:
+                widget.setStyleSheet("color: red")
+            except SerialException as e:
+            # except abacus.BaseError as e:
+                self.errorWindow(e)
+        elif abacus.constants.DEBUG:
+            print("Sleep %s Value: %d"%(letter, val))
+
     def sleepSweep(self):
         self.sleepSweepDialog.show()
 
-    def delaySweep(self):
-        self.delaySweepDialog.show()
+    def startAcquisition(self):
+        if self.port_name == None:
+            QtWidgets.QMessageBox.warning(self, 'Error', "Port has not been choosed", QtWidgets.QMessageBox.Ok)
+        elif self.results_files != None:
+            self.streaming = not self.streaming
+            if not self.streaming:
+                self.acquisition_button.setStyleSheet("background-color: none")
+                self.acquisition_button.setText("Start acquisition")
+                self.results_files.writeParams("Acquisition stopped")
+                self.unlockSettings()
+                self.stopClocks()
+            else:
+                self.acquisition_button.setStyleSheet("background-color: green")
+                self.acquisition_button.setText("Stop acquisition")
+                self.results_files.writeParams("Acquisition started")
+                self.sendSettings()
+                self.unlockSettings(False)
+                self.startClocks()
+
+            if self.init_time == 0:
+                self.init_time = time()
+        else:
+            QtWidgets.QMessageBox.warning(self, 'Error', "Please choose an output file.", QtWidgets.QMessageBox.Ok)
+
+    def startClocks(self):
+        self.refresh_timer.start()
+        self.data_timer.start()
+
+    def stopClocks(self):
+        self.refresh_timer.stop()
+        self.data_timer.stop()
+        try:
+            self.data_ring.save()
+        except FileNotFoundError as e:
+            self.errorWindow(e)
+
+    def subCurrent(self):
+        widget = QWidget()
+        self.current_labels = CurrentLabels(widget)
+        self.subwindow_current = SubWindow(self)
+        # self.subwindow_current.setMinimumSize(200, 100)
+        self.subwindow_current.setWidget(widget)
+        self.subwindow_current.setWindowTitle("Current")
+        self.mdi.addSubWindow(self.subwindow_current)
+
+    def subHistorical(self):
+        widget = QWidget()
+        self.historical_table = Table([], [])
+        self.historical_layout = QtGui.QVBoxLayout(widget)
+
+        self.historical_layout.setSpacing(0)
+        self.historical_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.historical_layout.addWidget(self.historical_table)
+
+        self.subwindow_historical = SubWindow(self)
+        self.subwindow_historical.setWidget(widget)
+        self.subwindow_historical.setWindowTitle("Historical")
+        self.mdi.addSubWindow(self.subwindow_historical)
+
+    def subPlots(self):
+        pg.setConfigOptions(foreground = 'k', background = None, antialias = True)
+        self.plot_win = pg.GraphicsWindow()
+
+        self.subwindow_plots = SubWindow(self)
+        self.subwindow_plots.setWidget(self.plot_win)
+        self.subwindow_plots.setWindowTitle("Plots")
+        self.mdi.addSubWindow(self.subwindow_plots)
 
     def subSettings(self, new = True):
         def fillFormLayout(layout, values, new = True):
@@ -368,21 +797,21 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.sleep_widgets[7].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[7], 'H', arg))
 
         if new:
-            settings_frame = QtWidgets.QFrame()
-            settings_frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-            settings_frame.setFrameShadow(QtWidgets.QFrame.Raised)
-            settings_verticalLayout = QtWidgets.QVBoxLayout(settings_frame)
-            settings_verticalLayout.setContentsMargins(11, 11, 11, 11)
+            settings_frame = QFrame()
+            settings_frame.setFrameShape(QFrame.StyledPanel)
+            settings_frame.setFrameShadow(QFrame.Raised)
+            settings_verticalLayout = QVBoxLayout(settings_frame)
+            settings_verticalLayout.setContentsMargins(0, 0, 0, 0)
             settings_verticalLayout.setSpacing(0)
 
             scrollArea = QtWidgets.QScrollArea()
             scrollArea.setWidgetResizable(True)
 
-            self.settings_frame2 = QtWidgets.QFrame()
-            self.settings_frame2.setFrameShape(QtWidgets.QFrame.StyledPanel)
-            self.settings_frame2.setFrameShadow(QtWidgets.QFrame.Raised)
+            self.settings_frame2 = QFrame()
+            self.settings_frame2.setFrameShape(QFrame.StyledPanel)
+            self.settings_frame2.setFrameShadow(QFrame.Raised)
 
-            settings_frame3 = QtWidgets.QFrame()
+            settings_frame3 = QFrame()
 
             self.settings_frame2_formLayout =  QtWidgets.QFormLayout(self.settings_frame2)
             settings_frame3_formLayout =  QtWidgets.QFormLayout(settings_frame3)
@@ -402,7 +831,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.settings_frame2_formLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.coincidence_label)
             self.settings_frame2_formLayout.setWidget(1, QtWidgets.QFormLayout.FieldRole, self.coincidence_spinBox)
 
-            self.unlock_settings_button = QtWidgets.QPushButton("Unlock settings")
+            self.unlock_settings_button = QPushButton("Unlock settings")
             self.unlock_settings_button.clicked.connect(lambda: self.unlockSettings(True))
 
             # fillFormLayout(self.settings_frame2_formLayout, widgets)
@@ -426,6 +855,14 @@ class MainWindow(QtWidgets.QMainWindow):
         # createSampling()
         self.setSettings()
 
+    def timeInUnitsToMs(self, time):
+        value = 0
+        if 'ms' in time:
+            value = int(time.replace('ms', ''))
+        elif 's' in time:
+            value = int(time.replace('s', ''))*1000
+        return value
+
     def unlockSettings(self, unlock = True):
         self.sampling_widget.setEnabled(unlock)
         self.coincidence_spinBox.setEnabled(unlock)
@@ -435,454 +872,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.unlock_settings_button.setEnabled(False)
         else:
             self.unlock_settings_button.setEnabled(True)
-
-    def subHistorical(self):
-        widget = QtWidgets.QWidget()
-        self.historical_table = Table([], [])
-        self.historical_layout = QtGui.QVBoxLayout(widget)
-        self.historical_layout.addWidget(self.historical_table)
-
-        self.subwindow_historical = SubWindow(self)
-        self.subwindow_historical.setWidget(widget)
-        self.subwindow_historical.setWindowTitle("Historical")
-        self.mdi.addSubWindow(self.subwindow_historical)
-
-    def subCurrent(self):
-        widget = QtWidgets.QWidget()
-        self.current_labels = CurrentLabels(widget)
-
-        self.subwindow_current = SubWindow(self)
-        self.subwindow_current.setMinimumSize(200, 100)
-        self.subwindow_current.setWidget(widget)
-        self.subwindow_current.setWindowTitle("Current")
-        self.mdi.addSubWindow(self.subwindow_current)
-
-    def subPlots(self):
-        pg.setConfigOptions(foreground = 'k', background = None, antialias = True)
-        self.plot_win = pg.GraphicsWindow()
-
-        self.subwindow_plots = SubWindow(self)
-        self.subwindow_plots.setWidget(self.plot_win)
-        self.subwindow_plots.setWindowTitle("Plots")
-        self.mdi.addSubWindow(self.subwindow_plots)
-
-    def aboutWindowCaller(self):
-        self.about_window.show()
-
-    def settingsDialogCaller(self):
-        self.settings_dialog.show()
-
-    def timeInUnitsToMs(self, time):
-        value = 0
-        if 'ms' in time:
-            value = int(time.replace('ms', ''))
-        elif 's' in time:
-            value = int(time.replace('s', ''))*1000
-        return value
-
-    def sendMultipleCoincidences(self, coincidences):
-        if self.port_name != None:
-            try:
-                for (i, letters) in enumerate(coincidences):
-                    abacus.setSetting(self.port_name, 'config_custom_c%d'%(i + 1), letters)
-            except SerialException as e:
-            # except Exception as e:
-                self.errorWindow(e)
-
-    def sendSettings(self):
-        self.samplingMethod(self.sampling_widget.getValue())
-        self.coincidenceWindowMethod(self.coincidence_spinBox.value())
-
-        for i in range(self.number_channels):
-            letter = self.getLetter(i)
-            delay_widget = self.delay_widgets[i]
-            sleep_widget = self.sleep_widgets[i]
-            self.delayMethod(delay_widget, letter, delay_widget.value())
-            self.sleepMethod(sleep_widget, letter, sleep_widget.value())
-
-    def samplingMethod(self, value, force_write = False):
-        if self.sampling_widget != None:
-            if force_write: self.sampling_widget.setValue(value)
-            value = self.sampling_widget.getValue()
-            if value > 0 and self.port_name != None:
-                if value > constants.DATA_REFRESH_RATE: self.refresh_timer.setInterval(value)
-                else: self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
-                self.data_timer.setInterval(value)
-                try:
-                    abacus.setSetting(self.port_name, 'sampling', value)
-                    self.sampling_widget.valid()
-                    if self.results_files != None:
-                        self.results_files.writeParams("Sampling time (ms),%s"%value)
-                except abacus.InvalidValueError:
-                    self.sampling_widget.invalid()
-                except SerialException as e:
-                # except abacus.BaseError as e:
-                    self.errorWindow(e)
-            else:
-                print("Sampling Value, %d"%value)
-        try:
-            self.sleepSweepDialog.setSampling(value)
-            self.delaySweepDialog.setSampling(value)
-        except AttributeError: pass
-
-    def coincidenceWindowMethod(self, val):
-        text_value = "%d"%val
-        if self.number_channels > 2:
-            step = 10**int(np.log10(val) - 1)
-            if step < 10: step = 5
-            self.coincidence_spinBox.setSingleStep(step)
-        if self.port_name != None:
-            try:
-                abacus.setSetting(self.port_name, 'coincidence_window', val)
-                self.coincidence_spinBox.setStyleSheet("color: black")
-                if self.results_files != None:
-                    self.results_files.writeParams("Coincidence Window (ns), %s"%str(val))
-            except abacus.InvalidValueError:
-                self.coincidence_spinBox.setStyleSheet("color: red")
-            except serial.serialutil.SerialException:
-                self.errorWindow(e)
-            # except abacus.BaseError:
-            #     self.errorWindow(e)
-        else:
-            print("Coincidence Window Value: %d"%val)
-        try:
-            self.sleepSweepDialog.setCoincidence(val)
-            self.delaySweepDialog.setCoincidence(val)
-        except AttributeError: pass
-
-    def delayMethod(self, widget, letter, val):
-        if self.port_name != None:
-            try:
-                abacus.setSetting(self.port_name, 'delay_%s'%letter, val)
-                widget.setStyleSheet("color: black")
-                if self.results_files != None:
-                    self.results_files.writeParams("Delay A (ns), %s"%str(val))
-            except abacus.InvalidValueError:
-                widget.setStyleSheet("color: red")
-            except SerialException as e:
-            # except abacus.BaseError as e:
-                self.errorWindow(e)
-        else:
-            print("Delay %s Value: %d"%(letter, val))
-
-    def sleepMethod(self, widget, letter, val):
-        if self.port_name != None:
-            try:
-                abacus.setSetting(self.port_name, 'sleep_%s'%letter, val)
-                if self.results_files != None:
-                    self.results_files.writeParams("sleep A (ns), %s"%str(val))
-            except abacus.InvalidValueError:
-                widget.setStyleSheet("color: red")
-            except SerialException as e:
-            # except abacus.BaseError as e:
-                self.errorWindow(e)
-        else:
-            print("Sleep %s Value: %d"%(letter, val))
-
-    def activeChannelsChanged(self, actives):
-        self.active_channels = actives
-        self.initPlots()
-        self.current_labels.createLabels(self.active_channels)
-        self.combination_indexes = [i for (i, com) in enumerate(self.combinations) if com in self.active_channels]
-
-        "Clear table"
-        self.historical_layout.removeWidget(self.historical_table)
-        self.historical_table.deleteLater()
-
-        "Create new table"
-        self.historical_table = Table(self.active_channels, self.combination_indexes)
-        self.historical_layout.addWidget(self.historical_table)
-
-        self.updateWidgets()
-
-    def getLetter(self, i):
-        return chr(i + ord('A'))
-
-    def checkParams(self):
-        if self.port_name != None:
-            try:
-                settings = abacus.getAllSettings(self.port_name)
-                samp = settings.getSetting("sampling")
-                coin = settings.getSetting("coincidence_window")
-                if self.number_channels == 4:
-                    custom = settings.getSetting("config_custom_c1")
-                    self.tabs_widget.setChecked(custom)
-                elif self.number_channels == 8:
-                    for i in range(8):
-                        custom = settings.getSetting("config_custom_c%d"%(i + 1))
-                        self.tabs_widget.setChecked(custom)
-
-                if self.coincidence_spinBox.value() != coin:
-                    self.coincidence_spinBox.setValue(coin)
-                for i in range(self.number_channels):
-                    letter = self.getLetter(i)
-                    delay = self.delay_widgets[i]
-                    sleep = self.sleep_widgets[i]
-                    delay_new_val = settings.getSetting("delay_%s"%letter)
-                    sleep_new_val = settings.getSetting("sleep_%s"%letter)
-                    if delay.value() != delay_new_val:
-                        delay.setValue(delay_new_val)
-                    if sleep.value() != sleep_new_val:
-                        sleep.setValue(sleep_new_val)
-
-                if self.sampling_widget.getValue() != samp:
-                    self.sampling_widget.setValue(samp)
-            # except abacus.BaseError as e:
-            except SerialException as e:
-                self.errorWindow(e)
-
-    def setSettings(self):
-        common.setCoincidenceSpinBox(self.coincidence_spinBox)
-        for widget in self.delay_widgets:
-            common.setDelaySpinBox(widget)
-        for widget in self.sleep_widgets:
-            common.setSleepSpinBox(widget)
-
-    def cleanPort(self):
-        if self.streaming:
-            self.startAcquisition()
-
-        if self.port_name != None:
-            abacus.close(self.port_name)
-            self.port_name = None
-            self.setNumberChannels(0)
-            self.subSettings(new = False)
-            self.check_timer.stop()
-
-    def setNumberChannels(self, n):
-        self.number_channels = n
-        self.tabs_widget.setNumberChannels(n)
-        self.sampling_widget.changeNumberChannels(n)
-        self.sleepSweepDialog.setNumberChannels(n)
-        self.tabs_widget.signal()
-
-    def connect(self):
-        if self.port_name != None:
-            self.connect_button.setText("Connect")
-            self.acquisition_button.setDisabled(True)
-            if self.results_files != None:
-                self.results_files.writeParams("Disconnected from device in port,%s"%self.port_name)
-            self.cleanPort()
-        else:
-            self.connect_dialog = ConnectDialog()
-            self.connect_dialog.refresh()
-            self.connect_dialog.exec_()
-
-            port = self.connect_dialog.comboBox.currentText()
-
-            if port != "":
-                self.port_name = port
-                abacus.open(self.port_name)
-                n = abacus.getChannelsFromName(self.port_name)
-                self.combinations = getCombinations(n)
-
-                self.setNumberChannels(n)
-                self.acquisition_button.setDisabled(False)
-                self.acquisition_button.setStyleSheet("background-color: none")
-                self.acquisition_button.setText("Start acquisition")
-                self.connect_button.setText("Disconnect")
-
-                self.subSettings(new = False)
-
-                self.data_ring = RingBuffer(constants.BUFFER_ROWS, len(self.combinations) + 2, self.combinations)
-                if self.results_files != None:
-                    self.data_ring.setFile(self.results_files.data_file)
-
-                self.updateConstants()
-                self.check_timer.start()
-
-                msg = "Connected to device in port,%s"%self.port_name
-                if self.results_files != None:
-                    try:
-                        self.results_files.writeParams(msg)
-                    except FileNotFoundError as e:
-                        self.errorWindow(e)
-                else:
-                    self.params_buffer += constants.BREAKLINE + strftime("%H:%M:%S", localtime()) + "," + msg
-
-            else:
-                self.connect_button.setText("Connect")
-                self.acquisition_button.setDisabled(True)
-
-    def startClocks(self):
-        self.refresh_timer.start()
-        self.data_timer.start()
-
-    def stopClocks(self):
-        self.refresh_timer.stop()
-        self.data_timer.stop()
-        try:
-            self.data_ring.save()
-        except FileNotFoundError as e:
-            self.errorWindow(e)
-
-    def startAcquisition(self):
-        if self.port_name == None:
-            QtWidgets.QMessageBox.warning(self, 'Error', "Port has not been choosed", QtWidgets.QMessageBox.Ok)
-        elif self.results_files != None:
-            if self.streaming:
-                self.acquisition_button.setStyleSheet("background-color: none")
-                self.acquisition_button.setText("Start acquisition")
-                self.results_files.writeParams("Acquisition stopped")
-                self.unlockSettings()
-                self.stopClocks()
-            else:
-                self.acquisition_button.setStyleSheet("background-color: green")
-                self.acquisition_button.setText("Stop acquisition")
-                self.results_files.writeParams("Acquisition started")
-                self.sendSettings()
-                self.unlockSettings(False)
-                self.startClocks()
-
-            self.streaming = not self.streaming
-            if self.init_time == 0:
-                self.init_time = time()
-        else:
-            QtWidgets.QMessageBox.warning(self, 'Error', "Please choose an output file.", QtWidgets.QMessageBox.Ok)
-
-    def updateData(self):
-        def get(counters, time_, id):
-            last = 3
-            if self.number_channels == 4: last = 10
-            elif self.number_channels == 8: last = 36
-            values = counters.getValues(self.combinations[:last])
-            "could be better"
-            i = 1
-            if self.number_channels > 2:
-                for letters in self.combinations[last :]:
-                    if letters in self.active_channels:
-                        val = counters.getValue("custom_c%d"%i)
-                        i += 1
-                    else: val = 0
-                    values.append(val)
-
-            values = np.array([time_, id] + values)
-            values = values.reshape((1, values.shape[0]))
-            self.data_ring.extend(values)
-        try:
-            # if self.number_channels == 2:
-            counters, id = abacus.getAllCounters(self.port_name)
-            # else:
-            #     counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
-
-            time_ = time() - self.init_time
-            data = self.data_ring[:]
-            if len(data) == 0:
-                get(counters, time_, id)
-            elif data[-1, 1] != id:
-                get(counters, time_, id)
-
-        except SerialException as e:
-        # except abacus.BaseError as e:
-            self.errorWindow(e)
-        except FileNotFoundError as e:
-            self.errorWindow(e)
-
-    def updateWidgets(self):
-        if self.data_ring != None:
-            data = self.data_ring[:]
-            if data.shape[0]:
-                self.updatePlots(data)
-                self.updateTable(data)
-                self.updateCurrents(data)
-
-    def updateTable(self, data):
-        self.historical_table.insertData(data)
-
-    def updateCurrents(self, data):
-        for (pos, index) in enumerate(self.combination_indexes):
-            self.current_labels.changeValue(pos, data[-1, index + 2])
-
-    def updatePlots(self, data):
-        time_ = data[:, 0]
-        for (i, j) in enumerate(self.combination_indexes):
-            self.plot_lines[i].setData(time_, data[:, j + 2])
-
-    def removePlots(self):
-        if self.legend != None:
-            self.legend.scene().removeItem(self.legend)
-        for line in self.plot_lines:
-            line.clear()
-        self.plot_lines = []
-        self.legend = None
-
-    def initPlots(self):
-        self.removePlots()
-        self.legend = self.counts_plot.addLegend()
-        n = len(constants.COLORS)
-        symbolSize = 5
-        for i in range(len(self.active_channels)):
-            color = constants.COLORS[i % n]
-            letter = self.active_channels[i]
-            plot = self.counts_plot.plot(pen = color, symbol='o',
-                symbolPen = color, symbolBrush = color,
-                symbolSize = symbolSize, name = letter)
-            self.plot_lines.append(plot)
-
-    def setSaveAs(self):
-        new_file_name = self.save_as_lineEdit.text()
-        try:
-            if new_file_name != "":
-                try:
-                    name, ext = self.checkFileName(new_file_name)
-                    if self.results_files == None:
-                        self.results_files = ResultsFiles(name, ext, self.init_date)
-                        self.results_files.params_file.header += self.params_buffer
-                        self.params_buffer = ""
-                    else:
-                        self.results_files.changeName(name, ext)
-                    names = self.results_files.getNames()
-                    if self.data_ring != None:
-                        self.data_ring.setFile(self.results_files.data_file)
-                    self.statusBar.showMessage('Files: %s, %s.'%(names))
-                    try:
-                        self.results_files.checkFilesExists()
-                    except FileExistsError:
-                        print("FileExistsError")
-                except ExtentionError as e:
-                    self.save_as_lineEdit.setText("")
-                    self.errorWindow(e)
-            else:
-                print("EmptyName")
-        except FileNotFoundError as e:
-            self.errorWindow(e)
-
-    def checkFileName(self, name):
-        if "." in name:
-            name, ext = name.split(".")
-            ext = ".%s"%ext
-        else:
-            try:
-                ext = constants.extension_comboBox
-                print(ext)
-            except AttributeError:
-                ext = constants.EXTENSION_DATA
-            name = common.unicodePath(name)
-            self.save_as_lineEdit.setText(name + ext)
-        if ext in constants.SUPPORTED_EXTENSIONS.keys():
-            return name, ext
-        else:
-            raise ExtentionError()
-
-    def chooseFile(self):
-        """
-        user interaction with saving file
-        """
-        try:
-            directory = constants.directory_lineEdit
-        except:
-            directory = os.path.expanduser("~")
-
-        dlg = QtWidgets.QFileDialog(directory = directory)
-        dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-        dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
-        dlg.setNameFilters(nameFilters)
-        dlg.selectNameFilter(constants.SUPPORTED_EXTENSIONS[constants.EXTENSION_DATA])
-        if dlg.exec_():
-            name = dlg.selectedFiles()[0]
-            self.save_as_lineEdit.setText(common.unicodePath(name))
-            self.setSaveAs()
 
     def updateConstants(self):
         try:
@@ -902,69 +891,83 @@ class MainWindow(QtWidgets.QMainWindow):
 
         except AttributeError as e: pass
 
-    def errorWindow(self, exception):
-        error_text = str(exception)
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Warning)
+    def updateCurrents(self, data):
+        for (pos, index) in enumerate(self.combination_indexes):
+            self.current_labels.changeValue(pos, data[-1, index + 2])
 
-        if type(exception) is SerialException:
-            self.stopClocks()
-            self.cleanPort()
-            self.streaming = False
-            self.acquisition_button.setDisabled(True)
-            self.acquisition_button.setStyleSheet("background-color: red")
-            msg.setIcon(QtWidgets.QMessageBox.Critical)
-            self.connect_button.setText("Connect")
+    def updateData(self):
+        def get(counters, time_, id):
+            last = 3
+            if self.number_channels == 4: last = 10
+            elif self.number_channels == 8: last = 36
+            values = counters.getValues(self.combinations[:last])
+            "could be better"
+            if self.number_channels > 2:
+                i = 1
+                for letters in self.combinations[last :]:
+                    if letters in self.active_channels:
+                        val = counters.getValue("custom_c%d"%i)
+                        i += 1
+                    else: val = 0
+                    values.append(val)
+
+            values = np.array([time_, id] + values)
+            values = values.reshape((1, values.shape[0]))
+            self.data_ring.extend(values)
         try:
-            self.results_files.writeParams("Error,%s"%error_text)
-        except Exception:
-            pass
+            for i in range(20):
+                try:
+                    # if self.number_channels == 2:
+                    counters, id = abacus.getAllCounters(self.port_name)
+                    # else:
+                    #     counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
 
-        msg.setText('An Error has ocurred.\n%s'%error_text)
-        msg.setWindowTitle("Error")
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
-        msg.exec_()
+                    time_ = time() - self.init_time
+                    data = self.data_ring[:]
+                    if len(data) == 0:
+                        get(counters, time_, id)
+                    elif data[-1, 1] != id:
+                        get(counters, time_, id)
+                    break
+                except abacus.BaseError:
+                    pass
 
-    def closeEvent(self, event):
-        if self.results_files != None:
-            if self.results_files.data_file.isEmpty():
-                self.results_files.params_file.delete()
+        except SerialException as e:
+            self.errorWindow(e)
+        except abacus.BaseError as e:
+            self.errorWindow(e)
+        except FileNotFoundError as e:
+            self.errorWindow(e)
 
-        # if self.results_files == None:
-        #     event.accept()
-        # elif self.results_files.areEmpty():
-        #     event.accept()
-        # elif self.results_files.data_file.isEmpty():
-        #     temp = False
-        #     if self.data_ring != None:
-        #         if len(self.data_ring[:]) == 0: temp = True
-        #     else: temp = True
-        #     if temp:
-        #         self.results_files.params_file.delete()
-        #         event.accept()
-        #     else:
-        #         exit()
-        # else:
-        #     exit()
-        quit_msg = "Are you sure you want to exit the program?"
-        reply = QtWidgets.QMessageBox.question(self, 'Exit',
-                         quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
-        if reply == QtWidgets.QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()
+    def updatePlots(self, data):
+        time_ = data[:, 0]
+        for (i, j) in enumerate(self.combination_indexes):
+            self.plot_lines[i].setData(time_, data[:, j + 2])
 
-    def initial(self):
-        self.__sleep_timer__.stop()
-        self.connect()
+    def updateTable(self, data):
+        self.historical_table.insertData(data)
 
-    def show2(self):
-        self.show()
+    def updateWidgets(self):
+        if self.data_ring != None:
+            data = self.data_ring[:]
+            if data.shape[0]:
+                self.updatePlots(data)
+                self.updateTable(data)
+                self.updateCurrents(data)
 
-        self.__sleep_timer__ = QtCore.QTimer()
-        self.__sleep_timer__.setInterval(10)
-        self.__sleep_timer__.timeout.connect(self.initial)
-        self.__sleep_timer__.start()
+    def writeParams(self, message):
+        exceptions = ["Connected", "Acquisition"]
+        is_exception = sum([1 if exception in message else 0 for exception in exceptions])
+        if is_exception | self.streaming:
+            if self.results_files != None:
+                try:
+                    self.results_files.writeParams(message)
+                except FileNotFoundError as e:
+                    self.errorWindow(e)
+            else:
+                self.params_buffer += constants.BREAKLINE + strftime("%H:%M:%S", localtime()) + ", " + message
+        elif abacus.constants.DEBUG:
+            print("writeParams ignored: %s"%message)
 
 def softwareUpdate(splash):
     try:
@@ -1014,13 +1017,31 @@ def run():
     main.setWindowIcon(icon)
 
     main.show2()
-    main.resize(800, 500)
+    main.resize(800, 600)
     main.mdi.tileSubWindows()
     main.centerOnScreen()
 
     app.exec_()
 
+def open_stdout():
+    global STDOUT
+    try:
+        STDOUT = open(constants.LOGFILE_PATH, 'w')
+        sys.stdout = STDOUT
+    except Exception as e:
+        STDOUT = None
+        print(e)
+
+def close_stdout():
+    global STDOUT
+    if STDOUT != None: STDOUT.close()
+
 if __name__ == "__main__":
     abacus.constants.DEBUG = True
+
+    open_stdout()
+
     run()
     sys.exit()
+
+    close_stdout()
