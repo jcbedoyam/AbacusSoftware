@@ -1,8 +1,8 @@
 import abacusSoftware.constants as constants
 import urllib.request
 
-URL_VERSION = "https://raw.githubusercontent.com/Tausand-dev/AbacusSoftware/master/abacusSoftware/constants.py"
-TARGET_URL = "https://sourceforge.net/projects/quantum-temp/"
+URL_VERSION = "https://raw.githubusercontent.com/Tausand-dev/AbacusSoftware/master/lastStableVersion.md"
+TARGET_URL = "https://www.tausand.com/downloads/"
 
 def versionstr(version):
     if "=" in version:
@@ -13,11 +13,8 @@ def versionstr(version):
 def checkUpdate():
     try:
         with urllib.request.urlopen(URL_VERSION) as response:
-           html = response.read().decode().split("\n")
-           for line in html:
-               if "__version__" in line:
-                   url_version = versionstr(line)
-                   break
+           html = response.read().decode()
+           url_version = versionstr(html)
     except Exception as e:
         url_version = [0]
 

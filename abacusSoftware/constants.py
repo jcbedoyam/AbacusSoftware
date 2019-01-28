@@ -7,7 +7,8 @@ __version__ = "1.3.0"
 CURRENT_OS = sys.platform
 DIRECTORY = os.path.dirname(sys.executable)
 SETTINGS_PATH = os.path.join(DIRECTORY, "settings.py")
-LOGFILE_PATH = os.path.join(DIRECTORY, "logfile.txt")
+LOGFILE_PATH = "logfile.txt"
+# LOGFILE_PATH = os.path.join(DIRECTORY, "logfile.txt")
 
 if abacus.constants.DEBUG:
     print("SETTINGS PATH ON:", SETTINGS_PATH)
@@ -32,7 +33,7 @@ PARAMS_HEADER = "##### SETTINGS FILE #####" + BREAKLINE + "Tausand Abacus sessio
 CONNECT_EMPTY_LABEL = "No devices found.\nYou might verify the device is conected, turned on, and not being\nused by other software. Also verify the driver is correctly installed."
 CONNECT_LABEL = "Please select one of the available ports: "
 
-WINDOW_NAME = "Tausand Abacus Sofware %s"%__version__ 
+WINDOW_NAME = "Tausand Abacus Sofware %s"%__version__
 
 DATA_REFRESH_RATE = 250 # fastest data refresh rate (ms)
 CHECK_RATE = 250

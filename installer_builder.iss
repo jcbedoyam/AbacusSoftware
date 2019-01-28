@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Abacus Software"
-#define MyAppVersion "1.2.5"
+#define MyAppVersion "1.3.0"
 #define MyAppPublisher "Tausand"
 #define MyAppURL "http://www.tausand.com/"
 #define MyAppExeName "AbacusSoftware.exe"

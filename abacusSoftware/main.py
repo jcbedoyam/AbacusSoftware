@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import traceback
 import webbrowser
 import numpy as np
 import abacusSoftware.__GUI_images__
@@ -10,7 +11,7 @@ from itertools import combinations
 from time import time, localtime, strftime
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from serial.serialutil import SerialException
+from serial.serialutil import SerialException, SerialTimeoutException
 
 try:
     from PyQt5 import QtCore, QtGui, QtWidgets
@@ -191,13 +192,13 @@ class MainWindow(QMainWindow):
 
         self.menuBuildInSweep = QtGui.QMenu("Sweep")
 
-        sleepSweep = QAction('Sleep time', self)
         delaySweep = QAction('Delay time', self)
+        sleepSweep = QAction('Sleep time', self)
 
-        # self.menuBuildInSweep.addAction(sleepSweep)
         # self.menuBuildInSweep.addAction(delaySweep)
-        sleepSweep.triggered.connect(self.sleepSweep)
+        self.menuBuildInSweep.addAction(sleepSweep)
         delaySweep.triggered.connect(self.delaySweep)
+        sleepSweep.triggered.connect(self.sleepSweep)
 
         self.menuBuildIn.addMenu(self.menuBuildInSweep)
 
@@ -248,8 +249,8 @@ class MainWindow(QMainWindow):
         self.settings_dialog = SettingsDialog(self)
         self.setWindowTitle(constants.WINDOW_NAME)
 
-        self.sleepSweepDialog = builtin.SleepDialog(self)
         self.delaySweepDialog = builtin.DelayDialog(self)
+        self.sleepSweepDialog = builtin.SleepDialog(self)
 
         self.mdi.tileSubWindows()
         self.mdi.cascadeSubWindows()
@@ -423,7 +424,8 @@ class MainWindow(QMainWindow):
             port = self.connect_dialog.comboBox.currentText()
 
             if port != "":
-                abacus.open(port)
+                try: abacus.open(port)
+                except abacus.AbacusError: pass
                 n = abacus.getChannelsFromName(port)
                 self.combinations = getCombinations(n)
 
@@ -469,8 +471,9 @@ class MainWindow(QMainWindow):
         error_text = str(exception)
         msg = QtWidgets.QMessageBox()
         msg.setIcon(QtWidgets.QMessageBox.Warning)
+        type_ = type(exception)
 
-        if type(exception) is SerialException:
+        if (type_ is SerialException) or (type_ is SerialTimeoutException):
             self.stopClocks()
             self.cleanPort()
             self.streaming = False
@@ -501,11 +504,9 @@ class MainWindow(QMainWindow):
                     subwindow = getattr(self, "subwindow_%s" % text)
                     if check:
                         action.setChecked(False)
-                        print("here")
                         subwindow.hide()
                     else:
                         action.setChecked(True)
-                        print("True")
                         subwindow.show()
 
         elif text == "Cascade":
@@ -921,14 +922,14 @@ class MainWindow(QMainWindow):
                     counters, id = abacus.getAllCounters(self.port_name)
                     # else:
                     #     counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
-
-                    time_ = time() - self.init_time
-                    data = self.data_ring[:]
-                    if len(data) == 0:
-                        get(counters, time_, id)
-                    elif data[-1, 1] != id:
-                        get(counters, time_, id)
-                    break
+                    if id:
+                        time_ = time() - self.init_time
+                        data = self.data_ring[:]
+                        if len(data) == 0:
+                            get(counters, time_, id)
+                        elif data[-1, 1] != id:
+                            get(counters, time_, id)
+                        break
                 except abacus.BaseError:
                     pass
 
@@ -1020,14 +1021,22 @@ def run():
     main.resize(800, 600)
     main.mdi.tileSubWindows()
     main.centerOnScreen()
-
     app.exec_()
+
+def exceptHook(exctype, value, tb):
+    print('Type:', exctype)
+    print('Value:', value)
+    print('Traceback:', tb.format_exc())
+
+    return
 
 def open_stdout():
     global STDOUT
+    sys.excepthook = exceptHook
     try:
         STDOUT = open(constants.LOGFILE_PATH, 'w')
         sys.stdout = STDOUT
+        sys.stderr = STDOUT
     except Exception as e:
         STDOUT = None
         print(e)
@@ -1037,11 +1046,14 @@ def close_stdout():
     if STDOUT != None: STDOUT.close()
 
 if __name__ == "__main__":
-    abacus.constants.DEBUG = True
-
+    # abacus.constants.DEBUG = True
     open_stdout()
 
+    # try:
     run()
-    sys.exit()
+    # except Exception as e:
+    #     print(e)
+        # print(traceback.format_exc())
 
     close_stdout()
+    sys.exit()

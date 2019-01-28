@@ -4,6 +4,8 @@ import abacusSoftware.common as common
 from abacusSoftware.files import File
 import pyAbacus as abacus
 
+import os
+import time
 import numpy as np
 import pyqtgraph as pg
 from threading import Thread
@@ -56,6 +58,10 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.stepSpin = QtWidgets.QSpinBox()
         self.nSpin = QtWidgets.QSpinBox()
         self.nSpin.setMinimum(1)
+
+        self.startSpin.lineEdit().setReadOnly(True)
+        self.stopSpin.lineEdit().setReadOnly(True)
+        self.stepSpin.lineEdit().setReadOnly(True)
 
         self.samplingLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.coincidenceLabel.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -357,24 +363,38 @@ class SleepDialog(SweepDialogBase):
         thread.start()
 
     def heavyDuty(self, channel, n, range_):
-        self.completed = True
-        # try:
-        #     for (i, delay) in enumerate(range_):
-        #         if not self.completed:
-        #             # result = self.parent.experiment.sleepSweep(channel, delay, n)
-        #             values = self.parent.experiment.sleepSweep(channel, delay, n)
-        #             result = []
-        #             for value in values:
-        #                 result.append(value)
-        #             self.x_data.append(delay)
-        #             self.y_data.append(np.mean(result))
-        #         else:
-        #             break
-        #
-        #     self.completed = True
-        # except Exception as e:
-        #     self.completed = True
-        #     self.error = e
+        port = self.parent.port_name
+        last_id = 0
+
+        if port != None:
+            try:
+                for sleep in range_:
+                    value = 0
+                    abacus.setSetting(port, 'sleep_%s'%channel, sleep)
+                    for j in range(n): # number of points
+                        for i in range(10): # tries
+                            if self.completed: return
+                            try:
+                                counters, id = abacus.getFollowingCounters(port, channel)
+                                if id != last_id:
+                                    last_id = id
+                                    value += counters.getValue(channel)
+                                    break
+                                else:
+                                    time_left = abacus.getTimeLeft(port) / 1000 # seconds
+                                    time.sleep(time_left)
+
+                            except abacus.BaseError as e:
+                                if i == 9: raise(e)
+
+                    self.x_data.append(sleep)
+                    self.y_data.append(value / n)
+                self.completed = True
+
+            except Exception as e:
+                self.completed = True
+                self.error = e
+                print(e)
 
     def setNumberChannels(self, number_channels):
         self.comboBox.clear()
