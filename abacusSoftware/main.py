@@ -8,7 +8,7 @@ import abacusSoftware.__GUI_images__
 import pyqtgraph as pg
 from datetime import datetime
 from itertools import combinations
-from time import time, localtime, strftime
+from time import time, localtime, strftime, sleep
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from serial.serialutil import SerialException, SerialTimeoutException
@@ -195,7 +195,7 @@ class MainWindow(QMainWindow):
         delaySweep = QAction('Delay time', self)
         sleepSweep = QAction('Sleep time', self)
 
-        # self.menuBuildInSweep.addAction(delaySweep)
+        self.menuBuildInSweep.addAction(delaySweep)
         self.menuBuildInSweep.addAction(sleepSweep)
         delaySweep.triggered.connect(self.delaySweep)
         sleepSweep.triggered.connect(self.sleepSweep)
@@ -588,6 +588,7 @@ class MainWindow(QMainWindow):
         self.number_channels = n
         self.tabs_widget.setNumberChannels(n)
         self.sampling_widget.changeNumberChannels(n)
+        self.delaySweepDialog.setNumberChannels(n)
         self.sleepSweepDialog.setNumberChannels(n)
         self.tabs_widget.signal()
 
@@ -916,22 +917,21 @@ class MainWindow(QMainWindow):
             values = values.reshape((1, values.shape[0]))
             self.data_ring.extend(values)
         try:
-            for i in range(20):
+            for i in range(constants.NUMBER_OF_TRIES):
                 try:
-                    # if self.number_channels == 2:
+                    data = self.data_ring[:]
+                    time_ = time() - self.init_time
+                    last_id = data[-1, 1]
                     counters, id = abacus.getAllCounters(self.port_name)
-                    # else:
-                    #     counters, id = abacus.getFollowingCounters(self.port_name, self.active_channels)
-                    if id:
-                        time_ = time() - self.init_time
-                        data = self.data_ring[:]
-                        if len(data) == 0:
-                            get(counters, time_, id)
-                        elif data[-1, 1] != id:
-                            get(counters, time_, id)
+
+                    if (id > 0) and (last_id != id):
+                        get(counters, time_, id)
                         break
-                except abacus.BaseError:
-                    pass
+                    else:
+                        time_left = abacus.getTimeLeft(self.port_name) / 1000 # seconds
+                        sleep(time_left)
+                except abacus.BaseError as e:
+                    if i == (constants.NUMBER_OF_TRIES - 1): raise(e)
 
         except SerialException as e:
             self.errorWindow(e)

@@ -9,27 +9,37 @@ import time
 import numpy as np
 import pyqtgraph as pg
 from threading import Thread
-from PyQt5 import QtWidgets, QtGui, QtCore
 from abacusSoftware.supportWidgets import ClickableLineEdit
 
-class SweepDialogBase(QtWidgets.QDialog):
+try:
+    from PyQt5 import QtCore, QtGui, QtWidgets
+    from PyQt5.QtWidgets import QLabel, QSpinBox, QComboBox, QSizePolicy, \
+                            QVBoxLayout, QHBoxLayout, QFrame, \
+                            QPushButton, QDialog, QGroupBox, QFormLayout, QMessageBox,\
+                            QFileDialog
+
+except ModuleNotFoundError:
+    from PyQt4.QtGui import QLabel, QSpinBox, QComboBox, QSizePolicy
+
+
+class SweepDialogBase(QDialog):
     def __init__(self, parent):
         super(SweepDialogBase, self).__init__(parent)
         self.resize(400, 500)
 
         self.parent = parent
 
-        self.verticalLayout = QtWidgets.QVBoxLayout(self)
+        self.verticalLayout = QVBoxLayout(self)
         self.verticalLayout.setContentsMargins(11, 11, 11, 11)
         self.verticalLayout.setSpacing(6)
 
-        self.frame = QtWidgets.QFrame()
+        self.frame = QFrame()
 
-        self.horizontalLayout = QtWidgets.QHBoxLayout(self.frame)
+        self.horizontalLayout = QVBoxLayout(self.frame)
         self.horizontalLayout.setContentsMargins(11, 11, 11, 11)
         self.horizontalLayout.setSpacing(6)
 
-        label = QtWidgets.QLabel("Save as:")
+        label = QLabel("Save as:")
         self.lineEdit = ClickableLineEdit(self)
         self.lineEdit.clicked.connect(self.chooseFile)
 
@@ -37,26 +47,26 @@ class SweepDialogBase(QtWidgets.QDialog):
         self.horizontalLayout.addWidget(self.lineEdit)
         self.verticalLayout.addWidget(self.frame)
 
-        self.groupBox = QtWidgets.QGroupBox("Settings")
+        self.groupBox = QGroupBox("Settings")
 
-        self.formLayout = QtWidgets.QFormLayout(self.groupBox)
+        self.formLayout = QFormLayout(self.groupBox)
 
-        samplingLabel = QtWidgets.QLabel("Sampling time:")
-        coincidenceLabel = QtWidgets.QLabel("Coincidence Window:")
+        samplingLabel = QLabel("Sampling time:")
+        coincidenceLabel = QLabel("Coincidence Window:")
 
-        startLabel = QtWidgets.QLabel("Start time (ns):")
-        stopLabel = QtWidgets.QLabel("Stop time (ns):")
-        stepLabel = QtWidgets.QLabel("Step size (ns):")
-        nLabel = QtWidgets.QLabel("Number of measurements per step:")
+        startLabel = QLabel("Start time (ns):")
+        stopLabel = QLabel("Stop time (ns):")
+        stepLabel = QLabel("Step size (ns):")
+        nLabel = QLabel("Number of measurements per step:")
 
-        self.samplingLabel = QtWidgets.QLabel("")
+        self.samplingLabel = QLabel("")
         self.setSampling(0)
-        self.coincidenceLabel = QtWidgets.QLabel("")
+        self.coincidenceLabel = QLabel("")
         self.setCoincidence(self.parent.coincidence_spinBox.value())
-        self.startSpin = QtWidgets.QSpinBox()
-        self.stopSpin = QtWidgets.QSpinBox()
-        self.stepSpin = QtWidgets.QSpinBox()
-        self.nSpin = QtWidgets.QSpinBox()
+        self.startSpin = QSpinBox()
+        self.stopSpin = QSpinBox()
+        self.stepSpin = QSpinBox()
+        self.nSpin = QSpinBox()
         self.nSpin.setMinimum(1)
 
         self.startSpin.lineEdit().setReadOnly(True)
@@ -81,7 +91,7 @@ class SweepDialogBase(QtWidgets.QDialog):
 
         self.verticalLayout.addWidget(self.groupBox)
 
-        self.startStopButton = QtWidgets.QPushButton("Start")
+        self.startStopButton = QPushButton("Start")
         self.startStopButton.setMaximumSize(QtCore.QSize(140, 60))
         self.verticalLayout.addWidget(self.startStopButton, alignment = QtCore.Qt.AlignRight)
 
@@ -114,11 +124,11 @@ class SweepDialogBase(QtWidgets.QDialog):
 
     def warning(self, error):
         error_text = str(error)
-        msg = QtWidgets.QMessageBox()
-        msg.setIcon(QtWidgets.QMessageBox.Warning)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
         msg.setText(error_text)
         msg.setWindowTitle("Warning")
-        msg.setStandardButtons(QtWidgets.QMessageBox.Ok | QtWidgets.QMessageBox.Cancel)
+        msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
         return msg.exec_()
 
     def enableWidgets(self, enable):
@@ -163,9 +173,9 @@ class SweepDialogBase(QtWidgets.QDialog):
         except:
             directory = os.path.expanduser("~")
 
-        dlg = QtWidgets.QFileDialog(directory = directory)
-        dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-        dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        dlg = QFileDialog(directory = directory)
+        dlg.setAcceptMode(QFileDialog.AcceptSave)
+        dlg.setFileMode(QFileDialog.AnyFile)
         nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
         dlg.setNameFilters(nameFilters)
         dlg.selectNameFilter(constants.SUPPORTED_EXTENSIONS[constants.EXTENSION_DATA])
@@ -177,7 +187,7 @@ class SweepDialogBase(QtWidgets.QDialog):
     def stopAcquisition(self):
         e = Exception("Data acquisition is active, in order to make the sweep it will be turned off.")
         ans = self.warning(e)
-        if ans == QtWidgets.QMessageBox.Ok:
+        if ans == QMessageBox.Ok:
             ans = True
         else: ans = False
         if ans: self.parent.startAcquisition()
@@ -192,8 +202,26 @@ class SweepDialogBase(QtWidgets.QDialog):
 class DelayDialog(SweepDialogBase):
     def __init__(self, parent):
         super(DelayDialog, self).__init__(parent)
-
         self.setWindowTitle("Delay time sweep")
+
+        self.comboBox1 = QComboBox()
+        self.comboBox2 = QComboBox()
+
+        self.number_channels = 0
+
+        self.comboBox1.setEditable(True)
+        self.comboBox2.setEditable(True)
+        self.comboBox1.lineEdit().setReadOnly(True)
+        self.comboBox2.lineEdit().setReadOnly(True)
+        self.comboBox1.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.comboBox2.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.comboBox1.currentIndexChanged.connect(self.channelsChange)
+        self.comboBox2.currentIndexChanged.connect(self.channelsChange)
+
+        self.setNumberChannels(4)
+
+        self.formLayout.insertRow(0, QLabel("Channel 2:"), self.comboBox2)
+        self.formLayout.insertRow(0, QLabel("Channel 1:"), self.comboBox1)
 
         self.startSpin.setMinimum(-abacus.constants.DELAY_MINIMUM_VALUE)
         self.startSpin.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE - abacus.constants.DELAY_STEP_VALUE)
@@ -211,6 +239,20 @@ class DelayDialog(SweepDialogBase):
 
         self.plot.setLabel('left', "Coincidences")
         self.plot.setLabel('bottom', "Delay time", units='ns')
+
+    def channelsChange(self, index):
+        i1 = self.comboBox1.currentIndex()
+        i2 = self.comboBox2.currentIndex()
+        if(i1 == i2):
+            self.comboBox2.setCurrentIndex((i1 + 1) % self.number_channels)
+
+    def createComboBox(self):
+        self.comboBox2 = QComboBox()
+        self.comboBox2.setEditable(True)
+        self.comboBox2.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.comboBox2.lineEdit().setReadOnly(True)
+
+        self.comboBox1.currentIndexChanged.connect(self.channelsChange)
 
     def startStop(self):
         if self.startStopButton.text() == "Stop":
@@ -256,33 +298,54 @@ class DelayDialog(SweepDialogBase):
         thread.start()
 
     def heavyDuty(self, n, range_):
-        self.completed = True
-        # try:
-        #     for (i, delay) in enumerate(range_):
-        #         if not self.completed:
-        #             if delay < 0:
-        #                 delay1 = abs(delay)
-        #                 delay2 = 0
-        #             else:
-        #                 delay1 = 0
-        #                 delay2 = delay
-        #
-        #
-        #             # result = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
-        #             # values = self.parent.experiment.delaySweep("A", "B", delay1, delay2, n)
-        #             result = []
-        #             for value in values:
-        #                 result.append(value)
-        #
-        #             self.x_data.append(delay)
-        #             self.y_data.append(np.mean(result))
-        #         else:
-        #             break
-        #
-        #     self.completed = True
-        # except Exception as e:
-        #     self.completed = True
-        #     self.error = e
+        port = self.parent.port_name
+        channel1 = self.comboBox1.currentText()
+        channel2 = self.comboBox2.currentText()
+        if port != None:
+            try:
+                for delay in enumerate(range_):
+                    delay1 = abs(delay)
+                    delay2 = 0
+                    if delay > 0:
+                        delay1 = 0
+                        delay2 = delay
+                    abacus.setSetting(port, "delay_%s" % channel1, delay1)
+                    abacus.setSetting(port, "delay_%s" % channel2, delay2)
+                    for i in range(n):
+                        for j in range(constants.NUMBER_OF_TRIES):
+                            if self.completed: return
+                            try:
+                                counters, id = abacus.getFollowingCounters(port, channel1 + channel2)
+                                if id > 0:
+                                    value += counters.getValue(channel1 + channel2)
+                                    break
+                                else:
+                                    time_left = abacus.getTimeLeft(port) / 1000 # seconds
+                                    time.sleep(time_left)
+
+                            except abacus.BaseError as e:
+                                if j == (constants.NUMBER_OF_TRIES - 1): raise(e)
+
+                    self.x_data.append(delay)
+                    self.y_data.append(value / n)
+                self.completed = True
+            except Exception as e:
+                self.completed = True
+                self.error = e
+
+    def setNumberChannels(self, number_channels):
+        self.number_channels = number_channels
+        self.comboBox1.blockSignals(True)
+        self.comboBox2.blockSignals(True)
+        self.comboBox1.clear()
+        self.comboBox2.clear()
+        self.comboBox1.addItems([chr(i + ord('A')) for i in range(number_channels)])
+        self.comboBox2.addItems([chr(i + ord('A')) for i in range(number_channels)])
+
+        self.comboBox2.setCurrentIndex(1)
+
+        self.comboBox1.blockSignals(False)
+        self.comboBox2.blockSignals(False)
 
 class SleepDialog(SweepDialogBase):
     def __init__(self, parent):
@@ -292,9 +355,8 @@ class SleepDialog(SweepDialogBase):
 
         self.setWindowTitle("Sleep time sweep")
 
-        label = QtWidgets.QLabel("Channel:")
-        self.comboBox = QtWidgets.QComboBox()
-        self.setNumberChannels(0)
+        label = QLabel("Channel:")
+        self.comboBox = QComboBox()
         self.comboBox.setEditable(True)
         self.comboBox.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.comboBox.lineEdit().setReadOnly(True)
@@ -364,20 +426,17 @@ class SleepDialog(SweepDialogBase):
 
     def heavyDuty(self, channel, n, range_):
         port = self.parent.port_name
-        last_id = 0
-
         if port != None:
             try:
                 for sleep in range_:
                     value = 0
                     abacus.setSetting(port, 'sleep_%s'%channel, sleep)
-                    for j in range(n): # number of points
-                        for i in range(10): # tries
+                    for i in range(n): # number of points
+                        for j in range(constants.NUMBER_OF_TRIES): # tries
                             if self.completed: return
                             try:
                                 counters, id = abacus.getFollowingCounters(port, channel)
-                                if id != last_id:
-                                    last_id = id
+                                if id > 0:
                                     value += counters.getValue(channel)
                                     break
                                 else:
@@ -385,7 +444,7 @@ class SleepDialog(SweepDialogBase):
                                     time.sleep(time_left)
 
                             except abacus.BaseError as e:
-                                if i == 9: raise(e)
+                                if j == (constants.NUMBER_OF_TRIES - 1): raise(e)
 
                     self.x_data.append(sleep)
                     self.y_data.append(value / n)
@@ -394,7 +453,6 @@ class SleepDialog(SweepDialogBase):
             except Exception as e:
                 self.completed = True
                 self.error = e
-                print(e)
 
     def setNumberChannels(self, number_channels):
         self.comboBox.clear()

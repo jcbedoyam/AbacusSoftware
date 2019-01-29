@@ -46,3 +46,5 @@ COLORS = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#8c564b",
 WIDGETS_NAMES = ["checkBox", "lineEdit", "comboBox", "spinBox"]
 WIDGETS_GET_ACTIONS = ["self.%s.isChecked()", "self.%s.text()", "self.%s.currentText()", "self.%s.value()"]
 WIDGETS_SET_ACTIONS = ["class_.%s.setChecked(%s)", "class_.%s.setText('%s')", "class_.%s.setCurrentIndex(class_.%s.findText('%s'))", "class_.%s.setValue(%d)"]
+
+NUMBER_OF_TRIES = 10
