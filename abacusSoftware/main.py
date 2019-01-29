@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import traceback
+import qdarkstyle
 import webbrowser
 import numpy as np
 import abacusSoftware.__GUI_images__
@@ -224,6 +225,8 @@ class MainWindow(QMainWindow):
         self.menuView.addSeparator()
         self.menuView.addAction("Tiled")
         self.menuView.addAction("Cascade")
+        self.menuView.addSeparator()
+        self.theme_action = self.menuView.addAction("Dark theme")
 
         for action in self.menuView.actions():
             if action.isCheckable(): action.setChecked(True)
@@ -514,6 +517,16 @@ class MainWindow(QMainWindow):
 
         elif text == "Tiled":
             self.mdi.tileSubWindows()
+
+        elif 'theme' in text:
+            if 'Dark theme' == text:
+                self.theme_action.setText('Light theme')
+                app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment(is_pyqtgraph=True))
+
+            else:
+                self.theme_action.setText('Dark theme')
+                app.setStyleSheet("")
+
 
     def initial(self):
         self.__sleep_timer__.stop()
@@ -992,9 +1005,12 @@ def softwareUpdate(splash):
 
 def run():
     from time import sleep
+    global app
+
+    os.environ['PYQTGRAPH_QT_LIB'] = 'PyQt5'
 
     app = QtWidgets.QApplication(sys.argv)
-    QtWidgets.QApplication.setStyle(QtWidgets.QStyleFactory.create('Fusion')) # <- Choose the style
+    app.setStyle(QtWidgets.QStyleFactory.create('Fusion')) # <- Choose the style
 
     splash_pix = QtGui.QPixmap(':/splash.png').scaledToWidth(600)
     splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
