@@ -14,7 +14,7 @@ setup(
     keywords = "example documentation tutorial",
     url = "https://github.com/Tausand-dev/ReimaginedQuantum",
     packages=['abacusSoftware'],
-    install_requires = ['pyAbacus', 'pyserial', 'numpy', 'pyqtgraph', 'PyQt5'],
+    install_requires = ['pyAbacus', 'pyserial', 'numpy', 'pyqtgraph', 'PyQt5', 'qdarkstyle'],
     long_description = "",#read('README'),
     classifiers = [
         "Development Status :: 1 - Planning",
