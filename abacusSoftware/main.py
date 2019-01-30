@@ -3,7 +3,6 @@ import re
 import sys
 import traceback
 import qdarkstyle
-import webbrowser
 import numpy as np
 import abacusSoftware.__GUI_images__
 import pyqtgraph as pg
@@ -1056,8 +1055,8 @@ def run():
     splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
     splash.show()
 
-    icon = QtGui.QIcon(':/abacus_small.ico')
-    app.setWindowIcon(icon)
+    constants.ICON = QtGui.QIcon(QtGui.QPixmap(':/abacus_small.ico'))
+    app.setWindowIcon(constants.ICON)
     app.processEvents()
 
     if abacus.CURRENT_OS == 'win32':
@@ -1071,7 +1070,7 @@ def run():
     splash.close()
 
     main = MainWindow()
-    main.setWindowIcon(icon)
+    main.setWindowIcon(constants.ICON)
 
     main.show2()
     main.resize(800, 600)

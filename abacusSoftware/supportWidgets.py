@@ -694,6 +694,7 @@ class SubWindow(QtWidgets.QMdiSubWindow):
     def __init__(self, parent = None):
         super(SubWindow, self).__init__(parent)
         self.parent = parent
+        self.setWindowIcon(constants.ICON)
         self.setMinimumSize(200, 120)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
