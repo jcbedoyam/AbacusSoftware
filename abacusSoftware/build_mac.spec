@@ -36,5 +36,5 @@ coll = COLLECT(exe,
                name='main')
 app = BUNDLE(coll,
              name='AbacusSoftware.app',
-             icon='GUI/images/abacus_small.png’,
+             icon='GUI/images/abacus_small.png',
              bundle_identifier=None)
