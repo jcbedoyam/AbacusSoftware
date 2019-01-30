@@ -405,7 +405,7 @@ class MainWindow(QMainWindow):
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'coincidence_window', val)
-                # if self.is_light_theme: self.coincidence_spinBox.setStyleSheet("color: black")
+                # if self.is_light_theme: self.coincidence_spinBox.setStyleSheet("color: default")
                 # else: self.coincidence_spinBox.setStyleSheet("color: white")
                 self.writeParams("Coincidence Window (ns), %s"%val)
             except abacus.InvalidValueError:
