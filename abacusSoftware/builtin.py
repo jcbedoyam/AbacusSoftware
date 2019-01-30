@@ -199,6 +199,16 @@ class SweepDialogBase(QDialog):
     def setCoincidence(self, val):
         self.coincidenceLabel.setText("%d ns"%val)
 
+    def setDarkTheme(self):
+        self.plot_win.setBackground((25, 35, 45))
+        self.plot.getAxis('bottom').setPen(foreground = 'w')
+        self.plot.getAxis('left').setPen(foreground = 'w')
+
+    def setLightTheme(self):
+        self.plot_win.setBackground(None)
+        self.plot.getAxis('bottom').setPen()
+        self.plot.getAxis('left').setPen()
+
 class DelayDialog(SweepDialogBase):
     def __init__(self, parent):
         super(DelayDialog, self).__init__(parent)
@@ -223,7 +233,7 @@ class DelayDialog(SweepDialogBase):
         self.formLayout.insertRow(0, QLabel("Channel 2:"), self.comboBox2)
         self.formLayout.insertRow(0, QLabel("Channel 1:"), self.comboBox1)
 
-        self.startSpin.setMinimum(-abacus.constants.DELAY_MINIMUM_VALUE)
+        self.startSpin.setMinimum(-abacus.constants.DELAY_MAXIMUM_VALUE)
         self.startSpin.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE - abacus.constants.DELAY_STEP_VALUE)
         self.startSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
         self.startSpin.setValue(-abacus.constants.DELAY_MAXIMUM_VALUE)
@@ -303,7 +313,8 @@ class DelayDialog(SweepDialogBase):
         channel2 = self.comboBox2.currentText()
         if port != None:
             try:
-                for delay in enumerate(range_):
+                for delay in range_:
+                    value = 0
                     delay1 = abs(delay)
                     delay2 = 0
                     if delay > 0:

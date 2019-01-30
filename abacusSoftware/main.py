@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
         self.start_position = None
         self.number_channels = 0
         self.active_channels = []
+        self.is_light_theme = True
         widget = QWidget()
 
         layout = QVBoxLayout(widget)
@@ -388,7 +389,7 @@ class MainWindow(QMainWindow):
                 if self.results_files.data_file.isEmpty():
                     self.results_files.params_file.delete()
             try:
-                self.settings_dialog.constantsWriter()
+                self.settings_dialog.constantsWriter(update_parent = False)
             except Exception as e:
                 if abacus.constants.DEBUG: print(e)
             event.accept()
@@ -404,10 +405,12 @@ class MainWindow(QMainWindow):
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'coincidence_window', val)
-                self.coincidence_spinBox.setStyleSheet("color: black")
+                # if self.is_light_theme: self.coincidence_spinBox.setStyleSheet("color: black")
+                # else: self.coincidence_spinBox.setStyleSheet("color: white")
                 self.writeParams("Coincidence Window (ns), %s"%val)
             except abacus.InvalidValueError:
-                self.coincidence_spinBox.setStyleSheet("color: red")
+                pass
+                # self.coincidence_spinBox.setStyleSheet("color: red")
             except serial.serialutil.SerialException:
                 self.errorWindow(e)
             # except abacus.BaseError:
@@ -464,10 +467,12 @@ class MainWindow(QMainWindow):
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'delay_%s'%letter, val)
-                widget.setStyleSheet("color: black")
+                # if self.is_light_theme: widget.setStyleSheet("color: black")
+                # else: widget.setStyleSheet("color: white")
                 self.writeParams("Delay %s (ns), %s"%(letter, val))
             except abacus.InvalidValueError:
-                widget.setStyleSheet("color: red")
+                pass
+                # widget.setStyleSheet("color: red")
             except SerialException as e:
             # except abacus.BaseError as e:
                 self.errorWindow(e)
@@ -609,19 +614,28 @@ class MainWindow(QMainWindow):
         self.tabs_widget.signal()
 
     def setDarkTheme(self):
+        self.is_light_theme = False
         self.plot_win.setBackground((25, 35, 45))
         self.counts_plot.getAxis('bottom').setPen(foreground = 'w')
         self.counts_plot.getAxis('left').setPen(foreground = 'w')
         self.theme_action.setText('Light theme')
+        self.delaySweepDialog.setDarkTheme()
+        self.sleepSweepDialog.setDarkTheme()
+        self.current_labels.resizeEvent(None)
         app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment(is_pyqtgraph=True))
 
     def setLightTheme(self):
+        self.is_light_theme = True
         self.theme_action.setText('Dark theme')
         app.setStyleSheet("")
 
         self.plot_win.setBackground(None)
         self.counts_plot.getAxis('bottom').setPen()
         self.counts_plot.getAxis('left').setPen()
+
+        self.delaySweepDialog.setLightTheme()
+        self.sleepSweepDialog.setLightTheme()
+        self.current_labels.resizeEvent(None)
 
     def setSaveAs(self):
         new_file_name = self.save_as_lineEdit.text()
@@ -674,9 +688,12 @@ class MainWindow(QMainWindow):
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'sleep_%s'%letter, val)
+                # if self.is_light_theme: widget.setStyleSheet("color: black")
+                # else: widget.setStyleSheet("color: white")
                 self.writeParams("Sleep %s (ns), %s"%(letter, val))
             except abacus.InvalidValueError:
-                widget.setStyleSheet("color: red")
+                pass
+                # widget.setStyleSheet("color: red")
             except SerialException as e:
             # except abacus.BaseError as e:
                 self.errorWindow(e)
@@ -956,7 +973,8 @@ class MainWindow(QMainWindow):
                 try:
                     data = self.data_ring[:]
                     time_ = time() - self.init_time
-                    last_id = data[-1, 1]
+                    if len(data): last_id = data[-1, 1]
+                    else: last_id = 0
                     counters, id = abacus.getAllCounters(self.port_name)
 
                     if (id > 0) and (last_id != id):

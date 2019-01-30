@@ -636,7 +636,7 @@ class SettingsDialog(QtWidgets.QDialog):
             layout.setWidget(i, QtWidgets.QFormLayout.LabelRole, line[0])
             layout.setWidget(i, QtWidgets.QFormLayout.FieldRole, line[1])
 
-    def constantsWriter(self):
+    def constantsWriter(self, update_parent = True):
         lines = []
         for (widget, eval_) in zip(constants.WIDGETS_NAMES, constants.WIDGETS_GET_ACTIONS):
             complete = common.findWidgets(self, widget)
@@ -660,7 +660,8 @@ class SettingsDialog(QtWidgets.QDialog):
             delimiter = " "
         lines += ["DELIMITER = '%s'"%delimiter]
         self.updateConstants(lines)
-        self.parent.updateConstants()
+        if update_parent: self.parent.updateConstants()
+
         # self.parent.samplingMethod(val, force_write = True)
 
     def accept_replace(self):
