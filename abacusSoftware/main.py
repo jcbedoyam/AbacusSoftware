@@ -258,6 +258,7 @@ class MainWindow(QMainWindow):
         self.mdi.tileSubWindows()
         self.mdi.cascadeSubWindows()
 
+        self.setLightTheme()
         self.setSettings()
         self.updateConstants()
 
@@ -379,11 +380,17 @@ class MainWindow(QMainWindow):
                          quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
         if reply == QtWidgets.QMessageBox.Yes:
             try:
-                self.data_ring.save()
-            except: pass
+                if self.data_ring != None:
+                    self.data_ring.save()
+            except Exception as e:
+                if abacus.constants.DEBUG: print(e)
             if self.results_files != None:
                 if self.results_files.data_file.isEmpty():
                     self.results_files.params_file.delete()
+            try:
+                self.settings_dialog.constantsWriter()
+            except Exception as e:
+                if abacus.constants.DEBUG: print(e)
             event.accept()
         else:
             event.ignore()
@@ -520,13 +527,9 @@ class MainWindow(QMainWindow):
 
         elif 'theme' in text:
             if 'Dark theme' == text:
-                self.theme_action.setText('Light theme')
-                app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment(is_pyqtgraph=True))
-
+                self.setDarkTheme()
             else:
-                self.theme_action.setText('Dark theme')
-                app.setStyleSheet("")
-
+                self.setLightTheme()
 
     def initial(self):
         self.__sleep_timer__.stop()
@@ -604,6 +607,21 @@ class MainWindow(QMainWindow):
         self.delaySweepDialog.setNumberChannels(n)
         self.sleepSweepDialog.setNumberChannels(n)
         self.tabs_widget.signal()
+
+    def setDarkTheme(self):
+        self.plot_win.setBackground((25, 35, 45))
+        self.counts_plot.getAxis('bottom').setPen(foreground = 'w')
+        self.counts_plot.getAxis('left').setPen(foreground = 'w')
+        self.theme_action.setText('Light theme')
+        app.setStyleSheet(qdarkstyle.load_stylesheet_from_environment(is_pyqtgraph=True))
+
+    def setLightTheme(self):
+        self.theme_action.setText('Dark theme')
+        app.setStyleSheet("")
+
+        self.plot_win.setBackground(None)
+        self.counts_plot.getAxis('bottom').setPen()
+        self.counts_plot.getAxis('left').setPen()
 
     def setSaveAs(self):
         new_file_name = self.save_as_lineEdit.text()
@@ -729,10 +747,10 @@ class MainWindow(QMainWindow):
         self.mdi.addSubWindow(self.subwindow_historical)
 
     def subPlots(self):
-        pg.setConfigOptions(foreground = 'k', background = None, antialias = True)
-        self.plot_win = pg.GraphicsWindow()
+        pg.setConfigOptions(antialias = True, foreground = 'k')
 
         self.subwindow_plots = SubWindow(self)
+        self.plot_win = pg.GraphicsWindow()
         self.subwindow_plots.setWidget(self.plot_win)
         self.subwindow_plots.setWindowTitle("Plots")
         self.mdi.addSubWindow(self.subwindow_plots)
@@ -902,9 +920,13 @@ class MainWindow(QMainWindow):
             self.sampling_widget.setValue(constants.sampling_widget)
             self.sendSettings()
 
+            if constants.theme_checkBox: self.setLightTheme()
+            else: self.setDarkTheme()
+
             if self.data_ring != None: self.data_ring.updateDelimiter(constants.DELIMITER)
 
-        except AttributeError as e: pass
+        except AttributeError as e:
+            if abacus.constants.DEBUG: print(e)
 
     def updateCurrents(self, data):
         for (pos, index) in enumerate(self.combination_indexes):

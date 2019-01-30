@@ -21,7 +21,7 @@ import pyAbacus as abacus
 from pyAbacus import findDevices
 
 class SamplingWidget(object):
-    def __init__(self, layout, label, method, number_channels = 2):
+    def __init__(self, layout = None, label = None, method = None, number_channels = 2):
         self.layout = layout
         self.label = label
         self.method = method
@@ -86,15 +86,14 @@ class SamplingWidget(object):
         else:
             self.is_comboBox = True
             self.widget = QComboBox()
-            self.widget.currentIndexChanged.connect(self.method)
+            if self.method != None: self.widget.currentIndexChanged.connect(self.method)
             self.widget.setEditable(True)
             self.widget.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             self.widget.lineEdit().setReadOnly(True)
             common.setSamplingComboBox(self.widget)
-
-            self.label.setText("Sampling time:")
-
-        self.layout.setWidget(0, QFormLayout.FieldRole, self.widget)
+            if self.label != None: self.label.setText("Sampling time:")
+        if self.layout != None:
+            self.layout.setWidget(0, QFormLayout.FieldRole, self.widget)
 
 class Tabs(QFrame):
     MAX_CHECKED_4CH = 1
@@ -526,9 +525,13 @@ class SettingsDialog(QtWidgets.QDialog):
         self.datetime_label = QtWidgets.QLabel("Use datetime:")
         self.datetime_checkBox = QtWidgets.QCheckBox()
 
+        self.theme_label = QtWidgets.QLabel("Light theme:")
+        self.theme_checkBox = QtWidgets.QCheckBox()
+
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame2)
 
-        widgets = [(self.check_updates_label, self.check_updates_checkBox),
+        widgets = [(self.theme_label, self.theme_checkBox),
+                    (self.check_updates_label, self.check_updates_checkBox),
                     (self.autogenerate_label, self.autogenerate_checkBox),
                     (self.datetime_label, self.datetime_checkBox),
                     (self.file_prefix_label, self.file_prefix_lineEdit),
@@ -541,6 +544,7 @@ class SettingsDialog(QtWidgets.QDialog):
 
         self.file_tab_verticalLayout.addWidget(self.file_tab_frame2)
 
+        self.theme_checkBox.setChecked(True)
         self.autogenerate_checkBox.setCheckState(2)
         self.check_updates_checkBox.setCheckState(2)
         self.autogenerate_checkBox.stateChanged.connect(self.actogenerateMethod)
@@ -550,6 +554,7 @@ class SettingsDialog(QtWidgets.QDialog):
         self.directory_lineEdit.setText(common.findDocuments())
         self.delimiter_comboBox.insertItems(0, constants.DELIMITERS)
         self.extension_comboBox.insertItems(0, sorted(constants.SUPPORTED_EXTENSIONS.keys())[::-1])
+
 
         """
         settings tab
@@ -565,16 +570,12 @@ class SettingsDialog(QtWidgets.QDialog):
         scrollArea.setWidget(self.settings_tab_frame)
 
         self.sampling_label = QtWidgets.QLabel("Sampling time:")
-        self.sampling_widget = QtWidgets.QComboBox()
+        self.sampling_widget = SamplingWidget()#QtWidgets.QComboBox()
         self.coincidence_label = QtWidgets.QLabel("Coincidence window (ns):")
         self.coincidence_spinBox = QtWidgets.QSpinBox()
-
-        self.sampling_widget.setEditable(True)
-        self.sampling_widget.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.sampling_widget.lineEdit().setReadOnly(True)
         self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        widgets = [(self.sampling_label, self.sampling_widget),
+        widgets = [(self.sampling_label, self.sampling_widget.widget),
                     (self.coincidence_label, self.coincidence_spinBox)]
 
         letters = [chr(i + ord('A')) for i in range(self.MAX_CHANNELS)]
@@ -608,7 +609,7 @@ class SettingsDialog(QtWidgets.QDialog):
 
         self.settings_tab_verticalLayout.addWidget(self.settings_tab_frame)
 
-        common.setSamplingComboBox(self.sampling_widget)
+        common.setSamplingComboBox(self.sampling_widget.widget)
         common.setCoincidenceSpinBox(self.coincidence_spinBox)
 
         """
@@ -648,9 +649,7 @@ class SettingsDialog(QtWidgets.QDialog):
                 else:
                     string = "%s = %s"%(item, val)
                 lines.append(string)
-        val_txt = self.sampling_widget.currentText()
-        val = common.timeInUnitsToMs(val_txt)
-        lines.append("sampling_widget = %d" % val)
+        lines.append("sampling_widget = %d" % self.sampling_widget.getValue())
         self.writeDefault(lines)
         lines += ["EXTENSION_DATA = '%s'"%self.extension_comboBox.currentText(),
                     "EXTENSION_PARAMS = '%s.txt'"%self.parameters_lineEdit.text()]
@@ -681,6 +680,7 @@ class SettingsDialog(QtWidgets.QDialog):
     def setConstants(self):
         try:
             common.updateConstants(self)
+            self.sampling_widget.setValue(constants.sampling_widget)
         except AttributeError:
             pass
 
