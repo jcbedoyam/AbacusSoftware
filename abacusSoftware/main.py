@@ -328,7 +328,7 @@ class MainWindow(QMainWindow):
                         custom = settings.getSetting("config_custom_c%d"%(i + 1))
                         self.tabs_widget.setChecked(custom)
 
-                if self.coincidence_spinBox.value() != coin:
+                if (self.coincidence_spinBox.value() != coin) & self.coincidence_spinBox.keyboardTracking():
                     self.coincidence_spinBox.setValue(coin)
                 for i in range(self.number_channels):
                     letter = self.getLetter(i)
@@ -341,7 +341,7 @@ class MainWindow(QMainWindow):
                     if (sleep.value() != sleep_new_val) & sleep.keyboardTracking():
                         sleep.setValue(sleep_new_val)
 
-                if self.sampling_widget.getValue() != samp:
+                if (self.sampling_widget.getValue() != samp):
                     self.sampling_widget.setValue(samp)
             except abacus.BaseError as e:
                 pass
@@ -418,16 +418,14 @@ class MainWindow(QMainWindow):
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'coincidence_window', val)
-                # if self.is_light_theme: self.coincidence_spinBox.setStyleSheet("color: default")
-                # else: self.coincidence_spinBox.setStyleSheet("color: white")
                 self.writeParams("Coincidence Window (ns), %s"%val)
+                self.coincidence_spinBox.setKeyboardTracking(True)
+                self.coincidence_spinBox.setStyleSheet("")
             except abacus.InvalidValueError:
-                pass
-                # self.coincidence_spinBox.setStyleSheet("color: red")
+                self.coincidence_spinBox.setKeyboardTracking(False)
+                self.coincidence_spinBox.setStyleSheet("color: rgb(255,0,0); selection-background-color: rgb(255,0,0)")
             except serial.serialutil.SerialException:
                 self.errorWindow(e)
-            # except abacus.BaseError:
-            #     self.errorWindow(e)
         elif abacus.constants.DEBUG:
             print("Coincidence Window Value: %d"%val)
         try:
