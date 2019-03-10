@@ -91,6 +91,10 @@ class MainWindow(QMainWindow):
         self.acquisition_button = QPushButton("Start Acquisition")
         self.acquisition_button.setMaximumSize(QtCore.QSize(140, 60))
         layout2.addWidget(self.acquisition_button)
+        self.clear_button = QPushButton("Clear plot")
+        self.clear_button.setMaximumSize(QtCore.QSize(140, 60))
+        layout2.addWidget(self.clear_button)
+
         layout.addWidget(frame2)
 
         frame3 = QFrame()
@@ -143,6 +147,8 @@ class MainWindow(QMainWindow):
 
         self.connect_dialog = None
         self.connect_button.clicked.connect(self.connect)
+
+        self.clear_button.clicked.connect(self.clearPlot)
 
         self.coincidence_spinBox.valueChanged.connect(self.coincidenceWindowMethod)
 
@@ -330,9 +336,9 @@ class MainWindow(QMainWindow):
                     sleep = self.sleep_widgets[i]
                     delay_new_val = settings.getSetting("delay_%s"%letter)
                     sleep_new_val = settings.getSetting("sleep_%s"%letter)
-                    if delay.value() != delay_new_val:
+                    if (delay.value() != delay_new_val) & delay.keyboardTracking():
                         delay.setValue(delay_new_val)
-                    if sleep.value() != sleep_new_val:
+                    if (sleep.value() != sleep_new_val) & sleep.keyboardTracking():
                         sleep.setValue(sleep_new_val)
 
                 if self.sampling_widget.getValue() != samp:
@@ -346,21 +352,29 @@ class MainWindow(QMainWindow):
         """
         user interaction with saving file
         """
-        try:
-            directory = constants.directory_lineEdit
-        except:
-            directory = os.path.expanduser("~")
+        path = self.save_as_lineEdit.text()
+        if path == "":
+            try:
+                path = constants.directory_lineEdit
+            except:
+                path = os.path.expanduser("~")
 
-        dlg = QtWidgets.QFileDialog(directory = directory)
-        dlg.setAcceptMode(QtWidgets.QFileDialog.AcceptSave)
-        dlg.setFileMode(QtWidgets.QFileDialog.AnyFile)
         nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
-        dlg.setNameFilters(nameFilters)
-        dlg.selectNameFilter(constants.SUPPORTED_EXTENSIONS[constants.EXTENSION_DATA])
-        if dlg.exec_():
-            name = dlg.selectedFiles()[0]
+        filters = ";;".join(nameFilters)
+        name, ext = QtWidgets.QFileDialog.getSaveFileName(self, 'Save as', path, filters, "", QtWidgets.QFileDialog.DontUseNativeDialog)
+        if name != "":
+            ext = ext[-5:-1]
+            if ext in name: pass
+            else: name += ext
             self.save_as_lineEdit.setText(common.unicodePath(name))
             self.setSaveAs()
+
+    def clearPlot(self):
+        if self.data_ring != None:
+            self.data_ring.save()
+            self.data_ring.clear()
+            for plot in self.plot_lines:
+                plot.setData([], [])
 
     def cleanPort(self):
         if self.streaming:
@@ -466,14 +480,14 @@ class MainWindow(QMainWindow):
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'delay_%s'%letter, val)
-                # if self.is_light_theme: widget.setStyleSheet("color: black")
-                # else: widget.setStyleSheet("color: white")
                 self.writeParams("Delay %s (ns), %s"%(letter, val))
+                widget.setKeyboardTracking(True)
+                widget.setStyleSheet("")
             except abacus.InvalidValueError:
-                pass
-                # widget.setStyleSheet("color: red")
+                widget.setKeyboardTracking(False)
+                widget.setStyleSheet("color: rgb(255,0,0); selection-background-color: rgb(255,0,0)")
+
             except SerialException as e:
-            # except abacus.BaseError as e:
                 self.errorWindow(e)
         elif abacus.constants.DEBUG:
             print("Delay %s Value: %d"%(letter, val))
@@ -687,14 +701,13 @@ class MainWindow(QMainWindow):
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'sleep_%s'%letter, val)
-                # if self.is_light_theme: widget.setStyleSheet("color: black")
-                # else: widget.setStyleSheet("color: white")
                 self.writeParams("Sleep %s (ns), %s"%(letter, val))
+                widget.setKeyboardTracking(True)
+                widget.setStyleSheet("")
             except abacus.InvalidValueError:
-                pass
-                # widget.setStyleSheet("color: red")
+                widget.setKeyboardTracking(False)
+                widget.setStyleSheet("color: rgb(255,0,0); selection-background-color: rgb(255,0,0)")
             except SerialException as e:
-            # except abacus.BaseError as e:
                 self.errorWindow(e)
         elif abacus.constants.DEBUG:
             print("Sleep %s Value: %d"%(letter, val))
@@ -1101,7 +1114,7 @@ def close_stdout():
     if STDOUT != None: STDOUT.close()
 
 if __name__ == "__main__":
-    # abacus.constants.DEBUG = True
+    abacus.constants.DEBUG = True
     open_stdout()
 
     # try:

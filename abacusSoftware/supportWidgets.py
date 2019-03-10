@@ -686,7 +686,7 @@ class SettingsDialog(QtWidgets.QDialog):
             pass
 
     def chooseFolder(self):
-        folder = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", common.findDocuments()))
+        folder = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", common.findDocuments(), QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontUseNativeDialog))
         if folder != "":
             self.directory_lineEdit.setText(folder)
 

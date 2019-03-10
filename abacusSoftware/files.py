@@ -104,6 +104,11 @@ class RingBuffer():
         self.header_list = ["Time (s)", "ID"] + ["Counts %s"%letter for letter in self.combinations]
         self.header = constants.DELIMITER.join(self.header_list)
 
+    def clear(self):
+        self.index = 0
+        self.total_movements = 0
+        self.last_saved = 0
+
     def isEmpty(self):
         if self.last_saved == 0: return True
         return False
