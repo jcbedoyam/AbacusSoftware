@@ -321,8 +321,15 @@ class DelayDialog(SweepDialogBase):
                     if delay > 0:
                         delay1 = 0
                         delay2 = delay
-                    abacus.setSetting(port, "delay_%s" % channel1, delay1)
-                    abacus.setSetting(port, "delay_%s" % channel2, delay2)
+                    delay1_ = -1
+                    delay2_ = -1
+                    while ((delay1 != delay1_) and (delay2 != delay2_)):
+                        abacus.setSetting(port, "delay_%s" % channel1, delay1)
+                        abacus.setSetting(port, "delay_%s" % channel2, delay2)
+                        settings = abacus.getAllSettings(port)
+                        delay1_ = settings.getSetting("delay_%s" % channel1)
+                        delay2_ = settings.getSetting("delay_%s" % channel2)
+
                     for i in range(n):
                         for j in range(constants.NUMBER_OF_TRIES):
                             if self.completed: return
@@ -444,7 +451,12 @@ class SleepDialog(SweepDialogBase):
                 for sleep in range_:
                     value = 0
                     last_id = 0
-                    abacus.setSetting(port, 'sleep_%s'%channel, sleep)
+                    sleep_ = -1
+                    while (sleep != sleep_):
+                        abacus.setSetting(port, 'sleep_%s'%channel, sleep)
+                        settings = abacus.getAllSettings(port)
+                        sleep_ = settings.getSetting("sleep_%s" % channel)
+
                     for i in range(n): # number of points
                         for j in range(constants.NUMBER_OF_TRIES): # tries
                             if self.completed: return
