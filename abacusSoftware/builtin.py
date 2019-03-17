@@ -326,6 +326,7 @@ class DelayDialog(SweepDialogBase):
                     while ((delay1 != delay1_) and (delay2 != delay2_)):
                         abacus.setSetting(port, "delay_%s" % channel1, delay1)
                         abacus.setSetting(port, "delay_%s" % channel2, delay2)
+                        time.sleep(1e-3)
                         settings = abacus.getAllSettings(port)
                         delay1_ = settings.getSetting("delay_%s" % channel1)
                         delay2_ = settings.getSetting("delay_%s" % channel2)
@@ -454,6 +455,7 @@ class SleepDialog(SweepDialogBase):
                     sleep_ = -1
                     while (sleep != sleep_):
                         abacus.setSetting(port, 'sleep_%s'%channel, sleep)
+                        time.sleep(1e-3)
                         settings = abacus.getAllSettings(port)
                         sleep_ = settings.getSetting("sleep_%s" % channel)
 
