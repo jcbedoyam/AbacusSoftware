@@ -323,13 +323,20 @@ class DelayDialog(SweepDialogBase):
                         delay2 = delay
                     delay1_ = -1
                     delay2_ = -1
-                    while ((delay1 != delay1_) and (delay2 != delay2_)):
+                    for j in range(constants.NUMBER_OF_TRIES):
                         abacus.setSetting(port, "delay_%s" % channel1, delay1)
                         abacus.setSetting(port, "delay_%s" % channel2, delay2)
                         time.sleep(1e-3)
-                        settings = abacus.getAllSettings(port)
-                        delay1_ = settings.getSetting("delay_%s" % channel1)
-                        delay2_ = settings.getSetting("delay_%s" % channel2)
+                        try:
+                            settings = abacus.getAllSettings(port)
+                            delay1_ = settings.getSetting("delay_%s" % channel1)
+                            delay2_ = settings.getSetting("delay_%s" % channel2)
+                            if ((delay1 != delay1_) and (delay2 != delay2_)): break
+                        except abacus.BaseError as e:
+                            time.sleep(1e-3)
+                            if j == (constants.NUMBER_OF_TRIES - 1): raise(e)
+
+                    time.sleep(self.parent.sampling_widget.getValue() / 1000)
 
                     for i in range(n):
                         for j in range(constants.NUMBER_OF_TRIES):
@@ -453,11 +460,18 @@ class SleepDialog(SweepDialogBase):
                     value = 0
                     last_id = 0
                     sleep_ = -1
-                    while (sleep != sleep_):
-                        abacus.setSetting(port, 'sleep_%s'%channel, sleep)
-                        time.sleep(1e-3)
-                        settings = abacus.getAllSettings(port)
-                        sleep_ = settings.getSetting("sleep_%s" % channel)
+                    for j in range(constants.NUMBER_OF_TRIES):
+                        try:
+                            abacus.setSetting(port, 'sleep_%s' % channel, sleep)
+                            time.sleep(1e-3)
+                            settings = abacus.getAllSettings(port)
+                            sleep_ = settings.getSetting("sleep_%s" % channel)
+                            if (sleep != sleep_): break
+                        except abacus.BaseError as e:
+                            time.sleep(1e-3)
+                            if j == (constants.NUMBER_OF_TRIES - 1): raise(e)
+
+                    time.sleep(self.parent.sampling_widget.getValue() / 1000)
 
                     for i in range(n): # number of points
                         for j in range(constants.NUMBER_OF_TRIES): # tries

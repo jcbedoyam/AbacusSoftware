@@ -2,7 +2,7 @@ import os
 import sys
 import pyAbacus as abacus
 
-__version__ = "1.3.2"
+__version__ = "1.3.3"
 
 CURRENT_OS = sys.platform
 DIRECTORY = os.path.dirname(sys.executable)
@@ -50,3 +50,5 @@ WIDGETS_SET_ACTIONS = ["class_.%s.setChecked(%s)", "class_.%s.setText('%s')", "c
 NUMBER_OF_TRIES = 10
 
 ICON = None
+
+IS_LIGHT_THEME = False

@@ -50,11 +50,17 @@ class SamplingWidget(object):
 
     def valid(self):
         if not self.isComboBox():
-            self.widget.setStyleSheet("color: black")
+            self.widget.setKeyboardTracking(True)
+            self.widget.setStyleSheet("")
 
     def invalid(self):
         if not self.isComboBox():
-            self.widget.setStyleSheet("color: red")
+            self.widget.setKeyboardTracking(False)
+            self.widget.setStyleSheet("color: rgb(255,0,0); selection-background-color: rgb(255,0,0)")
+
+    def keyboardTracking(self):
+        if self.isComboBox(): return True
+        return self.widget.keyboardTracking()
 
     def setValue(self, value):
         if self.isComboBox():
@@ -261,6 +267,7 @@ class AutoSizeLabel(QtWidgets.QLabel):
     """
     MAX_DIGITS = 7 #: Maximum number of digits of a number in label.
     MAX_CHARS = 9 + MAX_DIGITS #: Maximum number of letters in a label.
+    INITIAL_FONT_SIZE = 10
     global CURRENT_OS
     def __init__(self, text, value):
         QtWidgets.QLabel.__init__(self)
@@ -269,8 +276,7 @@ class AutoSizeLabel(QtWidgets.QLabel):
         if CURRENT_OS == "win32":
             self.font_name = "Courier New"
         self.setFont(QtGui.QFont(self.font_name))
-        self.initial_font_size = 10
-        self.font_size = 10
+        self.font_size = self.INITIAL_FONT_SIZE
         self.MAX_TRY = 150
         self.height = self.contentsRect().height()
         self.width = self.contentsRect().width()
@@ -314,23 +320,28 @@ class AutoSizeLabel(QtWidgets.QLabel):
             self.value = value
             self.setText(self.stylishText(self.name, self.value))
 
+    def clearSize(self):
+        self.setFontSize(self.INITIAL_FONT_SIZE)
+
     def resize(self):
         """ Finds the best font size to use if the size of the window changes. """
         f = self.font()
         cr = self.contentsRect()
         height = cr.height()
         width = cr.width()
-        if abs(height*width - self.height*self.width) > 1:
-            self.font_size = self.initial_font_size
+        if abs(height * width - self.height * self.width) > 1:
+            self.font_size = self.INITIAL_FONT_SIZE
             for i in range(self.MAX_TRY):
                 f.setPixelSize(self.font_size)
                 br =  QtGui.QFontMetrics(f).boundingRect(self.text())
                 if br.height() <= cr.height() and br.width() <= cr.width():
                     self.font_size += 1
                 else:
-                    if CURRENT_OS == 'win32':
+                    if (CURRENT_OS == 'win32'):
                         self.font_size += -1
                     else:
+                        self.font_size += -2
+                    if (not constants.IS_LIGHT_THEME):
                         self.font_size += -2
                     f.setPixelSize(max(self.font_size, 1))
                     break
@@ -388,7 +399,7 @@ class CurrentLabels(QtWidgets.QWidget):
             return True
 
     def resizeEvent(self, evt):
-        sizes = [None]*len(self.labels)
+        sizes = [None] * len(self.labels)
         for (i, label) in enumerate(self.labels):
             label.resize()
             sizes[i] = label.font_size
@@ -399,6 +410,9 @@ class CurrentLabels(QtWidgets.QWidget):
                 for label in self.labels:
                     label.setFontSize(size)
             except TypeError: pass
+
+    def clearSizes(self):
+        for label in self.labels: label.clearSize()
 
 class ConnectDialog(QtWidgets.QDialog):
     def __init__(self):
