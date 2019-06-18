@@ -1,3 +1,4 @@
 /files/*
 /Software/config.py
 /Software/salting.py
+*.pyc

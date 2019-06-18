@@ -6,26 +6,29 @@ from PyQt5 import QtGui
 def timeInUnitsToMs(time):
     value = 0
     if 'ms' in time:
-        value = int(time.replace('ms', ''))
+        value = int(time.replace(' ms', ''))
     elif 's' in time:
-        value = int(time.replace('s', ''))*1000
+        value = float(time.replace(' s', ''))
+        value = int(1000 * value)
     return value
 
-def setSamplingComboBox(comboBox, value = abacus.constants.SAMPLING_DEFAULT_VALUE):
+def setSamplingComboBox(comboBox, values = abacus.constants.SAMPLING_VALUES, default_value = abacus.constants.SAMPLING_DEFAULT_VALUE):
     comboBox.clear()
 
     model = comboBox.model()
-    for row in abacus.constants.SAMPLING_VALUES:
+    for row in values:
         if row < 1000:
             item = QtGui.QStandardItem("%d ms" % row)
+        elif row < 10000:
+            item = QtGui.QStandardItem("%.1f s" % (row / 1000))
         else:
-            item = QtGui.QStandardItem("%d s" % (row // 1000))
+            item = QtGui.QStandardItem("%d s" % (row / 1000))
         # if row < abacus.SAMP_CUTOFF:
         #     item.setBackground(QtGui.QColor('red'))
         #     item.setForeground(QtGui.QColor('white'))
         model.appendRow(item)
-    if value < 1000: unit = "ms"
-    else: unit = "s"; value = value // 1000
+    if default_value < 1000: unit = "ms"
+    else: unit = "s"; value = default_value // 1000
     comboBox.setCurrentIndex(comboBox.findText("%d %s"%(value, unit)))
 
 def setCoincidenceSpinBox(spinBox, value = abacus.constants.COINCIDENCE_WINDOW_DEFAULT_VALUE):
@@ -57,7 +60,7 @@ def readConstantsFile():
         with open(constants.SETTINGS_PATH) as file:
             for line in file:
                 try:
-                    exec("constants.%s"%line)
+                    exec("constants.%s" % line)
                 except SyntaxError as e:
                     pass
         constants.SETTING_FILE_EXISTS = True

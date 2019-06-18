@@ -34,9 +34,6 @@ from abacusSoftware.supportWidgets import Table, CurrentLabels, ConnectDialog, \
 import pyAbacus as abacus
 
 STDOUT = None
-# if constants.CURRENT_OS == "win32":
-#     import win_unicode_console
-#     win_unicode_console.enable()
 
 def getCombinations(n_channels):
     letters = [chr(i + ord('A')) for i in range(n_channels)]
@@ -325,7 +322,7 @@ class MainWindow(QMainWindow):
                     self.tabs_widget.setChecked(custom)
                 elif self.number_channels == 8:
                     for i in range(8):
-                        custom = settings.getSetting("config_custom_c%d"%(i + 1))
+                        custom = settings.getSetting("config_custom_c%d" % (i + 1))
                         self.tabs_widget.setChecked(custom)
 
                 if (self.coincidence_spinBox.value() != coin) & self.coincidence_spinBox.keyboardTracking():
@@ -341,9 +338,7 @@ class MainWindow(QMainWindow):
                     if (sleep.value() != sleep_new_val) & sleep.keyboardTracking():
                         sleep.setValue(sleep_new_val)
 
-                print("CheckParams:", self.sampling_widget.getValue(), samp, self.sampling_widget.keyboardTracking())
-                if ((self.sampling_widget.getValue() != samp) & self.sampling_widget.keyboardTracking()):
-
+                if (self.sampling_widget.getValue() != samp):
                     self.sampling_widget.setValue(samp)
             except abacus.BaseError as e:
                 pass
@@ -418,7 +413,6 @@ class MainWindow(QMainWindow):
             if step < 10: step = 5
             self.coincidence_spinBox.setSingleStep(step)
         if self.port_name != None:
-            print(val, self.coincidence_spinBox.keyboardTracking())
             try:
                 abacus.setSetting(self.port_name, 'coincidence_window', val)
                 self.writeParams("Coincidence Window (ns), %s"%val)
@@ -577,7 +571,6 @@ class MainWindow(QMainWindow):
 
     def samplingMethod(self, value, force_write = False):
         if self.sampling_widget != None:
-            print("0", value, force_write, self.sampling_widget.keyboardTracking())
             if force_write: self.sampling_widget.setValue(value)
             value = self.sampling_widget.getValue()
             if value > 0 and self.port_name != None:
@@ -586,10 +579,10 @@ class MainWindow(QMainWindow):
                     if value > constants.DATA_REFRESH_RATE: self.refresh_timer.setInterval(value)
                     else: self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
                     self.data_timer.setInterval(value)
-                    self.sampling_widget.valid()
+                    # self.sampling_widget.valid()
                     self.writeParams("Sampling time (ms), %s" % value)
-                except abacus.InvalidValueError as e:
-                    self.sampling_widget.invalid()
+                # except abacus.InvalidValueError as e:
+                #     self.sampling_widget.invalid()
                 except SerialException as e:
                     self.errorWindow(e)
             elif abacus.constants.DEBUG:

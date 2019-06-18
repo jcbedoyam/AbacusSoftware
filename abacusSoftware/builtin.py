@@ -333,7 +333,7 @@ class DelayDialog(SweepDialogBase):
                             delay2_ = settings.getSetting("delay_%s" % channel2)
                             if ((delay1 != delay1_) and (delay2 != delay2_)): break
                         except abacus.BaseError as e:
-                            time.sleep(1e-3)
+                            time.sleep(1e-2)
                             if j == (constants.NUMBER_OF_TRIES - 1): raise(e)
 
                     time.sleep(self.parent.sampling_widget.getValue() / 1000)
@@ -468,7 +468,7 @@ class SleepDialog(SweepDialogBase):
                             sleep_ = settings.getSetting("sleep_%s" % channel)
                             if (sleep != sleep_): break
                         except abacus.BaseError as e:
-                            time.sleep(1e-3)
+                            time.sleep(1e-2)
                             if j == (constants.NUMBER_OF_TRIES - 1): raise(e)
 
                     time.sleep(self.parent.sampling_widget.getValue() / 1000)

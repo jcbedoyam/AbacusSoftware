@@ -25,52 +25,27 @@ class SamplingWidget(object):
         self.layout = layout
         self.label = label
         self.method = method
-        self.is_comboBox = True
         self.number_channels = 0
         self.widget = None
         self.value = 0
         self.changeNumberChannels(number_channels)
 
-    def isComboBox(self):
-        return self.is_comboBox
-
     def setEnabled(self, enabled):
         self.widget.setEnabled(enabled)
 
     def getValue(self):
-        if self.isComboBox():
-            text_value = self.widget.currentText()
-            return common.timeInUnitsToMs(text_value)
-        else:
-            value = self.widget.value()
-            step = 10**int(np.log10(value) - 1)
-            if step < 1: step = 1
-            self.widget.setSingleStep(step)
-            return value
-
-    def valid(self):
-        if not self.isComboBox():
-            self.widget.setKeyboardTracking(True)
-            self.widget.setStyleSheet("")
-
-    def invalid(self):
-        if not self.isComboBox():
-            self.widget.setKeyboardTracking(False)
-            self.widget.setStyleSheet("color: rgb(255,0,0); selection-background-color: rgb(255,0,0)")
-
-    def keyboardTracking(self):
-        if self.isComboBox(): return True
-        return self.widget.keyboardTracking()
+        text_value = self.widget.currentText()
+        return common.timeInUnitsToMs(text_value)
 
     def setValue(self, value):
-        if self.isComboBox():
-            if value >= 1000:
-                index = self.widget.findText('%d s' % (value // 1000))
-            else:
-                index = self.widget.findText('%d ms' % value)
-            self.widget.setCurrentIndex(index)
+        if value < 1000:
+            index = self.widget.findText('%d ms' % value)
+        elif value < 10000:
+            index = self.widget.findText('%.1f s' % (value / 1000))
         else:
-            self.widget.setValue(value)
+            index = self.widget.findText('%d s' % (value / 1000))
+
+        self.widget.setCurrentIndex(index)
 
     def changeNumberChannels(self, number_channels):
         self.number_channels = number_channels
@@ -78,26 +53,21 @@ class SamplingWidget(object):
             self.layout.removeWidget(self.widget)
             self.widget.deleteLater()
 
-        if self.number_channels > 2:
-            self.is_comboBox = False
-            self.widget = QSpinBox()
-            self.widget.setMinimum(min(abacus.constants.SAMPLING_VALUES))
-            self.widget.setMaximum(max(abacus.constants.SAMPLING_VALUES))
-            self.widget.valueChanged.connect(self.method)
-            self.widget.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-            self.label.setText("Sampling time (ms):")
-            self.widget.setValue(abacus.constants.SAMPLING_DEFAULT_VALUE)
-            self.getValue()
-        else:
-            self.is_comboBox = True
-            self.widget = QComboBox()
-            if self.method != None: self.widget.currentIndexChanged.connect(self.method)
-            self.widget.setEditable(True)
-            self.widget.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            self.widget.lineEdit().setReadOnly(True)
+        self.widget = QComboBox()
+        if self.method != None: self.widget.currentIndexChanged.connect(self.method)
+        self.widget.setEditable(True)
+        self.widget.lineEdit().setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.widget.lineEdit().setReadOnly(True)
+        if self.number_channels == 2:
             common.setSamplingComboBox(self.widget)
-            if self.label != None: self.label.setText("Sampling time:")
+        else:
+            bases = np.arange(10, 100, 1)
+            values = list(range(1, 10))
+            for i in range(5):
+                values += list(bases * 10 ** i)
+            values.append(int(1e6))
+            common.setSamplingComboBox(self.widget, values = values)
+        if self.label != None: self.label.setText("Sampling time:")
         if self.layout != None:
             self.layout.setWidget(0, QFormLayout.FieldRole, self.widget)
 
@@ -113,6 +83,7 @@ class Tabs(QFrame):
         self.double = []
         self.multiple = []
         self.multiple_checked = []
+        self.last_multiple_checked = None
         self.number_channels = 0
 
         scrollArea1 = QtWidgets.QScrollArea()
@@ -210,15 +181,18 @@ class Tabs(QFrame):
         if len(self.multiple_checked) == max and len(new):
             getattr(self, self.multiple_checked[-1]).setChecked(False)
             del self.multiple_checked[-1]
-
         self.multiple_checked += new
-        if len(new):
+        if len(new) and new != self.last_multiple_checked:
+            self.last_multiple_checked = new
             self.parent.sendMultipleCoincidences(new)
-            self.signal()
+        self.signal()
 
     def setChecked(self, letters):
-        if letters:
+        if len(letters) <= 2:
             getattr(self, letters).setChecked(True)
+        elif self.last_multiple_checked != letters:
+            getattr(self, letters).setChecked(True)
+            self.last_multiple_checked = letters
 
 class Table(QtWidgets.QTableWidget):
     def __init__(self, active_labels, active_indexes):
@@ -565,7 +539,10 @@ class SettingsDialog(QtWidgets.QDialog):
         self.datetime_checkBox.setCheckState(2)
         self.parameters_lineEdit.setText(constants.PARAMS_SUFFIX)
         self.file_prefix_lineEdit.setText(constants.FILE_PREFIX)
-        self.directory_lineEdit.setText(common.findDocuments())
+        # self.setDirectory()
+        # if not self.verifyDirectory():
+        #     self.directory_lineEdit.setText(common.findDocuments())
+        # else: self.direco
         self.delimiter_comboBox.insertItems(0, constants.DELIMITERS)
         self.extension_comboBox.insertItems(0, sorted(constants.SUPPORTED_EXTENSIONS.keys())[::-1])
 
@@ -639,7 +616,6 @@ class SettingsDialog(QtWidgets.QDialog):
         self.verticalLayout.addWidget(self.buttons)
 
         self.setConstants()
-        # self.constantsWriter()
 
     def actogenerateMethod(self, val):
         self.datetime_checkBox.setEnabled(val)
@@ -676,8 +652,6 @@ class SettingsDialog(QtWidgets.QDialog):
         self.updateConstants(lines)
         if update_parent: self.parent.updateConstants()
 
-        # self.parent.samplingMethod(val, force_write = True)
-
     def accept_replace(self):
         self.constantsWriter()
         self.accept()
@@ -696,6 +670,7 @@ class SettingsDialog(QtWidgets.QDialog):
         try:
             common.updateConstants(self)
             self.sampling_widget.setValue(constants.sampling_widget)
+            self.setDirectory()
         except AttributeError:
             pass
 
@@ -703,6 +678,23 @@ class SettingsDialog(QtWidgets.QDialog):
         folder = str(QtWidgets.QFileDialog.getExistingDirectory(self, "Select Directory", common.findDocuments(), QtWidgets.QFileDialog.ShowDirsOnly | QtWidgets.QFileDialog.DontUseNativeDialog))
         if folder != "":
             self.directory_lineEdit.setText(folder)
+
+    def setDirectory(self):
+        try:
+            directory = constants.directory_lineEdit
+            if os.path.exists(directory):
+                self.directory_lineEdit.setText(directory)
+                return
+            directory = os.path.normpath(directory)
+            documents = os.path.normpath(common.findDocuments())
+            e = Exception('The default directory "%s" does not exist.\n\nThe default directory will be set to "%s".' % (directory, documents))
+            self.parent.errorWindow(e)
+        except AttributeError as e:
+            pass
+        directory = common.findDocuments()
+        self.directory_lineEdit.setText(directory)
+        common.directory_lineEdit = directory
+        self.constantsWriter()
 
 class SubWindow(QtWidgets.QMdiSubWindow):
     def __init__(self, parent = None):
