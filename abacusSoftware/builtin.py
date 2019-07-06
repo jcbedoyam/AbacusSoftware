@@ -315,12 +315,13 @@ class DelayDialog(SweepDialogBase):
             try:
                 for delay in range_:
                     value = 0
-                    delay1 = abs(delay)
-                    delay2 = 0
                     last_id = 0
                     if delay > 0:
                         delay1 = 0
                         delay2 = delay
+                    else:
+                        delay1 = abs(delay)
+                        delay2 = 0
                     delay1_ = -1
                     delay2_ = -1
                     for j in range(constants.NUMBER_OF_TRIES):
@@ -328,9 +329,8 @@ class DelayDialog(SweepDialogBase):
                         abacus.setSetting(port, "delay_%s" % channel2, delay2)
                         time.sleep(1e-3)
                         try:
-                            settings = abacus.getAllSettings(port)
-                            delay1_ = settings.getSetting("delay_%s" % channel1)
-                            delay2_ = settings.getSetting("delay_%s" % channel2)
+                            delay1_ = abacus.getSetting(port, "delay_%s" % channel1)
+                            delay2_ = abacus.getSetting(port, "delay_%s" % channel2)
                             if ((delay1 != delay1_) and (delay2 != delay2_)): break
                         except abacus.BaseError as e:
                             time.sleep(1e-2)
@@ -464,8 +464,7 @@ class SleepDialog(SweepDialogBase):
                         try:
                             abacus.setSetting(port, 'sleep_%s' % channel, sleep)
                             time.sleep(1e-3)
-                            settings = abacus.getAllSettings(port)
-                            sleep_ = settings.getSetting("sleep_%s" % channel)
+                            sleep_ = abacus.getSetting(port, "sleep_%s" % channel)
                             if (sleep != sleep_): break
                         except abacus.BaseError as e:
                             time.sleep(1e-2)
