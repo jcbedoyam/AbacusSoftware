@@ -274,7 +274,7 @@ class DelayDialog(SweepDialogBase):
         else:
             step = self.stepSpin.value()
             n = self.nSpin.value()
-            range_ = np.arange(self.startSpin.value(), self.stopSpin.value(), step)
+            range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + 1, step)
             range_ = range_[range_ <= abacus.constants.DELAY_MAXIMUM_VALUE]
 
             if self.parent.port_name != None:
@@ -418,7 +418,7 @@ class SleepDialog(SweepDialogBase):
         else:
             step = self.stepSpin.value()
             n = self.nSpin.value()
-            range_ = np.arange(self.startSpin.value(), self.stopSpin.value(), step)
+            range_ = np.arange(self.startSpin.value(), self.stopSpin.value() + 1, step)
             range_ = range_[range_ <= abacus.constants.SLEEP_MAXIMUM_VALUE]
             channel = self.comboBox.currentText()
 
