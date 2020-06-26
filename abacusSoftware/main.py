@@ -410,8 +410,13 @@ class MainWindow(QMainWindow):
         text_value = "%d"%val
         if self.number_channels > 2:
             step = 10**int(np.log10(val) - 1)
-            if step < 10: step = 5
-            self.coincidence_spinBox.setSingleStep(step)
+            if step < 10: step = abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE   #updated 2020-06-25
+        else: #when num_channels=2 (new on 2020-06-26)
+            if val < 100:
+                step = abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE
+            else:
+                step = 10 #10ns
+        self.coincidence_spinBox.setSingleStep(step)
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'coincidence_window', val)
@@ -563,7 +568,8 @@ class MainWindow(QMainWindow):
 
     def removePlots(self):
         if self.legend != None:
-            self.legend.scene().removeItem(self.legend)
+            if self.legend.scene() != None: #new on 2020-06-23. This solves the issue of not reconnecting to a device after disconnection.
+                self.legend.scene().removeItem(self.legend)
         for line in self.plot_lines:
             line.clear()
         self.plot_lines = []
