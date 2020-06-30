@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "Abacus Software"
-#define MyAppVersion "1.3.3"
+#define MyAppVersion "1.4.0"
 #define MyAppPublisher "Tausand"
 #define MyAppURL "http://www.tausand.com/"
 #define MyAppExeName "AbacusSoftware.exe"
@@ -22,7 +22,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf}\{#MyAppName}
 DisableProgramGroupPage=yes
 OutputBaseFilename=AbacusSetup
-SetupIconFile=E:\Tausand\AbacusSoftware\abacusSoftware\GUI\images\abacus_small.ico
+SetupIconFile=abacusSoftware\GUI\images\abacus_small.ico
 Compression=lzma
 SolidCompression=yes
 
@@ -34,8 +34,8 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "E:\Tausand\AbacusSoftware\abacusSoftware\dist\AbacusSoftware\AbacusSoftware.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "E:\Tausand\AbacusSoftware\abacusSoftware\dist\AbacusSoftware\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dist\AbacusSoftware\AbacusSoftware.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\AbacusSoftware\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
