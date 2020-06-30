@@ -2,13 +2,13 @@ altgraph==0.17
 helpdev==0.7.1
 importlib-metadata==1.7.0
 numpy==1.19.0
-pkg-resources==0.0.0
+setuptools==41.2.0
+#pkg-resources>=0.0.0
 pyAbacus==1.1.0
 PyInstaller==3.6
-PyQt5==5.10.1
+PyQt5==5.15.0
 pyqtgraph==0.11.0
 pyserial==3.4
 QDarkStyle==2.8.1
 QtPy==1.9.0
-sip==4.19.8
 zipp==3.1.0

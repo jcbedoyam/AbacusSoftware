@@ -22,7 +22,7 @@ exe = EXE(pyz,
           debug=False,
           strip=False,
           upx=True,
-          console=False, icon='GUI\\images\\abacus_small.ico', version='fileversion.txt')
+          console=False, icon='abacusSoftware\\GUI\\images\\abacus_small.ico', version='abacusSoftware\\fileversion.txt')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
