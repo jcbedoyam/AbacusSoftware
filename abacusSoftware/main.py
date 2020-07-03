@@ -415,8 +415,8 @@ class MainWindow(QMainWindow):
         text_value = "%d" % val
         if self.number_channels > 2:
             step = 10 ** int(np.log10(val) - 1)
-            if step < 10: step = abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE  # updated 2020-06-25
-        else:  # when num_channels=2 (new on 2020-06-26)
+            if step < 10: step = abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE  #updated on v1.4.0 (2020-06-25)
+        else:  # when num_channels=2. New on v1.4.0 (2020-06-26)
             if val < 100:
                 step = abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE
             else:
@@ -501,6 +501,7 @@ class MainWindow(QMainWindow):
             print("Delay %s Value: %d" % (letter, val))
 
     def delaySweep(self):
+        self.delaySweepDialog.updateConstants() #new on v1.4.0 (2020-06-30)
         self.delaySweepDialog.show()
 
     def errorWindow(self, exception):
@@ -576,7 +577,7 @@ class MainWindow(QMainWindow):
 
     def removePlots(self):
         if self.legend != None:
-            if self.legend.scene() != None:  # new on 2020-06-23. This solves the issue of not reconnecting to a device after disconnection.
+            if self.legend.scene() != None:  #new on v1.4.0 (2020-06-23). This solves the issue of not reconnecting to a device after disconnection.
                 self.legend.scene().removeItem(self.legend)
         for line in self.plot_lines:
             line.clear()
@@ -729,6 +730,7 @@ class MainWindow(QMainWindow):
             print("Sleep %s Value: %d" % (letter, val))
 
     def sleepSweep(self):
+        self.sleepSweepDialog.updateConstants() #new on v1.4.0 (2020-06-30)
         self.sleepSweepDialog.show()
 
     def startAcquisition(self):
