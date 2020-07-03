@@ -36,12 +36,12 @@ def setCoincidenceSpinBox(spinBox, value = abacus.constants.COINCIDENCE_WINDOW_D
     spinBox.setMaximum(abacus.constants.COINCIDENCE_WINDOW_MAXIMUM_VALUE)
     spinBox.setSingleStep(abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE)
     spinBox.setValue(value)
-
+    
 def setDelaySpinBox(spinBox, value = abacus.constants.DELAY_DEFAULT_VALUE):
     spinBox.setMinimum(abacus.constants.DELAY_MINIMUM_VALUE)
     spinBox.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE)
     spinBox.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
-    spinBox.setValue(value)
+    spinBox.setValue(value)    
 
 def setSleepSpinBox(spinBox, value = abacus.constants.SLEEP_DEFAULT_VALUE):
     spinBox.setMinimum(abacus.constants.SLEEP_MINIMUM_VALUE)
@@ -74,9 +74,16 @@ def updateConstants(class_):
             if att in dir(constants):
                 val = eval("constants.%s"%att)
                 if name != "comboBox":
-                    exec(action%(att, val))
+                    try: #if the element does not exist, skip. Example: sleep_C in a 2ch device
+                        exec(action%(att, val)) 
+                    except:
+                        pass
+                            
                 else:
-                    exec(action%(att, att, val))
+                    try: #if the element does not exist, skip. Example: sleep_C in a 2ch device
+                        exec(action%(att, att, val))
+                    except:
+                        pass
 
 def findDocuments():
     if constants.CURRENT_OS == "win32":

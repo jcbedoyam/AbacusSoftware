@@ -246,6 +246,7 @@ class DelayDialog(SweepDialogBase):
         self.stepSpin.setMinimum(abacus.constants.DELAY_STEP_VALUE)
         self.stepSpin.setMaximum(((abacus.constants.DELAY_MAXIMUM_VALUE - abacus.constants.DELAY_MINIMUM_VALUE) // abacus.constants.DELAY_STEP_VALUE) * abacus.constants.DELAY_STEP_VALUE)
         self.stepSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
+        self.stepSpin.setValue(abacus.constants.DELAY_STEP_VALUE) #new on v1.4.0 (2020-06-30)
 
         self.plot.setLabel('left', "Coincidences")
         self.plot.setLabel('bottom', "Delay time", units='ns')
@@ -375,6 +376,25 @@ class DelayDialog(SweepDialogBase):
         self.comboBox1.blockSignals(False)
         self.comboBox2.blockSignals(False)
 
+    def updateConstants(self): #new on v1.4.0 (2020-06-30)
+        try:
+            self.startSpin.setMinimum(-abacus.constants.DELAY_MAXIMUM_VALUE)
+            self.startSpin.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE - abacus.constants.DELAY_STEP_VALUE)
+            self.startSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
+            self.startSpin.setValue(-abacus.constants.DELAY_MAXIMUM_VALUE)
+
+            self.stopSpin.setMinimum(-abacus.constants.DELAY_MAXIMUM_VALUE)
+            self.stopSpin.setMaximum(abacus.constants.DELAY_MAXIMUM_VALUE)
+            self.stopSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
+            self.stopSpin.setValue(abacus.constants.DELAY_MAXIMUM_VALUE)
+
+            self.stepSpin.setMinimum(abacus.constants.DELAY_STEP_VALUE)
+            self.stepSpin.setMaximum(((abacus.constants.DELAY_MAXIMUM_VALUE - abacus.constants.DELAY_MINIMUM_VALUE) // abacus.constants.DELAY_STEP_VALUE) * abacus.constants.DELAY_STEP_VALUE)
+            self.stepSpin.setSingleStep(abacus.constants.DELAY_STEP_VALUE)
+            self.stepSpin.setValue(abacus.constants.DELAY_STEP_VALUE)
+        except AttributeError as e:
+            if abacus.constants.DEBUG: print(e)
+
 class SleepDialog(SweepDialogBase):
     def __init__(self, parent):
         super(SleepDialog, self).__init__(parent)
@@ -404,6 +424,7 @@ class SleepDialog(SweepDialogBase):
         self.stepSpin.setMinimum(abacus.constants.SLEEP_STEP_VALUE)
         self.stepSpin.setMaximum(((abacus.constants.SLEEP_MAXIMUM_VALUE - abacus.constants.SLEEP_MINIMUM_VALUE) // abacus.constants.SLEEP_STEP_VALUE) * abacus.constants.SLEEP_STEP_VALUE)
         self.stepSpin.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
+        self.stepSpin.setValue(abacus.constants.SLEEP_STEP_VALUE) #new on v1.4.0 (2020-06-30)
 
         self.plot.setLabel('left', "Counts")
         self.plot.setLabel('bottom', "Sleep time", units='ns')
@@ -499,3 +520,22 @@ class SleepDialog(SweepDialogBase):
     def setNumberChannels(self, number_channels):
         self.comboBox.clear()
         self.comboBox.addItems([chr(i + ord('A')) for i in range(number_channels)])
+
+    def updateConstants(self): #new on v1.4.0 (2020-06-30)
+        try:
+            self.startSpin.setMinimum(abacus.constants.SLEEP_MINIMUM_VALUE)
+            self.startSpin.setMaximum(abacus.constants.SLEEP_MAXIMUM_VALUE - abacus.constants.SLEEP_STEP_VALUE)
+            self.startSpin.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
+            self.startSpin.setValue(abacus.constants.SLEEP_MINIMUM_VALUE)
+
+            self.stopSpin.setMinimum(abacus.constants.SLEEP_MINIMUM_VALUE)
+            self.stopSpin.setMaximum(abacus.constants.SLEEP_MAXIMUM_VALUE)
+            self.stopSpin.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
+            self.stopSpin.setValue(abacus.constants.SLEEP_MAXIMUM_VALUE)
+
+            self.stepSpin.setMinimum(abacus.constants.SLEEP_STEP_VALUE)
+            self.stepSpin.setMaximum(((abacus.constants.SLEEP_MAXIMUM_VALUE - abacus.constants.SLEEP_MINIMUM_VALUE) // abacus.constants.SLEEP_STEP_VALUE) * abacus.constants.SLEEP_STEP_VALUE)
+            self.stepSpin.setSingleStep(abacus.constants.SLEEP_STEP_VALUE)
+            self.stepSpin.setValue(abacus.constants.SLEEP_STEP_VALUE) #new on v1.4.0 (2020-06-30)
+        except AttributeError as e:
+            if abacus.constants.DEBUG: print(e)

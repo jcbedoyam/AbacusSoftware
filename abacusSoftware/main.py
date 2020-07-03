@@ -9,15 +9,14 @@ import pyqtgraph as pg
 from datetime import datetime
 from itertools import combinations
 from time import time, localtime, strftime, sleep
-from PyQt5 import QtCore, QtGui, QtWidgets
 
 from serial.serialutil import SerialException, SerialTimeoutException
 
 try:
     from PyQt5 import QtCore, QtGui, QtWidgets
     from PyQt5.QtWidgets import QLabel, QSpinBox, QComboBox, QSizePolicy, QAction, \
-                            QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, \
-                            QPushButton, QMdiArea
+        QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QFrame, \
+        QPushButton, QMdiArea
 except ModuleNotFoundError:
     from PyQt4.QtGui import QLabel, QSpinBox, QComboBox, QSizePolicy, QAction
 
@@ -29,11 +28,12 @@ from abacusSoftware.menuBar import AboutWindow
 from abacusSoftware.exceptions import ExtentionError
 from abacusSoftware.files import ResultsFiles, RingBuffer
 from abacusSoftware.supportWidgets import Table, CurrentLabels, ConnectDialog, \
-                        SettingsDialog, SubWindow, ClickableLineEdit, Tabs, SamplingWidget
+    SettingsDialog, SubWindow, ClickableLineEdit, Tabs, SamplingWidget
 
 import pyAbacus as abacus
 
 STDOUT = None
+
 
 def getCombinations(n_channels):
     letters = [chr(i + ord('A')) for i in range(n_channels)]
@@ -42,10 +42,12 @@ def getCombinations(n_channels):
         letters += ["".join(pair) for pair in combinations(joined, i)]
     return letters
 
+
 common.readConstantsFile()
 
+
 class MainWindow(QMainWindow):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super(QMainWindow, self).__init__(parent)
         self.port_name = None
         self.start_position = None
@@ -63,7 +65,7 @@ class MainWindow(QMainWindow):
         frame.setFrameShape(QFrame.StyledPanel)
         frame.setFrameShadow(QFrame.Raised)
 
-        horizontalLayout =  QHBoxLayout(frame)
+        horizontalLayout = QHBoxLayout(frame)
         label = QLabel("Save as:")
 
         self.save_as_lineEdit = ClickableLineEdit()
@@ -221,10 +223,10 @@ class MainWindow(QMainWindow):
         self.menuHelp.addAction(self.actionAbout)
         self.menuProperties.addAction(self.actionDefault_settings)
 
-        self.menuView.addAction(QAction("Show settings", self.menuView, checkable = True))
-        self.menuView.addAction(QAction("Show historical", self.menuView, checkable = True))
-        self.menuView.addAction(QAction("Show current", self.menuView, checkable = True))
-        self.menuView.addAction(QAction("Show plots", self.menuView, checkable = True))
+        self.menuView.addAction(QAction("Show settings", self.menuView, checkable=True))
+        self.menuView.addAction(QAction("Show historical", self.menuView, checkable=True))
+        self.menuView.addAction(QAction("Show current", self.menuView, checkable=True))
+        self.menuView.addAction(QAction("Show plots", self.menuView, checkable=True))
         self.menuView.addSeparator()
         self.menuView.addAction("Tiled")
         self.menuView.addAction("Cascade")
@@ -297,7 +299,7 @@ class MainWindow(QMainWindow):
     def checkFileName(self, name):
         if "." in name:
             name, ext = name.split(".")
-            ext = ".%s"%ext
+            ext = ".%s" % ext
         else:
             try:
                 ext = constants.extension_comboBox
@@ -331,8 +333,8 @@ class MainWindow(QMainWindow):
                     letter = self.getLetter(i)
                     delay = self.delay_widgets[i]
                     sleep = self.sleep_widgets[i]
-                    delay_new_val = settings.getSetting("delay_%s"%letter)
-                    sleep_new_val = settings.getSetting("sleep_%s"%letter)
+                    delay_new_val = settings.getSetting("delay_%s" % letter)
+                    sleep_new_val = settings.getSetting("sleep_%s" % letter)
                     if (delay.value() != delay_new_val) & delay.keyboardTracking():
                         delay.setValue(delay_new_val)
                     if (sleep.value() != sleep_new_val) & sleep.keyboardTracking():
@@ -358,11 +360,14 @@ class MainWindow(QMainWindow):
 
         nameFilters = [constants.SUPPORTED_EXTENSIONS[extension] for extension in constants.SUPPORTED_EXTENSIONS]
         filters = ";;".join(nameFilters)
-        name, ext = QtWidgets.QFileDialog.getSaveFileName(self, 'Save as', path, filters, "", QtWidgets.QFileDialog.DontUseNativeDialog)
+        name, ext = QtWidgets.QFileDialog.getSaveFileName(self, 'Save as', path, filters, "",
+                                                          QtWidgets.QFileDialog.DontUseNativeDialog)
         if name != "":
             ext = ext[-5:-1]
-            if ext in name: pass
-            else: name += ext
+            if ext in name:
+                pass
+            else:
+                name += ext
             self.save_as_lineEdit.setText(common.unicodePath(name))
             self.setSaveAs()
 
@@ -382,13 +387,13 @@ class MainWindow(QMainWindow):
             self.port_name = None
             self.data_ring = None
             self.setNumberChannels(0)
-            self.subSettings(new = False)
+            self.subSettings(new=False)
             self.check_timer.stop()
 
     def closeEvent(self, event):
         quit_msg = "Are you sure you want to exit the program?"
         reply = QtWidgets.QMessageBox.question(self, 'Exit',
-                         quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
+                                               quit_msg, QtWidgets.QMessageBox.Yes, QtWidgets.QMessageBox.No)
         if reply == QtWidgets.QMessageBox.Yes:
             try:
                 if self.data_ring != None:
@@ -399,7 +404,7 @@ class MainWindow(QMainWindow):
                 if self.results_files.data_file.isEmpty():
                     self.results_files.params_file.delete()
             try:
-                self.settings_dialog.constantsWriter(update_parent = False)
+                self.settings_dialog.constantsWriter(update_parent=False)
             except Exception as e:
                 if abacus.constants.DEBUG: print(e)
             event.accept()
@@ -407,15 +412,20 @@ class MainWindow(QMainWindow):
             event.ignore()
 
     def coincidenceWindowMethod(self, val):
-        text_value = "%d"%val
+        text_value = "%d" % val
         if self.number_channels > 2:
-            step = 10**int(np.log10(val) - 1)
-            if step < 10: step = 5
-            self.coincidence_spinBox.setSingleStep(step)
+            step = 10 ** int(np.log10(val) - 1)
+            if step < 10: step = abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE  #updated on v1.4.0 (2020-06-25)
+        else:  # when num_channels=2. New on v1.4.0 (2020-06-26)
+            if val < 100:
+                step = abacus.constants.COINCIDENCE_WINDOW_STEP_VALUE
+            else:
+                step = 10  # 10ns
+        self.coincidence_spinBox.setSingleStep(step)
         if self.port_name != None:
             try:
                 abacus.setSetting(self.port_name, 'coincidence_window', val)
-                self.writeParams("Coincidence Window (ns), %s"%val)
+                self.writeParams("Coincidence Window (ns), %s" % val)
                 self.coincidence_spinBox.setKeyboardTracking(True)
                 self.coincidence_spinBox.setStyleSheet("")
             except abacus.InvalidValueError:
@@ -424,18 +434,19 @@ class MainWindow(QMainWindow):
             except serial.serialutil.SerialException:
                 self.errorWindow(e)
         elif abacus.constants.DEBUG:
-            print("Coincidence Window Value: %d"%val)
+            print("Coincidence Window Value: %d" % val)
         try:
             self.sleepSweepDialog.setCoincidence(val)
             self.delaySweepDialog.setCoincidence(val)
-        except AttributeError: pass
+        except AttributeError:
+            pass
 
     def connect(self):
         if self.port_name != None:
             self.connect_button.setText("Connect")
             self.acquisition_button.setDisabled(True)
             if self.results_files != None:
-                self.results_files.writeParams("Disconnected from device in port,%s"%self.port_name)
+                self.results_files.writeParams("Disconnected from device in port,%s" % self.port_name)
             self.cleanPort()
         else:
             self.connect_dialog = ConnectDialog()
@@ -445,8 +456,10 @@ class MainWindow(QMainWindow):
             port = self.connect_dialog.comboBox.currentText()
 
             if port != "":
-                try: abacus.open(port)
-                except abacus.AbacusError: pass
+                try:
+                    abacus.open(port)
+                except abacus.AbacusError:
+                    pass
                 n = abacus.getChannelsFromName(port)
                 self.combinations = getCombinations(n)
 
@@ -456,14 +469,14 @@ class MainWindow(QMainWindow):
                 self.acquisition_button.setText("Start acquisition")
                 self.connect_button.setText("Disconnect")
 
-                self.subSettings(new = False)
+                self.subSettings(new=False)
 
                 self.data_ring = RingBuffer(constants.BUFFER_ROWS, len(self.combinations) + 2, self.combinations)
                 if self.results_files != None:
                     self.data_ring.setFile(self.results_files.data_file)
 
-                self.port_name = port # not before
-                self.writeParams("Connected to device in port, %s"%self.port_name)
+                self.port_name = port  # not before
+                self.writeParams("Connected to device in port, %s" % self.port_name)
                 self.updateConstants()
                 self.check_timer.start()
 
@@ -474,8 +487,8 @@ class MainWindow(QMainWindow):
     def delayMethod(self, widget, letter, val):
         if self.port_name != None:
             try:
-                abacus.setSetting(self.port_name, 'delay_%s'%letter, val)
-                self.writeParams("Delay %s (ns), %s"%(letter, val))
+                abacus.setSetting(self.port_name, 'delay_%s' % letter, val)
+                self.writeParams("Delay %s (ns), %s" % (letter, val))
                 widget.setKeyboardTracking(True)
                 widget.setStyleSheet("")
             except abacus.InvalidValueError:
@@ -485,9 +498,10 @@ class MainWindow(QMainWindow):
             except SerialException as e:
                 self.errorWindow(e)
         elif abacus.constants.DEBUG:
-            print("Delay %s Value: %d"%(letter, val))
+            print("Delay %s Value: %d" % (letter, val))
 
     def delaySweep(self):
+        self.delaySweepDialog.updateConstants() #new on v1.4.0 (2020-06-30)
         self.delaySweepDialog.show()
 
     def errorWindow(self, exception):
@@ -505,11 +519,11 @@ class MainWindow(QMainWindow):
             msg.setIcon(QtWidgets.QMessageBox.Critical)
             self.connect_button.setText("Connect")
         try:
-            self.results_files.writeParams("Error,%s"%error_text)
+            self.results_files.writeParams("Error,%s" % error_text)
         except Exception:
             pass
 
-        msg.setText('An Error has ocurred.\n%s'%error_text)
+        msg.setText('An Error has ocurred.\n%s' % error_text)
         msg.setWindowTitle("Error")
         msg.setStandardButtons(QtWidgets.QMessageBox.Ok)
         msg.exec_()
@@ -556,28 +570,31 @@ class MainWindow(QMainWindow):
         for i in range(len(self.active_channels)):
             color = constants.COLORS[i % n]
             letter = self.active_channels[i]
-            plot = self.counts_plot.plot(pen = color, symbol='o',
-                symbolPen = color, symbolBrush = color,
-                symbolSize = symbolSize, name = letter)
+            plot = self.counts_plot.plot(pen=color, symbol='o',
+                                         symbolPen=color, symbolBrush=color,
+                                         symbolSize=symbolSize, name=letter)
             self.plot_lines.append(plot)
 
     def removePlots(self):
         if self.legend != None:
-            self.legend.scene().removeItem(self.legend)
+            if self.legend.scene() != None:  #new on v1.4.0 (2020-06-23). This solves the issue of not reconnecting to a device after disconnection.
+                self.legend.scene().removeItem(self.legend)
         for line in self.plot_lines:
             line.clear()
         self.plot_lines = []
         self.legend = None
 
-    def samplingMethod(self, value, force_write = False):
+    def samplingMethod(self, value, force_write=False):
         if self.sampling_widget != None:
             if force_write: self.sampling_widget.setValue(value)
             value = self.sampling_widget.getValue()
             if value > 0 and self.port_name != None:
                 try:
                     abacus.setSetting(self.port_name, 'sampling', value)
-                    if value > constants.DATA_REFRESH_RATE: self.refresh_timer.setInterval(value)
-                    else: self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
+                    if value > constants.DATA_REFRESH_RATE:
+                        self.refresh_timer.setInterval(value)
+                    else:
+                        self.refresh_timer.setInterval(constants.DATA_REFRESH_RATE)
                     self.data_timer.setInterval(value)
                     # self.sampling_widget.valid()
                     self.writeParams("Sampling time (ms), %s" % value)
@@ -586,19 +603,20 @@ class MainWindow(QMainWindow):
                 except SerialException as e:
                     self.errorWindow(e)
             elif abacus.constants.DEBUG:
-                print("Sampling Value, %d"%value)
+                print("Sampling Value, %d" % value)
         try:
             self.sleepSweepDialog.setSampling(value)
             self.delaySweepDialog.setSampling(value)
-        except AttributeError: pass
+        except AttributeError:
+            pass
 
     def sendMultipleCoincidences(self, coincidences):
         if self.port_name != None:
             try:
                 for (i, letters) in enumerate(coincidences):
-                    abacus.setSetting(self.port_name, 'config_custom_c%d'%(i + 1), letters)
+                    abacus.setSetting(self.port_name, 'config_custom_c%d' % (i + 1), letters)
             except SerialException as e:
-            # except Exception as e:
+                # except Exception as e:
                 self.errorWindow(e)
 
     def sendSettings(self):
@@ -623,8 +641,8 @@ class MainWindow(QMainWindow):
     def setDarkTheme(self):
         constants.IS_LIGHT_THEME = False
         self.plot_win.setBackground((25, 35, 45))
-        self.counts_plot.getAxis('bottom').setPen(foreground = 'w')
-        self.counts_plot.getAxis('left').setPen(foreground = 'w')
+        self.counts_plot.getAxis('bottom').setPen(foreground='w')
+        self.counts_plot.getAxis('left').setPen(foreground='w')
         self.theme_action.setText('Light theme')
         self.delaySweepDialog.setDarkTheme()
         self.sleepSweepDialog.setDarkTheme()
@@ -664,7 +682,7 @@ class MainWindow(QMainWindow):
                     names = self.results_files.getNames()
                     if self.data_ring != None:
                         self.data_ring.setFile(self.results_files.data_file)
-                    self.statusBar.showMessage('Files: %s, %s.'%(names))
+                    self.statusBar.showMessage('Files: %s, %s.' % (names))
                     try:
                         self.results_files.checkFilesExists()
                     except FileExistsError:
@@ -699,8 +717,8 @@ class MainWindow(QMainWindow):
     def sleepMethod(self, widget, letter, val):
         if self.port_name != None:
             try:
-                abacus.setSetting(self.port_name, 'sleep_%s'%letter, val)
-                self.writeParams("Sleep %s (ns), %s"%(letter, val))
+                abacus.setSetting(self.port_name, 'sleep_%s' % letter, val)
+                self.writeParams("Sleep %s (ns), %s" % (letter, val))
                 widget.setKeyboardTracking(True)
                 widget.setStyleSheet("")
             except abacus.InvalidValueError:
@@ -709,9 +727,10 @@ class MainWindow(QMainWindow):
             except SerialException as e:
                 self.errorWindow(e)
         elif abacus.constants.DEBUG:
-            print("Sleep %s Value: %d"%(letter, val))
+            print("Sleep %s Value: %d" % (letter, val))
 
     def sleepSweep(self):
+        self.sleepSweepDialog.updateConstants() #new on v1.4.0 (2020-06-30)
         self.sleepSweepDialog.show()
 
     def startAcquisition(self):
@@ -775,7 +794,7 @@ class MainWindow(QMainWindow):
         self.mdi.addSubWindow(self.subwindow_historical)
 
     def subPlots(self):
-        pg.setConfigOptions(antialias = True, foreground = 'k')
+        pg.setConfigOptions(antialias=True, foreground='k')
 
         self.subwindow_plots = SubWindow(self)
         self.plot_win = pg.GraphicsWindow()
@@ -783,8 +802,8 @@ class MainWindow(QMainWindow):
         self.subwindow_plots.setWindowTitle("Plots")
         self.mdi.addSubWindow(self.subwindow_plots)
 
-    def subSettings(self, new = True):
-        def fillFormLayout(layout, values, new = True):
+    def subSettings(self, new=True):
+        def fillFormLayout(layout, values, new=True):
             for (i, line) in enumerate(values):
                 if not new: i += 2
                 layout.setWidget(i, QtWidgets.QFormLayout.LabelRole, line[0])
@@ -804,14 +823,14 @@ class MainWindow(QMainWindow):
             self.sleep_widgets = []
             for i in range(self.number_channels):
                 letter = self.getLetter(i)
-                delay_label = 'delay_%s_label'%letter
-                delay_spinBox = 'delay_%s_spinBox'%letter
-                sleep_label = 'sleep_%s_label'%letter
-                sleep_spinBox = 'sleep_%s_spinBox'%letter
+                delay_label = 'delay_%s_label' % letter
+                delay_spinBox = 'delay_%s_spinBox' % letter
+                sleep_label = 'sleep_%s_label' % letter
+                sleep_spinBox = 'sleep_%s_spinBox' % letter
 
-                setattr(self, delay_label, QLabel("Delay %s (ns):"%letter))
+                setattr(self, delay_label, QLabel("Delay %s (ns):" % letter))
                 setattr(self, delay_spinBox, QSpinBox())
-                setattr(self, sleep_label, QLabel("Sleep %s (ns):"%letter))
+                setattr(self, sleep_label, QLabel("Sleep %s (ns):" % letter))
                 setattr(self, sleep_spinBox, QSpinBox())
 
                 getattr(self, delay_spinBox).setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -826,36 +845,64 @@ class MainWindow(QMainWindow):
             self.subSettings_delays_sleeps = delays + sleeps
 
             if self.number_channels == 2:
-                self.delay_widgets[0].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
-                self.delay_widgets[1].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
-                self.sleep_widgets[0].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
-                self.sleep_widgets[1].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
+                self.delay_widgets[0].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
+                self.delay_widgets[1].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
+                self.sleep_widgets[0].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
+                self.sleep_widgets[1].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
             elif self.number_channels == 4:
-                self.delay_widgets[0].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
-                self.delay_widgets[1].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
-                self.delay_widgets[2].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[2], 'C', arg))
-                self.delay_widgets[3].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[3], 'D', arg))
-                self.sleep_widgets[0].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
-                self.sleep_widgets[1].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
-                self.sleep_widgets[2].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[2], 'C', arg))
-                self.sleep_widgets[3].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[3], 'D', arg))
+                self.delay_widgets[0].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
+                self.delay_widgets[1].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
+                self.delay_widgets[2].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[2], 'C', arg))
+                self.delay_widgets[3].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[3], 'D', arg))
+                self.sleep_widgets[0].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
+                self.sleep_widgets[1].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
+                self.sleep_widgets[2].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[2], 'C', arg))
+                self.sleep_widgets[3].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[3], 'D', arg))
             elif self.number_channels == 8:
-                self.delay_widgets[0].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
-                self.delay_widgets[1].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
-                self.delay_widgets[2].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[2], 'C', arg))
-                self.delay_widgets[3].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[3], 'D', arg))
-                self.delay_widgets[4].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[4], 'E', arg))
-                self.delay_widgets[5].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[5], 'F', arg))
-                self.delay_widgets[6].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[6], 'G', arg))
-                self.delay_widgets[7].valueChanged.connect(lambda arg: self.delayMethod(self.delay_widgets[7], 'H', arg))
-                self.sleep_widgets[0].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
-                self.sleep_widgets[1].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
-                self.sleep_widgets[2].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[2], 'C', arg))
-                self.sleep_widgets[3].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[3], 'D', arg))
-                self.sleep_widgets[4].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[4], 'E', arg))
-                self.sleep_widgets[5].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[5], 'F', arg))
-                self.sleep_widgets[6].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[6], 'G', arg))
-                self.sleep_widgets[7].valueChanged.connect(lambda arg: self.sleepMethod(self.sleep_widgets[7], 'H', arg))
+                self.delay_widgets[0].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[0], 'A', arg))
+                self.delay_widgets[1].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[1], 'B', arg))
+                self.delay_widgets[2].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[2], 'C', arg))
+                self.delay_widgets[3].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[3], 'D', arg))
+                self.delay_widgets[4].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[4], 'E', arg))
+                self.delay_widgets[5].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[5], 'F', arg))
+                self.delay_widgets[6].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[6], 'G', arg))
+                self.delay_widgets[7].valueChanged.connect(
+                    lambda arg: self.delayMethod(self.delay_widgets[7], 'H', arg))
+                self.sleep_widgets[0].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[0], 'A', arg))
+                self.sleep_widgets[1].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[1], 'B', arg))
+                self.sleep_widgets[2].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[2], 'C', arg))
+                self.sleep_widgets[3].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[3], 'D', arg))
+                self.sleep_widgets[4].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[4], 'E', arg))
+                self.sleep_widgets[5].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[5], 'F', arg))
+                self.sleep_widgets[6].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[6], 'G', arg))
+                self.sleep_widgets[7].valueChanged.connect(
+                    lambda arg: self.sleepMethod(self.sleep_widgets[7], 'H', arg))
 
         if new:
             settings_frame = QFrame()
@@ -874,14 +921,14 @@ class MainWindow(QMainWindow):
 
             settings_frame3 = QFrame()
 
-            self.settings_frame2_formLayout =  QtWidgets.QFormLayout(self.settings_frame2)
-            settings_frame3_formLayout =  QtWidgets.QFormLayout(settings_frame3)
+            self.settings_frame2_formLayout = QtWidgets.QFormLayout(self.settings_frame2)
+            settings_frame3_formLayout = QtWidgets.QFormLayout(settings_frame3)
 
             scrollArea.setWidget(self.settings_frame2)
 
             self.sampling_label = QLabel("Sampling time:")
             self.sampling_widget = SamplingWidget(self.settings_frame2_formLayout, \
-                                self.sampling_label, self.samplingMethod)
+                                                  self.sampling_label, self.samplingMethod)
             self.coincidence_label = QLabel("Coincidence window (ns):")
             self.coincidence_spinBox = QSpinBox()
             self.coincidence_spinBox.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -911,7 +958,7 @@ class MainWindow(QMainWindow):
         else:
             deleteWidgets(self.settings_frame2_formLayout, self.subSettings_delays_sleeps)
             createWidgets()
-            fillFormLayout(self.settings_frame2_formLayout, self.subSettings_delays_sleeps, new = False)
+            fillFormLayout(self.settings_frame2_formLayout, self.subSettings_delays_sleeps, new=False)
 
         # createSampling()
         self.setSettings()
@@ -921,10 +968,10 @@ class MainWindow(QMainWindow):
         if 'ms' in time:
             value = int(time.replace('ms', ''))
         elif 's' in time:
-            value = int(time.replace('s', ''))*1000
+            value = int(time.replace('s', '')) * 1000
         return value
 
-    def unlockSettings(self, unlock = True):
+    def unlockSettings(self, unlock=True):
         self.sampling_widget.setEnabled(unlock)
         self.coincidence_spinBox.setEnabled(unlock)
         for widget in self.delay_widgets + self.sleep_widgets:
@@ -948,8 +995,10 @@ class MainWindow(QMainWindow):
             self.sampling_widget.setValue(constants.sampling_widget)
             self.sendSettings()
 
-            if constants.theme_checkBox: self.setLightTheme()
-            else: self.setDarkTheme()
+            if constants.theme_checkBox:
+                self.setLightTheme()
+            else:
+                self.setDarkTheme()
 
             if self.data_ring != None: self.data_ring.updateDelimiter(constants.DELIMITER)
 
@@ -963,39 +1012,45 @@ class MainWindow(QMainWindow):
     def updateData(self):
         def get(counters, time_, id):
             last = 3
-            if self.number_channels == 4: last = 10
-            elif self.number_channels == 8: last = 36
+            if self.number_channels == 4:
+                last = 10
+            elif self.number_channels == 8:
+                last = 36
             values = counters.getValues(self.combinations[:last])
             "could be better"
             if self.number_channels > 2:
                 i = 1
-                for letters in self.combinations[last :]:
+                for letters in self.combinations[last:]:
                     if letters in self.active_channels:
-                        val = counters.getValue("custom_c%d"%i)
+                        val = counters.getValue("custom_c%d" % i)
                         i += 1
-                    else: val = 0
+                    else:
+                        val = 0
                     values.append(val)
 
             values = np.array([time_, id] + values)
             values = values.reshape((1, values.shape[0]))
             self.data_ring.extend(values)
+
         try:
             for i in range(constants.NUMBER_OF_TRIES):
                 try:
                     data = self.data_ring[:]
                     time_ = time() - self.init_time
-                    if len(data): last_id = data[-1, 1]
-                    else: last_id = 0
+                    if len(data):
+                        last_id = data[-1, 1]
+                    else:
+                        last_id = 0
                     counters, id = abacus.getAllCounters(self.port_name)
 
                     if (id > 0) and (last_id != id):
                         get(counters, time_, id)
                         break
                     else:
-                        time_left = abacus.getTimeLeft(self.port_name) / 1000 # seconds
+                        time_left = abacus.getTimeLeft(self.port_name) / 1000  # seconds
                         sleep(time_left)
                 except abacus.BaseError as e:
-                    if i == (constants.NUMBER_OF_TRIES - 1): raise(e)
+                    if i == (constants.NUMBER_OF_TRIES - 1): raise (e)
 
         except SerialException as e:
             self.errorWindow(e)
@@ -1032,7 +1087,8 @@ class MainWindow(QMainWindow):
             else:
                 self.params_buffer += constants.BREAKLINE + strftime("%H:%M:%S", localtime()) + ", " + message
         elif abacus.constants.DEBUG:
-            print("writeParams ignored: %s"%message)
+            print("writeParams ignored: %s" % message)
+
 
 def softwareUpdate(splash):
     try:
@@ -1047,12 +1103,13 @@ def softwareUpdate(splash):
             splash.close()
             msg = QtWidgets.QMessageBox()
             msg.setIcon(QtWidgets.QMessageBox.Information)
-            msg.setText("There is a new version avaible (%s).\nDo you want to download it?"%version)
+            msg.setText("There is a new version avaible (%s).\nDo you want to download it?" % version)
             msg.setWindowTitle("Update avaible")
             msg.setStandardButtons(QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No)
             if msg.exec_() == QtWidgets.QMessageBox.Yes:
                 webbrowser.open(url.TARGET_URL)
                 exit()
+
 
 def run():
     from time import sleep
@@ -1061,7 +1118,7 @@ def run():
     os.environ['PYQTGRAPH_QT_LIB'] = 'PyQt5'
 
     app = QtWidgets.QApplication(sys.argv)
-    app.setStyle(QtWidgets.QStyleFactory.create('Fusion')) # <- Choose the style
+    app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))  # <- Choose the style
 
     splash_pix = QtGui.QPixmap(':/splash.png').scaledToWidth(600)
     splash = QtWidgets.QSplashScreen(splash_pix, QtCore.Qt.WindowStaysOnTopHint)
@@ -1073,7 +1130,7 @@ def run():
 
     if abacus.CURRENT_OS == 'win32':
         import ctypes
-        myappid = 'abacus.abacus.01' # arbitrary string
+        myappid = 'abacus.abacus.01'  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     sleep(1)
@@ -1090,12 +1147,14 @@ def run():
     main.centerOnScreen()
     app.exec_()
 
+
 def exceptHook(exctype, value, tb):
     print('Type:', exctype)
     print('Value:', value)
     print('Traceback:', tb.format_exc())
 
     return
+
 
 def open_stdout():
     global STDOUT
@@ -1108,9 +1167,11 @@ def open_stdout():
         STDOUT = None
         print(e)
 
+
 def close_stdout():
     global STDOUT
     if STDOUT != None: STDOUT.close()
+
 
 if __name__ == "__main__":
     abacus.constants.DEBUG = True
@@ -1120,7 +1181,7 @@ if __name__ == "__main__":
     run()
     # except Exception as e:
     #     print(e)
-        # print(traceback.format_exc())
+    # print(traceback.format_exc())
 
     close_stdout()
     sys.exit()
