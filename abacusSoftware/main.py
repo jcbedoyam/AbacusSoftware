@@ -94,6 +94,12 @@ class MainWindow(QMainWindow):
         self.clear_button.setMaximumSize(QtCore.QSize(140, 60))
         layout2.addWidget(self.clear_button)
 
+        #Nuevo boton About Me
+
+        self.about_button = QPushButton("About Me")
+        self.about_button.setMaximumSize(QtCore.QSize(140, 60))
+        layout2.addWidget(self.about_button)
+
         layout.addWidget(frame2)
 
         frame3 = QFrame()
@@ -148,6 +154,9 @@ class MainWindow(QMainWindow):
         self.connect_button.clicked.connect(self.connect)
 
         self.clear_button.clicked.connect(self.clearPlot)
+
+        #Funcionalidad boton nuevo
+        self.about_button.clicked.connect(self.aboutWindowCaller)
 
         self.coincidence_spinBox.valueChanged.connect(self.coincidenceWindowMethod)
 
