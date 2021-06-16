@@ -18,7 +18,7 @@ class AboutWindow(QtWidgets.QDialog, Ui_Dialog_about):
 
         tausand = '<a href="https://www.tausand.com/"> https://www.tausand.com </a>'
         pages =  '<a href="https://github.com/Tausand-dev/AbacusSoftware"> https://github.com/Tausand-dev/AbacusSoftware </a>'
-        message = "Abacus Software is a suite of tools build to ensure your experience with Tausand's coincidence counters becomes simplified. \n\nSoftware Version: %s\nPyAbacus Version: %s\n\n"%(__version__, pa.__version__)
+        message = "Originally, I started to learn how to code when I was 15 because I was interested in competitive programming. I entered some local competitions aimed for high\nschool students and was eventually chosen to participate representing Colombia in the International Olympiad in Informatics (IOI) held in Taiwan. I think this has\nbeen the best experience I’ve had thanks to programming. I was able to meet a lot of people who were also interested in algorithms, data structures and coding\nfrom all around the globe. Also, traveling by myself as a part of a team taught me since a very young age about team work and responsibility. \n\nAbacus Software is a suite of tools build to ensure your experience with Tausand's coincidence counters becomes simplified. \n\nSoftware Version: %s\nPyAbacus Version: %s\n\n"%(__version__, pa.__version__)
         self.message_label.setText(message)
         self.visit_label = QtWidgets.QLabel()
         self.github_label = QtWidgets.QLabel()
